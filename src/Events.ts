@@ -1,13 +1,14 @@
+/* eslint-disable class-methods-use-this */
 import { Description, On, Guard } from "@typeit/discord";
 import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
-import { IsAPrivateMessage } from "./Guards/IsAPrivateMessage";
-import { NotABot } from "./Guards/NotABot";
-import { Main } from "./Main";
+import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
+import NotABot from "./Guards/NotABot";
+import Main from "./Main";
 
 const existingInvites: Map<string, string[]> = new Map();
 
 @Description("Event listeners.")
-export abstract class Events {
+export default abstract class Events {
   @On("ready")
   onReady(): void {
     console.log("Bot logged in.");
@@ -18,7 +19,7 @@ export abstract class Events {
           existingInvites.set(
             guild.id,
             guildInvites
-              .filter((i) => i.inviter.id == Main.Client.user.id)
+              .filter((i) => i.inviter.id === Main.Client.user.id)
               .map((i) => i.code)
           );
         })
@@ -50,7 +51,7 @@ export abstract class Events {
 
       member.guild.fetchInvites().then((currentInvites) => {
         const currentBotInvites = currentInvites.filter(
-          (i) => i.inviter.id == Main.Client.user.id
+          (i) => i.inviter.id === Main.Client.user.id
         );
 
         const previousInvites = existingInvites.get(member.guild.id);
@@ -60,7 +61,7 @@ export abstract class Events {
           (i) => !currentBotInvites.has(i)
         );
 
-        if (usedInvites && usedInvites.length == 1) {
+        if (usedInvites && usedInvites.length === 1) {
           console.log(
             `${member.user.username} joined with the ${usedInvites[0]} invite`
             // TODO: call api

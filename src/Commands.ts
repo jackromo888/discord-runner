@@ -1,10 +1,11 @@
+/* eslint-disable class-methods-use-this */
 import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
 import { Invite } from "discord.js";
-import { NotABot } from "./Guards/NotABot";
-import { Main } from "./Main";
+import NotABot from "./Guards/NotABot";
+import Main from "./Main";
 
 @Discord(Main.prefix)
-export abstract class Commands {
+export default abstract class Commands {
   @Command("ping")
   @Guard(NotABot)
   ping(command: CommandMessage): void {
@@ -36,11 +37,11 @@ export abstract class Commands {
   @Command("isMember :userId")
   @Guard(NotABot)
   isMember(command: CommandMessage): void {
-    const userId: string = command.args.userId;
+    const { userId } = command.args;
     command.guild.members
       .fetch({ user: userId })
-      .then((_) => command.reply("yes"))
-      .catch((_) => {
+      .then(() => command.reply("yes"))
+      .catch(() => {
         command.reply("no");
       });
     // TODO: respose
@@ -50,8 +51,8 @@ export abstract class Commands {
   @Command("addRole :userId :roleId")
   @Guard(NotABot)
   addRole(command: CommandMessage): void {
-    const userId: string = command.args.userId;
-    const roleId: string = command.args.roleId;
+    const { userId } = command.args;
+    const { roleId } = command.args;
     command.guild.members
       .fetch({ user: userId })
       .then((member) => {
@@ -78,8 +79,8 @@ export abstract class Commands {
   @Command("removeRole :userId :roleId")
   @Guard(NotABot)
   removeRole(command: CommandMessage): void {
-    const userId: string = command.args.userId;
-    const roleId: string = command.args.roleId;
+    const { userId } = command.args;
+    const { roleId } = command.args;
 
     command.guild.members
       .fetch({ user: userId })
@@ -107,7 +108,7 @@ export abstract class Commands {
   @Command("join :joinCode")
   @Guard(NotABot)
   join(command: CommandMessage): void {
-    const joinCode = command.args.joinCode;
+    const { joinCode } = command.args;
     console.log(
       `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
     );
