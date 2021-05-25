@@ -4,6 +4,7 @@ import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
 import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
+import logger from "./utils/logger";
 
 const existingInvites: Map<string, string[]> = new Map();
 
@@ -11,7 +12,7 @@ const existingInvites: Map<string, string[]> = new Map();
 export default abstract class Events {
   @On("ready")
   onReady(): void {
-    console.log("Bot logged in.");
+    logger.info("Bot logged in.");
     Main.Client.guilds.cache.forEach((guild) => {
       guild
         .fetchInvites()
@@ -23,7 +24,7 @@ export default abstract class Events {
               .map((i) => i.code)
           );
         })
-        .catch(console.error);
+        .catch(logger.error);
     });
   }
 
@@ -46,8 +47,8 @@ export default abstract class Events {
   // TODO: change this to API request
   @On("guildMemberAdd")
   onGuildMemberAdd(members: [GuildMember | PartialGuildMember]): void {
-    if (members.length == 1) {
-      let member = members[0];
+    if (members.length === 1) {
+      const member = members[0];
 
       member.guild.fetchInvites().then((currentInvites) => {
         const currentBotInvites = currentInvites.filter(
@@ -62,18 +63,18 @@ export default abstract class Events {
         );
 
         if (usedInvites && usedInvites.length === 1) {
-          console.log(
+          logger.debug(
             `${member.user.username} joined with the ${usedInvites[0]} invite`
             // TODO: call api
           );
         } else {
           // TODO: ask these members for invite code
-          console.log("ambiguous invite code");
+          logger.debug("ambiguous invite code");
         }
       });
     } else {
       // TODO: ask these members for invite code
-      console.log("more than one join at the same time");
+      logger.debug("more than one join at the same time");
     }
   }
 
@@ -81,7 +82,7 @@ export default abstract class Events {
   @On("guildMemberRemove")
   onGuildMemberRemove(members: [GuildMember | PartialGuildMember]): void {
     members.forEach((member) => {
-      console.log(
+      logger.debug(
         `User removed from platform of the community (${member.user.id}, "discord", ${Main.Client.user.id})`
       );
       // TODO: call api

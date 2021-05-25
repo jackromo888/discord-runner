@@ -3,6 +3,7 @@ import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
 import { Invite } from "discord.js";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
+import logger from "./utils/logger";
 
 @Discord(Main.prefix)
 export default abstract class Commands {
@@ -29,7 +30,7 @@ export default abstract class Commands {
       .then((invite: Invite) => {
         command.reply(invite.url);
       })
-      .catch(console.error);
+      .catch(logger.error);
     // TODO: respose
   }
 
@@ -63,13 +64,13 @@ export default abstract class Commands {
             // TODO: respose
           })
           .catch((error) => {
-            console.log(error);
+            logger.error(error);
             command.reply("role does not exit");
             // TODO: error respose
           });
       })
       .catch((error) => {
-        console.log(error);
+        logger.error(error);
         command.reply("member does not exit");
         // TODO: error respose
       });
@@ -92,13 +93,13 @@ export default abstract class Commands {
             // TODO: respose
           })
           .catch((error) => {
-            console.log(error);
+            logger.error(error);
             command.reply("role does not exit");
             // TODO: error respose
           });
       })
       .catch((error) => {
-        console.log(error);
+        logger.error(error);
         command.reply("member does not exit");
         // TODO: error respose
       });
@@ -109,7 +110,7 @@ export default abstract class Commands {
   @Guard(NotABot)
   join(command: CommandMessage): void {
     const { joinCode } = command.args;
-    console.log(
+    logger.debug(
       `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
     );
     // TODO: call the API
