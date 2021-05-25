@@ -1,10 +1,13 @@
+/* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
 import { Client } from "@typeit/discord";
 import * as dotenv from "dotenv";
 import { exit } from "process";
-dotenv.config({ path: __dirname + "/.env" });
 
-export class Main {
+dotenv.config({ path: `${__dirname}/.env` });
+
+export default class Main {
   private static _client: Client;
+
   private static _prefix: string;
 
   static get Client(): Client {
