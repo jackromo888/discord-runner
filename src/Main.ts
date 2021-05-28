@@ -3,7 +3,7 @@ import { Client } from "@typeit/discord";
 import * as dotenv from "dotenv";
 import { exit } from "process";
 
-dotenv.config({ path: `${__dirname}/.env` });
+dotenv.config();
 
 export default class Main {
   private static _client: Client;
