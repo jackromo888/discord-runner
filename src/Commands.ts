@@ -3,6 +3,7 @@ import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
 import { Invite } from "discord.js";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
+import { userJoined } from "./service";
 import logger from "./utils/logger";
 
 @Discord(Main.prefix)
@@ -106,7 +107,6 @@ export default abstract class Commands {
       });
   }
 
-  // TODO: change this to API request
   @Command("join :joinCode")
   @Guard(NotABot)
   join(command: CommandMessage): void {
@@ -114,7 +114,7 @@ export default abstract class Commands {
     logger.debug(
       `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
     );
-    // TODO: call the API
+    userJoined(joinCode, command.author.id, command.guild.id);
     command.delete().then();
   }
 }
