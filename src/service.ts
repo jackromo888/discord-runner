@@ -1,7 +1,8 @@
 import axios from "axios";
+import config from "./config";
 import logger from "./utils/logger";
 
-const API_BASE_URL = "http://localhost:8989/api/";
+const API_BASE_URL = config.hubUrl;
 const PLATFORM = "discord";
 
 export function userJoined(

@@ -1,12 +1,13 @@
 /* eslint-disable class-methods-use-this */
 import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
 import { Invite } from "discord.js";
+import config from "./config";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { userJoined } from "./service";
 import logger from "./utils/logger";
 
-@Discord(Main.prefix)
+@Discord(config.prefix)
 export default abstract class Commands {
   @Command("ping")
   @Guard(NotABot)
