@@ -4,6 +4,7 @@ import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
 import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
+import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
 
 const existingInvites: Map<string, string[]> = new Map();
@@ -44,7 +45,6 @@ export default abstract class Events {
     });
   }
 
-  // TODO: change this to API request
   @On("guildMemberAdd")
   onGuildMemberAdd(members: [GuildMember | PartialGuildMember]): void {
     if (members.length === 1) {
@@ -65,8 +65,8 @@ export default abstract class Events {
         if (usedInvites && usedInvites.length === 1) {
           logger.debug(
             `${member.user.username} joined with the ${usedInvites[0]} invite`
-            // TODO: call api
           );
+          userJoined(usedInvites[0], member.user.id, member.guild.id);
         } else {
           // TODO: ask these members for invite code
           logger.debug("ambiguous invite code");
@@ -78,14 +78,13 @@ export default abstract class Events {
     }
   }
 
-  // TODO: change this to API request
   @On("guildMemberRemove")
   onGuildMemberRemove(members: [GuildMember | PartialGuildMember]): void {
     members.forEach((member) => {
       logger.debug(
         `User removed from platform of the community (${member.user.id}, "discord", ${Main.Client.user.id})`
       );
-      // TODO: call api
+      userRemoved(member.user.id, member.guild.id);
     });
   }
 }
