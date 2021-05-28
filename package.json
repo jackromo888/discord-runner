@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@typeit/discord": "^4.0.9",
+    "axios": "^0.21.1",
     "discord.js": "^12.5.3",
     "dotenv": "^9.0.2",
     "winston": "^3.3.3"
