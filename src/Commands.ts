@@ -26,6 +26,7 @@ export default abstract class Commands {
       .createInvite({
         maxAge: 60 * 60 * 24, // TODO: maxAge?
         maxUses: 1,
+        unique: true,
       })
       .then((invite: Invite) => {
         command.reply(invite.url);
