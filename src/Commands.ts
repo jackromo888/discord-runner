@@ -1,11 +1,13 @@
 /* eslint-disable class-methods-use-this */
 import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
 import { Invite } from "discord.js";
+import config from "./config";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
+import { userJoined } from "./service";
 import logger from "./utils/logger";
 
-@Discord(Main.prefix)
+@Discord(config.prefix)
 export default abstract class Commands {
   @Command("ping")
   @Guard(NotABot)
@@ -26,6 +28,7 @@ export default abstract class Commands {
       .createInvite({
         maxAge: 60 * 60 * 24, // TODO: maxAge?
         maxUses: 1,
+        unique: true,
       })
       .then((invite: Invite) => {
         command.reply(invite.url);
@@ -105,7 +108,6 @@ export default abstract class Commands {
       });
   }
 
-  // TODO: change this to API request
   @Command("join :joinCode")
   @Guard(NotABot)
   join(command: CommandMessage): void {
@@ -113,7 +115,7 @@ export default abstract class Commands {
     logger.debug(
       `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
     );
-    // TODO: call the API
+    userJoined(joinCode, command.author.id, command.guild.id);
     command.delete().then();
   }
 }
