@@ -1,4 +1,4 @@
-export type UpgradeParams = {
+export type ManageRolesParams = {
   guildId: string;
   userId: string;
   roleIds: string[];

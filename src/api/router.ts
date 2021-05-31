@@ -1,17 +1,26 @@
 import { Router } from "express";
-import { body } from "express-validator";
 import controller from "./controller";
+import validators from "./validators";
 
 export default () => {
   const router: Router = Router();
 
   router.post(
     "/upgrade",
-    body("guildId").trim().isLength({ min: 18, max: 18 }),
-    body("userId").trim().isLength({ min: 18, max: 18 }),
-    body("roleIds").isArray({ min: 1 }),
-    body("message").trim().isLength({ min: 1 }),
+    validators.guildIdValidator,
+    validators.userIdValidator,
+    validators.roleIdsValidator,
+    validators.messageValidator,
     controller.upgrade
+  );
+
+  router.post(
+    "/downgrade",
+    validators.guildIdValidator,
+    validators.userIdValidator,
+    validators.roleIdsValidator,
+    validators.messageValidator,
+    controller.downgrade
   );
 
   return router;

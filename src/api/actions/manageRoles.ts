@@ -2,9 +2,13 @@ import { Collection, Role } from "discord.js";
 import { Response } from "express";
 import Main from "../../Main";
 import logger from "../../utils/logger";
-import { UpgradeParams } from "../params";
+import { ManageRolesParams } from "../params";
 
-export default function addRole(params: UpgradeParams, res: Response): void {
+export default function manageRoles(
+  params: ManageRolesParams,
+  isUpgrade: boolean,
+  res: Response
+): void {
   Main.Client.guilds
     .fetch(params.guildId)
     .then((guild) => {
@@ -26,7 +30,7 @@ export default function addRole(params: UpgradeParams, res: Response): void {
                 res.status(400).json({
                   error: errorMsg,
                 });
-              } else {
+              } else if (isUpgrade) {
                 member.roles
                   .add(rolesToAdd)
                   .then(() => {
@@ -35,6 +39,19 @@ export default function addRole(params: UpgradeParams, res: Response): void {
                   .catch((error) => {
                     logger.error(error);
                     const errorMsg = "cannot add role(s) to user";
+                    res.status(400).json({
+                      error: errorMsg,
+                    });
+                  });
+              } else {
+                member.roles
+                  .remove(rolesToAdd)
+                  .then(() => {
+                    res.status(200).send();
+                  })
+                  .catch((error) => {
+                    logger.error(error);
+                    const errorMsg = "cannot remove role(s) from user";
                     res.status(400).json({
                       error: errorMsg,
                     });
