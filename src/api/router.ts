@@ -9,7 +9,8 @@ export default () => {
     "/upgrade",
     validators.guildIdValidator,
     validators.userIdValidator,
-    validators.roleIdsValidator,
+    validators.roleIdsArrayValidator,
+    validators.roleIdsElementValidator,
     validators.messageValidator,
     controller.upgrade
   );
@@ -18,7 +19,8 @@ export default () => {
     "/downgrade",
     validators.guildIdValidator,
     validators.userIdValidator,
-    validators.roleIdsValidator,
+    validators.roleIdsArrayValidator,
+    validators.roleIdsElementValidator,
     validators.messageValidator,
     controller.downgrade
   );
