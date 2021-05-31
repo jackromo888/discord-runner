@@ -8,6 +8,10 @@ if (envFound.error) {
 const discordToken = process.env.DISCORD_TOKEN;
 const hubUrl = process.env.HUB_URL;
 const prefix = process.env.PREFIX || "!";
+const api = {
+  prefix: "/api",
+  port: process.env.PORT || 8990,
+};
 
 if (!discordToken) {
   throw new Error(
@@ -22,4 +26,5 @@ export default {
   discordToken,
   hubUrl,
   prefix,
+  api,
 };

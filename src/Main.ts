@@ -1,5 +1,6 @@
 /* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
 import { Client } from "@typeit/discord";
+import api from "./api/api";
 import config from "./config";
 
 export default class Main {
@@ -10,6 +11,8 @@ export default class Main {
   }
 
   static start(): void {
+    api();
+
     this._client = new Client();
     this._client.login(
       config.discordToken,
