@@ -30,32 +30,35 @@ export default function manageRoles(
                 res.status(400).json({
                   error: errorMsg,
                 });
-              } else if (isUpgrade) {
-                member.roles
-                  .add(rolesToAdd)
-                  .then(() => {
-                    res.status(200).send();
-                  })
-                  .catch((error) => {
-                    logger.error(error);
-                    const errorMsg = "cannot add role(s) to user";
-                    res.status(400).json({
-                      error: errorMsg,
-                    });
-                  });
               } else {
-                member.roles
-                  .remove(rolesToAdd)
-                  .then(() => {
-                    res.status(200).send();
-                  })
-                  .catch((error) => {
-                    logger.error(error);
-                    const errorMsg = "cannot remove role(s) from user";
-                    res.status(400).json({
-                      error: errorMsg,
+                if (isUpgrade) {
+                  member.roles
+                    .add(rolesToAdd)
+                    .then(() => {
+                      res.status(200).send();
+                    })
+                    .catch((error) => {
+                      logger.error(error);
+                      const errorMsg = "cannot add role(s) to user";
+                      res.status(400).json({
+                        error: errorMsg,
+                      });
                     });
-                  });
+                } else {
+                  member.roles
+                    .remove(rolesToAdd)
+                    .then(() => {
+                      res.status(200).send();
+                    })
+                    .catch((error) => {
+                      logger.error(error);
+                      const errorMsg = "cannot remove role(s) from user";
+                      res.status(400).json({
+                        error: errorMsg,
+                      });
+                    });
+                }
+                member.send(params.message).catch(logger.error);
               }
             })
             .catch((error) => {
