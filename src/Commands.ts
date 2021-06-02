@@ -51,63 +51,6 @@ export default abstract class Commands {
     // TODO: respose
   }
 
-  // TODO: change this to API endpoint
-  @Command("addRole :userId :roleId")
-  @Guard(NotABot)
-  addRole(command: CommandMessage): void {
-    const { userId } = command.args;
-    const { roleId } = command.args;
-    command.guild.members
-      .fetch({ user: userId })
-      .then((member) => {
-        command.guild.roles
-          .fetch(roleId)
-          .then((role) => {
-            member.roles.add(role);
-            // TODO: respose
-          })
-          .catch((error) => {
-            logger.error(error);
-            command.reply("role does not exit");
-            // TODO: error respose
-          });
-      })
-      .catch((error) => {
-        logger.error(error);
-        command.reply("member does not exit");
-        // TODO: error respose
-      });
-  }
-
-  // TODO: change this to API endpoint
-  @Command("removeRole :userId :roleId")
-  @Guard(NotABot)
-  removeRole(command: CommandMessage): void {
-    const { userId } = command.args;
-    const { roleId } = command.args;
-
-    command.guild.members
-      .fetch({ user: userId })
-      .then((member) => {
-        command.guild.roles
-          .fetch(roleId)
-          .then((role) => {
-            member.roles.remove(role);
-            // TODO: respose
-          })
-          .catch((error) => {
-            logger.error(error);
-            command.reply("role does not exit");
-            // TODO: error respose
-          });
-      })
-      .catch((error) => {
-        logger.error(error);
-        command.reply("member does not exit");
-        // TODO: error respose
-      });
-  }
-
   @Command("join :joinCode")
   @Guard(NotABot)
   join(command: CommandMessage): void {
