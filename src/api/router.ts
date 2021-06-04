@@ -7,20 +7,20 @@ export default () => {
 
   router.post(
     "/upgrade",
-    validators.guildIdValidator,
-    validators.userIdValidator,
+    validators.bodyDiscordId("guildId"),
+    validators.bodyDiscordId("userId"),
     validators.roleIdsArrayValidator,
-    validators.roleIdsElementValidator,
+    validators.bodyDiscordId("roleIds.*"),
     validators.messageValidator,
     controller.upgrade
   );
 
   router.post(
     "/downgrade",
-    validators.guildIdValidator,
-    validators.userIdValidator,
+    validators.bodyDiscordId("guildId"),
+    validators.bodyDiscordId("userId"),
     validators.roleIdsArrayValidator,
-    validators.roleIdsElementValidator,
+    validators.bodyDiscordId("roleIds.*"),
     validators.messageValidator,
     controller.downgrade
   );
