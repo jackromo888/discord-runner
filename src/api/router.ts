@@ -25,5 +25,11 @@ export default () => {
     controller.downgrade
   );
 
+  router.get(
+    "/invite/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getInvite
+  );
+
   return router;
 };
