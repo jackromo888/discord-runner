@@ -18,20 +18,6 @@ export default abstract class Commands {
     );
   }
 
-  // TODO: change this to API endpoint
-  @Command("isMember :userId")
-  @Guard(NotABot)
-  isMember(command: CommandMessage): void {
-    const { userId } = command.args;
-    command.guild.members
-      .fetch({ user: userId })
-      .then(() => command.reply("yes"))
-      .catch(() => {
-        command.reply("no");
-      });
-    // TODO: respose
-  }
-
   @Command("join :joinCode")
   @Guard(NotABot)
   join(command: CommandMessage): void {
