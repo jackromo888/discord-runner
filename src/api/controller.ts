@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import generateInvite from "./actions/generateInvite";
 import isMember from "./actions/isMember";
 import manageRoles from "./actions/manageRoles";
-import { ManageRolesParams } from "./params";
+import { ManageRolesParams } from "./types/params";
 
 export default {
   upgrade: (req: Request, res: Response): void => {
