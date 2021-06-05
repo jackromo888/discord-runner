@@ -31,5 +31,12 @@ export default () => {
     controller.getInvite
   );
 
+  router.get(
+    "/isMember/:guildId/:userId",
+    validators.paramDiscordId("guildId"),
+    validators.paramDiscordId("userId"),
+    controller.isMember
+  );
+
   return router;
 };
