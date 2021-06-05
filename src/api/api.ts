@@ -7,7 +7,6 @@ export default () => {
   const api = express();
 
   api.use(express.json());
-  // app.use(cors()) // TODO: is this even neccessary?
   api.use(config.api.prefix, router());
 
   api.listen(config.api.port, () =>
