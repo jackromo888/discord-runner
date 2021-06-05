@@ -2,7 +2,8 @@ import { Collection, Role } from "discord.js";
 import { Response } from "express";
 import Main from "../../Main";
 import logger from "../../utils/logger";
-import { ManageRolesParams } from "../params";
+import { ManageRolesParams } from "../types/params";
+import getUserResult from "../utils/getUserResult";
 
 export default function manageRoles(
   params: ManageRolesParams,
@@ -34,8 +35,8 @@ export default function manageRoles(
                 if (isUpgrade) {
                   member.roles
                     .add(rolesToAdd)
-                    .then(() => {
-                      res.status(200).send();
+                    .then((updatedMember) => {
+                      res.status(200).json(getUserResult(updatedMember));
                     })
                     .catch((error) => {
                       logger.error(error);
@@ -47,8 +48,8 @@ export default function manageRoles(
                 } else {
                   member.roles
                     .remove(rolesToAdd)
-                    .then(() => {
-                      res.status(200).send();
+                    .then((updatedMember) => {
+                      res.status(200).json(getUserResult(updatedMember));
                     })
                     .catch((error) => {
                       logger.error(error);
