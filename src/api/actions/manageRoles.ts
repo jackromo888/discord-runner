@@ -19,13 +19,12 @@ export default function manageRoles(
           guild.roles
             .fetch()
             .then((roles) => {
-              const rolesToAdd: Collection<string, Role> = roles.cache.filter(
-                (role) => params.roleIds.includes(role.id)
-              );
-              if (rolesToAdd.size !== params.roleIds.length) {
+              const rolesToAddOrRemove: Collection<string, Role> =
+                roles.cache.filter((role) => params.roleIds.includes(role.id));
+              if (rolesToAddOrRemove.size !== params.roleIds.length) {
                 const missingRoleIds = params.roleIds.filter(
                   (roleId) =>
-                    !rolesToAdd.map((role) => role.id).includes(roleId)
+                    !rolesToAddOrRemove.map((role) => role.id).includes(roleId)
                 );
                 const errorMsg = `missing role(s): ${missingRoleIds}`;
                 res.status(400).json({
@@ -34,7 +33,7 @@ export default function manageRoles(
               } else {
                 if (isUpgrade) {
                   member.roles
-                    .add(rolesToAdd)
+                    .add(rolesToAddOrRemove)
                     .then((updatedMember) => {
                       res.status(200).json(getUserResult(updatedMember));
                     })
@@ -47,7 +46,7 @@ export default function manageRoles(
                     });
                 } else {
                   member.roles
-                    .remove(rolesToAdd)
+                    .remove(rolesToAddOrRemove)
                     .then((updatedMember) => {
                       res.status(200).json(getUserResult(updatedMember));
                     })
