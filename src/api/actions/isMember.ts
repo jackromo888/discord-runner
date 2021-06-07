@@ -1,5 +1,6 @@
 import { DiscordAPIError, Guild, GuildMember } from "discord.js";
 import Main from "../../Main";
+import logger from "../../utils/logger";
 import { ActionError, UserResult } from "../types/results";
 import getUserResult from "../utils/getUserResult";
 
@@ -11,6 +12,7 @@ export default async function isMember(
   try {
     guild = await Main.Client.guilds.fetch(guildId);
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       return {
         error: "guild not found",
@@ -29,6 +31,7 @@ export default async function isMember(
           error: "not a member",
         };
       }
+      logger.error(error);
       return {
         error: "cannot fetch member",
       };

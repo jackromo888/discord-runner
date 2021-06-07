@@ -1,5 +1,6 @@
 import { DiscordAPIError, Guild, Invite } from "discord.js";
 import Main from "../../Main";
+import logger from "../../utils/logger";
 import { ActionError, InviteResult } from "../types/results";
 
 export default async function generateInvite(
@@ -9,6 +10,7 @@ export default async function generateInvite(
   try {
     guild = await Main.Client.guilds.fetch(guildId);
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       const errorMsg = "guild not found";
       return {
@@ -26,6 +28,7 @@ export default async function generateInvite(
       unique: true,
     });
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       const errorMsg = "cannot generate invite";
       return {

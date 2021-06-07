@@ -20,6 +20,7 @@ export default async function manageRoles(
   try {
     guild = await Main.Client.guilds.fetch(params.guildId);
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       const errorMsg = "guild not found";
       return {
@@ -33,6 +34,7 @@ export default async function manageRoles(
   try {
     member = await guild.members.fetch(params.userId);
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       return {
         error: "cannot fetch member",
@@ -45,6 +47,7 @@ export default async function manageRoles(
   try {
     roleManager = await guild.roles.fetch();
   } catch (error) {
+    logger.error(error);
     if (error instanceof DiscordAPIError) {
       return {
         error: "cannot fetch roles",
@@ -70,6 +73,7 @@ export default async function manageRoles(
     try {
       updatedMember = await member.roles.add(rolesToAddOrRemove);
     } catch (error) {
+      logger.error(error);
       return {
         error: "cannot add role(s) to user",
       };
@@ -78,6 +82,7 @@ export default async function manageRoles(
     try {
       updatedMember = await member.roles.remove(rolesToAddOrRemove);
     } catch (error) {
+      logger.error(error);
       return {
         error: "cannot remove role(s) from user",
       };
