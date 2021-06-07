@@ -12,9 +12,8 @@ export default async function generateInvite(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      const errorMsg = "guild not found";
       return {
-        error: errorMsg,
+        error: "guild not found",
       };
     }
     throw error;
@@ -30,9 +29,8 @@ export default async function generateInvite(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      const errorMsg = "cannot generate invite";
       return {
-        error: errorMsg,
+        error: "cannot generate invite",
       };
     }
     throw error;

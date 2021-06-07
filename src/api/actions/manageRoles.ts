@@ -22,9 +22,8 @@ export default async function manageRoles(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      const errorMsg = "guild not found";
       return {
-        error: errorMsg,
+        error: "guild not found",
       };
     }
     throw error;
