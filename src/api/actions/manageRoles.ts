@@ -1,87 +1,90 @@
-import { Collection, Role } from "discord.js";
-import { Response } from "express";
+import {
+  Collection,
+  DiscordAPIError,
+  Guild,
+  GuildMember,
+  Role,
+  RoleManager,
+} from "discord.js";
 import Main from "../../Main";
 import logger from "../../utils/logger";
 import { ManageRolesParams } from "../types/params";
+import { ActionError, UserResult } from "../types/results";
 import getUserResult from "../utils/getUserResult";
 
-export default function manageRoles(
+export default async function manageRoles(
   params: ManageRolesParams,
-  isUpgrade: boolean,
-  res: Response
-): void {
-  Main.Client.guilds
-    .fetch(params.guildId)
-    .then((guild) => {
-      guild.members
-        .fetch({ user: params.userId })
-        .then((member) => {
-          guild.roles
-            .fetch()
-            .then((roles) => {
-              const rolesToAddOrRemove: Collection<string, Role> =
-                roles.cache.filter((role) => params.roleIds.includes(role.id));
-              if (rolesToAddOrRemove.size !== params.roleIds.length) {
-                const missingRoleIds = params.roleIds.filter(
-                  (roleId) =>
-                    !rolesToAddOrRemove.map((role) => role.id).includes(roleId)
-                );
-                const errorMsg = `missing role(s): ${missingRoleIds}`;
-                res.status(400).json({
-                  error: errorMsg,
-                });
-              } else {
-                if (isUpgrade) {
-                  member.roles
-                    .add(rolesToAddOrRemove)
-                    .then((updatedMember) => {
-                      res.status(200).json(getUserResult(updatedMember));
-                    })
-                    .catch((error) => {
-                      logger.error(error);
-                      const errorMsg = "cannot add role(s) to user";
-                      res.status(400).json({
-                        error: errorMsg,
-                      });
-                    });
-                } else {
-                  member.roles
-                    .remove(rolesToAddOrRemove)
-                    .then((updatedMember) => {
-                      res.status(200).json(getUserResult(updatedMember));
-                    })
-                    .catch((error) => {
-                      logger.error(error);
-                      const errorMsg = "cannot remove role(s) from user";
-                      res.status(400).json({
-                        error: errorMsg,
-                      });
-                    });
-                }
-                member.send(params.message).catch(logger.error);
-              }
-            })
-            .catch((error) => {
-              logger.error(error);
-              const errorMsg = "cannot fetch roles";
-              res.status(400).json({
-                error: errorMsg,
-              });
-            });
-        })
-        .catch((error) => {
-          logger.error(error);
-          const errorMsg = "user not found";
-          res.status(400).json({
-            error: errorMsg,
-          });
-        });
-    })
-    .catch((error) => {
-      logger.error(error);
+  isUpgrade: boolean
+): Promise<UserResult | ActionError> {
+  let guild: Guild;
+  try {
+    guild = await Main.Client.guilds.fetch(params.guildId);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
       const errorMsg = "guild not found";
-      res.status(400).json({
+      return {
         error: errorMsg,
-      });
-    });
+      };
+    }
+    throw error;
+  }
+
+  let member: GuildMember;
+  try {
+    member = await guild.members.fetch(params.userId);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      return {
+        error: "cannot fetch member",
+      };
+    }
+    throw error;
+  }
+
+  let roleManager: RoleManager;
+  try {
+    roleManager = await guild.roles.fetch();
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      return {
+        error: "cannot fetch roles",
+      };
+    }
+    throw error;
+  }
+
+  const rolesToAddOrRemove: Collection<string, Role> = roleManager.cache.filter(
+    (role) => params.roleIds.includes(role.id)
+  );
+  if (rolesToAddOrRemove.size !== params.roleIds.length) {
+    const missingRoleIds = params.roleIds.filter(
+      (roleId) => !rolesToAddOrRemove.map((role) => role.id).includes(roleId)
+    );
+    return {
+      error: `missing role(s): ${missingRoleIds}`,
+    };
+  }
+
+  let updatedMember: GuildMember;
+  if (isUpgrade) {
+    try {
+      updatedMember = await member.roles.add(rolesToAddOrRemove);
+    } catch (error) {
+      return {
+        error: "cannot add role(s) to user",
+      };
+    }
+  } else {
+    try {
+      updatedMember = await member.roles.remove(rolesToAddOrRemove);
+    } catch (error) {
+      return {
+        error: "cannot remove role(s) from user",
+      };
+    }
+  }
+
+  updatedMember.send(params.message).catch(logger.error);
+
+  return getUserResult(updatedMember);
 }

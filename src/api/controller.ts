@@ -16,7 +16,13 @@ export default {
     }
 
     const params: ManageRolesParams = req.body;
-    manageRoles(params, true, res);
+    manageRoles(params, true).then((result) => {
+      if (result instanceof ActionError) {
+        res.status(400).send(result);
+      } else {
+        res.status(200).send(result);
+      }
+    });
   },
 
   downgrade: (req: Request, res: Response): void => {
@@ -28,7 +34,13 @@ export default {
     }
 
     const params: ManageRolesParams = req.body;
-    manageRoles(params, false, res);
+    manageRoles(params, false).then((result) => {
+      if (result instanceof ActionError) {
+        res.status(400).send(result);
+      } else {
+        res.status(200).send(result);
+      }
+    });
   },
 
   getInvite: (req: Request, res: Response): void => {
