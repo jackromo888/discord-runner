@@ -17,11 +17,8 @@ export default {
 
     const params: ManageRolesParams = req.body;
     manageRoles(params, true).then((result) => {
-      if (result instanceof ActionError) {
-        res.status(400).send(result);
-      } else {
-        res.status(200).send(result);
-      }
+      const statusCode = result instanceof ActionError ? 400 : 200;
+      res.status(statusCode).send(result);
     });
   },
 
@@ -35,11 +32,8 @@ export default {
 
     const params: ManageRolesParams = req.body;
     manageRoles(params, false).then((result) => {
-      if (result instanceof ActionError) {
-        res.status(400).send(result);
-      } else {
-        res.status(200).send(result);
-      }
+      const statusCode = result instanceof ActionError ? 400 : 200;
+      res.status(statusCode).send(result);
     });
   },
 
@@ -54,11 +48,8 @@ export default {
     const { guildId } = req.params;
 
     generateInvite(guildId).then((result) => {
-      if (result instanceof ActionError) {
-        res.status(400).send(result);
-      } else {
-        res.status(200).send(result);
-      }
+      const statusCode = result instanceof ActionError ? 400 : 200;
+      res.status(statusCode).send(result);
     });
   },
 
@@ -72,11 +63,8 @@ export default {
 
     const { guildId, userId } = req.params;
     isMember(guildId, userId).then((result) => {
-      if (result instanceof ActionError) {
-        res.status(400).send(result);
-      } else {
-        res.status(200).send(result);
-      }
+      const statusCode = result instanceof ActionError ? 400 : 200;
+      res.status(statusCode).send(result);
     });
   },
 };

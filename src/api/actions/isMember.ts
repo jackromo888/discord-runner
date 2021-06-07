@@ -14,9 +14,7 @@ export default async function isMember(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      return {
-        error: "guild not found",
-      };
+      return new ActionError("guild not found");
     }
     throw error;
   }
@@ -32,9 +30,7 @@ export default async function isMember(
         };
       }
       logger.error(error);
-      return {
-        error: "cannot fetch member",
-      };
+      return new ActionError("cannot fetch member");
     }
     throw error;
   }

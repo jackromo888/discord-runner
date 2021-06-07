@@ -22,9 +22,7 @@ export default async function manageRoles(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      return {
-        error: "guild not found",
-      };
+      return new ActionError("guild not found");
     }
     throw error;
   }
@@ -35,9 +33,7 @@ export default async function manageRoles(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      return {
-        error: "cannot fetch member",
-      };
+      return new ActionError("cannot fetch member");
     }
     throw error;
   }
@@ -48,9 +44,7 @@ export default async function manageRoles(
   } catch (error) {
     logger.error(error);
     if (error instanceof DiscordAPIError) {
-      return {
-        error: "cannot fetch roles",
-      };
+      return new ActionError("cannot fetch roles");
     }
     throw error;
   }
@@ -62,9 +56,7 @@ export default async function manageRoles(
     const missingRoleIds = params.roleIds.filter(
       (roleId) => !rolesToAddOrRemove.map((role) => role.id).includes(roleId)
     );
-    return {
-      error: `missing role(s): ${missingRoleIds}`,
-    };
+    return new ActionError(`missing role(s): ${missingRoleIds}`);
   }
 
   let updatedMember: GuildMember;
@@ -73,18 +65,14 @@ export default async function manageRoles(
       updatedMember = await member.roles.add(rolesToAddOrRemove);
     } catch (error) {
       logger.error(error);
-      return {
-        error: "cannot add role(s) to user",
-      };
+      return new ActionError("cannot add role(s) to user");
     }
   } else {
     try {
       updatedMember = await member.roles.remove(rolesToAddOrRemove);
     } catch (error) {
       logger.error(error);
-      return {
-        error: "cannot remove role(s) from user",
-      };
+      return new ActionError("cannot remove role(s) from user");
     }
   }
 

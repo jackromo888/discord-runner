@@ -11,4 +11,8 @@ export type InviteResult = {
 
 export class ActionError {
   error: string;
+
+  constructor(message: string) {
+    this.error = message;
+  }
 }
