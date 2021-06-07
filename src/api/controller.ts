@@ -4,6 +4,7 @@ import generateInvite from "./actions/generateInvite";
 import isMember from "./actions/isMember";
 import manageRoles from "./actions/manageRoles";
 import { ManageRolesParams } from "./types/params";
+import { ActionError } from "./types/results";
 
 export default {
   upgrade: (req: Request, res: Response): void => {
@@ -58,6 +59,12 @@ export default {
     }
 
     const { guildId, userId } = req.params;
-    isMember(guildId, userId, res);
+    isMember(guildId, userId).then((result) => {
+      if (result instanceof ActionError) {
+        res.status(400).send(result);
+      } else {
+        res.status(200).send(result);
+      }
+    });
   },
 };

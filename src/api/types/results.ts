@@ -9,3 +9,7 @@ export type InviteResult = {
   code: string;
   error: string;
 };
+
+export class ActionError {
+  error: string;
+}

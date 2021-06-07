@@ -1,39 +1,40 @@
-import { DiscordAPIError } from "discord.js";
-import { Response } from "express";
+import { DiscordAPIError, Guild, GuildMember } from "discord.js";
 import Main from "../../Main";
-import logger from "../../utils/logger";
+import { ActionError, UserResult } from "../types/results";
 import getUserResult from "../utils/getUserResult";
 
-export default function isMember(
+export default async function isMember(
   guildId: string,
-  userId: string,
-  res: Response
-): void {
-  Main.Client.guilds
-    .fetch(guildId)
-    .then((guild) => {
-      guild.members
-        .fetch(userId)
-        .then((member) => {
-          res.status(200).json(getUserResult(member));
-        })
-        .catch((error: DiscordAPIError) => {
-          if (error.message === "Unknown Member") {
-            res.status(200).send(null);
-          } else {
-            logger.error(error);
-            const errorMsg = "cannot fetch member";
-            res.status(400).json({
-              error: errorMsg,
-            });
-          }
-        });
-    })
-    .catch((error) => {
-      logger.error(error);
-      const errorMsg = "guild not found";
-      res.status(400).json({
-        error: errorMsg,
-      });
-    });
+  userId: string
+): Promise<UserResult | ActionError> {
+  let guild: Guild;
+  try {
+    guild = await Main.Client.guilds.fetch(guildId);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      return {
+        error: "guild not found",
+      };
+    }
+    throw error;
+  }
+
+  let member: GuildMember;
+  try {
+    member = await guild.members.fetch(userId);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      if (error.message === "Unknown Member") {
+        return {
+          error: "not a member",
+        };
+      }
+      return {
+        error: "cannot fetch member",
+      };
+    }
+    throw error;
+  }
+
+  return getUserResult(member);
 }
