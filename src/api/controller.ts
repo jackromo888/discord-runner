@@ -41,11 +41,11 @@ export default {
 
     const { guildId } = req.params;
 
-    generateInvite(guildId).then((inviteResult) => {
-      if (!inviteResult.error) {
-        res.status(200).send(inviteResult.code);
+    generateInvite(guildId).then((result) => {
+      if (result instanceof ActionError) {
+        res.status(400).send(result);
       } else {
-        res.status(400).send(inviteResult.error);
+        res.status(200).send(result);
       }
     });
   },

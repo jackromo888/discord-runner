@@ -7,7 +7,6 @@ export type UserResult = {
 
 export type InviteResult = {
   code: string;
-  error: string;
 };
 
 export class ActionError {
