@@ -10,7 +10,7 @@ import Main from "../../Main";
 import logger from "../../utils/logger";
 import { ManageRolesParams } from "../types/params";
 import { ActionError, UserResult } from "../types/results";
-import getUserResult from "../utils/getUserResult";
+import getUserResult from "../../utils/utils";
 
 export default async function manageRoles(
   params: ManageRolesParams,

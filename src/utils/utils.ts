@@ -1,5 +1,5 @@
 import { GuildMember } from "discord.js";
-import { UserResult } from "../types/results";
+import { UserResult } from "../api/types/results";
 
 export default function getUserResult(member: GuildMember): UserResult {
   return {

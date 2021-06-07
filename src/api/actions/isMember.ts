@@ -2,7 +2,7 @@ import { DiscordAPIError, Guild, GuildMember } from "discord.js";
 import Main from "../../Main";
 import logger from "../../utils/logger";
 import { ActionError, UserResult } from "../types/results";
-import getUserResult from "../utils/getUserResult";
+import getUserResult from "../../utils/utils";
 
 export default async function isMember(
   guildId: string,
