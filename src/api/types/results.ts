@@ -4,3 +4,8 @@ export type UserResult = {
   avatar: string;
   roles: string[];
 };
+
+export type InviteResult = {
+  code: string;
+  error: string;
+};

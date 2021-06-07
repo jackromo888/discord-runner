@@ -1,34 +1,44 @@
-import { Invite } from "discord.js";
-import { Response } from "express";
+import { DiscordAPIError, Guild, Invite } from "discord.js";
 import Main from "../../Main";
-import logger from "../../utils/logger";
+import { InviteResult } from "../types/results";
 
-export default function generateInvite(guildId: string, res: Response): void {
-  Main.Client.guilds
-    .fetch(guildId)
-    .then((guild) => {
-      guild.systemChannel
-        .createInvite({
-          maxAge: 60 * 15,
-          maxUses: 1,
-          unique: true,
-        })
-        .then((invite: Invite) => {
-          res.status(200).send(invite.code);
-        })
-        .catch((error) => {
-          logger.error(error);
-          const errorMsg = "cannot generate invite";
-          res.status(400).json({
-            error: errorMsg,
-          });
-        });
-    })
-    .catch((error) => {
-      logger.error(error);
+export default async function generateInvite(
+  guildId: string
+): Promise<InviteResult> {
+  let guild: Guild;
+  try {
+    guild = await Main.Client.guilds.fetch(guildId);
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
       const errorMsg = "guild not found";
-      res.status(400).json({
+      return {
+        code: null,
         error: errorMsg,
-      });
+      };
+    }
+    throw error;
+  }
+
+  let invite: Invite;
+  try {
+    invite = await guild.systemChannel.createInvite({
+      maxAge: 60 * 15,
+      maxUses: 1,
+      unique: true,
     });
+  } catch (error) {
+    if (error instanceof DiscordAPIError) {
+      const errorMsg = "cannot generate invite";
+      return {
+        code: null,
+        error: errorMsg,
+      };
+    }
+    throw error;
+  }
+
+  return {
+    code: invite.code,
+    error: null,
+  };
 }
