@@ -1,3 +1,10 @@
+export type ManageRolesParams = {
+  guildId: string;
+  userId: string;
+  roleIds: string[];
+  message: string;
+};
+
 export type UserResult = {
   username: string;
   discriminator: string;

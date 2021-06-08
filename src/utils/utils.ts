@@ -1,5 +1,5 @@
 import { DiscordAPIError, GuildMember } from "discord.js";
-import { ActionError, ErrorResult, UserResult } from "../api/types/results";
+import { ActionError, ErrorResult, UserResult } from "../api/types";
 import logger from "./logger";
 
 export function getUserResult(member: GuildMember): UserResult {

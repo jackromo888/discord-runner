@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getErrorResult } from "../utils/utils";
 import { generateInvite, isMember, manageRoles } from "./actions";
-import { ManageRolesParams } from "./types/params";
+import { ManageRolesParams } from "./types";
 
 export default {
   upgrade: (req: Request, res: Response): void => {

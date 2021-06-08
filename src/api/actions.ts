@@ -1,8 +1,12 @@
 import { Collection, GuildMember, Role } from "discord.js";
 import Main from "../Main";
 import logger from "../utils/logger";
-import { ManageRolesParams } from "./types/params";
-import { ActionError, InviteResult, UserResult } from "./types/results";
+import {
+  ActionError,
+  InviteResult,
+  ManageRolesParams,
+  UserResult,
+} from "./types";
 import { getUserResult } from "../utils/utils";
 
 export async function manageRoles(
