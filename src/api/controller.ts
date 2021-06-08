@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { getErrorResult } from "../utils/utils";
 import generateInvite from "./actions/generateInvite";
 import isMember from "./actions/isMember";
 import manageRoles from "./actions/manageRoles";
 import { ManageRolesParams } from "./types/params";
-import { ActionError } from "./types/results";
 
 export default {
   upgrade: (req: Request, res: Response): void => {
@@ -16,10 +16,14 @@ export default {
     }
 
     const params: ManageRolesParams = req.body;
-    manageRoles(params, true).then((result) => {
-      const statusCode = result instanceof ActionError ? 400 : 200;
-      res.status(statusCode).send(result);
-    });
+    manageRoles(params, true)
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((error) => {
+        const errorMsg = getErrorResult(error);
+        res.status(400).json(errorMsg);
+      });
   },
 
   downgrade: (req: Request, res: Response): void => {
@@ -31,10 +35,14 @@ export default {
     }
 
     const params: ManageRolesParams = req.body;
-    manageRoles(params, false).then((result) => {
-      const statusCode = result instanceof ActionError ? 400 : 200;
-      res.status(statusCode).send(result);
-    });
+    manageRoles(params, false)
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((error) => {
+        const errorMsg = getErrorResult(error);
+        res.status(400).json(errorMsg);
+      });
   },
 
   getInvite: (req: Request, res: Response): void => {
@@ -47,10 +55,14 @@ export default {
 
     const { guildId } = req.params;
 
-    generateInvite(guildId).then((result) => {
-      const statusCode = result instanceof ActionError ? 400 : 200;
-      res.status(statusCode).send(result);
-    });
+    generateInvite(guildId)
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((error) => {
+        const errorMsg = getErrorResult(error);
+        res.status(400).json(errorMsg);
+      });
   },
 
   isMember: (req: Request, res: Response): void => {
@@ -62,9 +74,13 @@ export default {
     }
 
     const { guildId, userId } = req.params;
-    isMember(guildId, userId).then((result) => {
-      const statusCode = result instanceof ActionError ? 400 : 200;
-      res.status(statusCode).send(result);
-    });
+    isMember(guildId, userId)
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((error) => {
+        const errorMsg = getErrorResult(error);
+        res.status(400).json(errorMsg);
+      });
   },
 };
