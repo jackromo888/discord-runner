@@ -1,6 +1,5 @@
 /* eslint-disable class-methods-use-this */
 import { Discord, CommandMessage, Command, Guard } from "@typeit/discord";
-import { Invite } from "discord.js";
 import config from "./config";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
@@ -17,38 +16,6 @@ export default abstract class Commands {
         Date.now() - command.createdTimestamp
       }ms. API Latency is ${Math.round(Main.Client.ws.ping)}ms`
     );
-  }
-
-  // TODO: change this to API endpoint
-  @Command("invite")
-  @Guard(NotABot)
-  createInvite(command: CommandMessage): void {
-    // TODO: replace systemChannel
-    command.guild.systemChannel
-      .createInvite({
-        maxAge: 60 * 60 * 24, // TODO: maxAge?
-        maxUses: 1,
-        unique: true,
-      })
-      .then((invite: Invite) => {
-        command.reply(invite.url);
-      })
-      .catch(logger.error);
-    // TODO: respose
-  }
-
-  // TODO: change this to API endpoint
-  @Command("isMember :userId")
-  @Guard(NotABot)
-  isMember(command: CommandMessage): void {
-    const { userId } = command.args;
-    command.guild.members
-      .fetch({ user: userId })
-      .then(() => command.reply("yes"))
-      .catch(() => {
-        command.reply("no");
-      });
-    // TODO: respose
   }
 
   @Command("join :joinCode")

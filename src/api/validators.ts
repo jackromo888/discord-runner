@@ -1,18 +1,14 @@
-import { body } from "express-validator";
+import { body, param } from "express-validator";
+
+const getIdValidatorForParam = (fieldName: string) =>
+  param(fieldName).isString().trim().isLength({ min: 18, max: 18 }).isNumeric();
+
+const getIdValidatorForBody = (fieldName: string) =>
+  body(fieldName).isString().trim().isLength({ min: 18, max: 18 }).isNumeric();
 
 export default {
-  guildIdValidator: body("guildId")
-    .isString()
-    .trim()
-    .isLength({ min: 18, max: 18 }),
-  userIdValidator: body("userId")
-    .isString()
-    .trim()
-    .isLength({ min: 18, max: 18 }),
+  paramDiscordId: getIdValidatorForParam,
+  bodyDiscordId: getIdValidatorForBody,
   roleIdsArrayValidator: body("roleIds").isArray({ min: 1 }),
-  roleIdsElementValidator: body("roleIds.*")
-    .isString()
-    .trim()
-    .isLength({ min: 18, max: 18 }),
   messageValidator: body("message").isString().trim().isLength({ min: 1 }),
 };
