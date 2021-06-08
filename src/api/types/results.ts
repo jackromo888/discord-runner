@@ -9,10 +9,15 @@ export type InviteResult = {
   code: string;
 };
 
-export class ActionError {
-  error: string;
+export type ErrorResult = {
+  errors: { msg: string; value: string[] }[];
+};
 
-  constructor(message: string) {
-    this.error = message;
+export class ActionError extends Error {
+  ids: string[];
+
+  constructor(message: string, ids: string[]) {
+    super(message);
+    this.ids = ids;
   }
 }
