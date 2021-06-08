@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { getErrorResult } from "../utils/utils";
-import generateInvite from "./actions/generateInvite";
-import isMember from "./actions/isMember";
-import manageRoles from "./actions/manageRoles";
+import { generateInvite, isMember, manageRoles } from "./actions";
 import { ManageRolesParams } from "./types/params";
 
 export default {
