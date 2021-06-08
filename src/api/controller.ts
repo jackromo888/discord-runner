@@ -4,7 +4,7 @@ import { getErrorResult } from "../utils/utils";
 import { generateInvite, isMember, manageRoles } from "./actions";
 import { ManageRolesParams } from "./types";
 
-export default {
+const controller = {
   upgrade: (req: Request, res: Response): void => {
     const errors = validationResult(req);
 
@@ -82,3 +82,5 @@ export default {
       });
   },
 };
+
+export default controller;

@@ -2,7 +2,7 @@ import { Router } from "express";
 import controller from "./controller";
 import validators from "./validators";
 
-export default () => {
+const createRouter = () => {
   const router: Router = Router();
 
   router.post(
@@ -40,3 +40,5 @@ export default () => {
 
   return router;
 };
+
+export default createRouter;

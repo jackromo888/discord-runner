@@ -9,7 +9,7 @@ import {
 } from "./types";
 import { getUserResult } from "../utils/utils";
 
-export async function manageRoles(
+async function manageRoles(
   params: ManageRolesParams,
   isUpgrade: boolean
 ): Promise<UserResult> {
@@ -42,7 +42,7 @@ export async function manageRoles(
   return getUserResult(updatedMember);
 }
 
-export async function generateInvite(guildId: string): Promise<InviteResult> {
+async function generateInvite(guildId: string): Promise<InviteResult> {
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const invite = await guild.systemChannel.createInvite({
@@ -56,13 +56,12 @@ export async function generateInvite(guildId: string): Promise<InviteResult> {
   };
 }
 
-export async function isMember(
-  guildId: string,
-  userId: string
-): Promise<UserResult> {
+async function isMember(guildId: string, userId: string): Promise<UserResult> {
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
   return getUserResult(member);
 }
+
+export { manageRoles, generateInvite, isMember };

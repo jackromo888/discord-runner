@@ -1,26 +1,26 @@
-export type ManageRolesParams = {
+type ManageRolesParams = {
   guildId: string;
   userId: string;
   roleIds: string[];
   message: string;
 };
 
-export type UserResult = {
+type UserResult = {
   username: string;
   discriminator: string;
   avatar: string;
   roles: string[];
 };
 
-export type InviteResult = {
+type InviteResult = {
   code: string;
 };
 
-export type ErrorResult = {
+type ErrorResult = {
   errors: { msg: string; value: string[] }[];
 };
 
-export class ActionError extends Error {
+class ActionError extends Error {
   ids: string[];
 
   constructor(message: string, ids: string[]) {
@@ -28,3 +28,11 @@ export class ActionError extends Error {
     this.ids = ids;
   }
 }
+
+export {
+  ManageRolesParams,
+  UserResult,
+  InviteResult,
+  ErrorResult,
+  ActionError,
+};

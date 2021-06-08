@@ -2,7 +2,7 @@ import { DiscordAPIError, GuildMember } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import logger from "./logger";
 
-export function getUserResult(member: GuildMember): UserResult {
+function getUserResult(member: GuildMember): UserResult {
   return {
     username: member.user.username,
     discriminator: member.user.discriminator,
@@ -13,7 +13,7 @@ export function getUserResult(member: GuildMember): UserResult {
   };
 }
 
-export function getErrorResult(error: Error): ErrorResult {
+function getErrorResult(error: Error): ErrorResult {
   let errorMsg: string;
   let ids: string[];
   if (error instanceof DiscordAPIError) {
@@ -42,3 +42,5 @@ export function getErrorResult(error: Error): ErrorResult {
     ],
   };
 }
+
+export { getUserResult, getErrorResult };
