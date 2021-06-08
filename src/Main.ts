@@ -3,7 +3,7 @@ import { Client } from "@typeit/discord";
 import api from "./api/api";
 import config from "./config";
 
-export default class Main {
+class Main {
   private static _client: Client;
 
   static get Client(): Client {
@@ -23,3 +23,5 @@ export default class Main {
 }
 
 Main.start();
+
+export default Main;

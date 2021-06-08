@@ -3,7 +3,7 @@ import config from "../config";
 import logger from "../utils/logger";
 import router from "./router";
 
-export default () => {
+const createApi = () => {
   const api = express();
 
   api.use(express.json());
@@ -15,3 +15,5 @@ export default () => {
 
   return api;
 };
+
+export default createApi;

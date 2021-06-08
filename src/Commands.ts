@@ -7,7 +7,7 @@ import { userJoined } from "./service";
 import logger from "./utils/logger";
 
 @Discord(config.prefix)
-export default abstract class Commands {
+abstract class Commands {
   @Command("ping")
   @Guard(NotABot)
   ping(command: CommandMessage): void {
@@ -29,3 +29,5 @@ export default abstract class Commands {
     command.delete().then();
   }
 }
+
+export default Commands;

@@ -5,11 +5,7 @@ import logger from "./utils/logger";
 const API_BASE_URL = config.hubUrl;
 const PLATFORM = "discord";
 
-export function userJoined(
-  refId: string,
-  idFromPlatform: string,
-  sender: string
-) {
+function userJoined(refId: string, idFromPlatform: string, sender: string) {
   axios
     .post(`${API_BASE_URL}/user/joined`, {
       refId,
@@ -23,7 +19,7 @@ export function userJoined(
     .catch(logger.error);
 }
 
-export function userRemoved(idFromPlatform: string, sender: string) {
+function userRemoved(idFromPlatform: string, sender: string) {
   axios
     .post(`${API_BASE_URL}/user/removed`, {
       idFromPlatform,
@@ -35,3 +31,5 @@ export function userRemoved(idFromPlatform: string, sender: string) {
     })
     .catch(logger.error);
 }
+
+export { userJoined, userRemoved };

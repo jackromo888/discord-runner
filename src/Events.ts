@@ -10,7 +10,7 @@ import logger from "./utils/logger";
 const existingInvites: Map<string, string[]> = new Map();
 
 @Description("Event listeners.")
-export default abstract class Events {
+abstract class Events {
   @On("ready")
   onReady(): void {
     logger.info("Bot logged in.");
@@ -88,3 +88,5 @@ export default abstract class Events {
     });
   }
 }
+
+export default Events;
