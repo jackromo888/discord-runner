@@ -7,7 +7,7 @@
 ## Description
 
 Medousa is part of the [Agora project](https://github.com/AgoraSpaceDAO). She
-is a ruthless greek goddess who works as a Telegram bot and does all the dirty
+is a ruthless greek goddess who works as a Discord bot and does all the dirty
 work from removing intruders to providing extra privileges to premium users.
 
 - [Website](https://agora.space)
