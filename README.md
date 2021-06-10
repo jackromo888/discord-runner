@@ -20,6 +20,8 @@ Install dependencies:
 
 ```bash
 npm install
+# or
+yarn install
 ```
 
 Create a new file called .env and add the following environment variables:
