@@ -2,7 +2,7 @@ import axios from "axios";
 import config from "./config";
 import logger from "./utils/logger";
 
-const API_BASE_URL = config.hubUrl;
+const API_BASE_URL = config.backendUrl;
 const PLATFORM = "discord";
 
 function userJoined(refId: string, idFromPlatform: string, sender: string) {

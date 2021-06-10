@@ -29,7 +29,7 @@ Create a new file called .env and add the following environment variables:
 ```bash
 DISCORD_TOKEN="KJlrEsMLydUXvJaaSRZDSmvD.pLQtsV.FJUJliPzZjgPhujkuhkOiBroWBk"
 PREFIX="!"
-HUB_URL="https://agora.space/api/"
+BACKEND_URL="https://agora.space/api/"
 ```
 
 Run the bot:
