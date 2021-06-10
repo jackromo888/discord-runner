@@ -6,7 +6,7 @@ if (envFound.error) {
 }
 
 const discordToken = process.env.DISCORD_TOKEN;
-const hubUrl = process.env.HUB_URL;
+const backendUrl = process.env.BACKEND_URL;
 const prefix = process.env.PREFIX || "!";
 const api = {
   prefix: "/api",
@@ -18,13 +18,13 @@ if (!discordToken) {
     "You need to specify the bot's DISCORD_TOKEN in the .env file."
   );
 }
-if (!hubUrl) {
-  throw new Error("You need to specify the HUB_URL in the .env file.");
+if (!backendUrl) {
+  throw new Error("You need to specify the BACKEND_URL in the .env file.");
 }
 
 export default {
   discordToken,
-  hubUrl,
+  backendUrl,
   prefix,
   api,
 };
