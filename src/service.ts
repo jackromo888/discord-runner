@@ -23,12 +23,13 @@ const userJoined = (
     .catch(logger.error);
 };
 
-const userRemoved = (idFromPlatform: string, sender: string): void => {
+const userRemoved = (dcUserId: string, serverId: string): void => {
   axios
-    .post(`${API_BASE_URL}/user/removed`, {
-      idFromPlatform,
+    .post(`${API_BASE_URL}/user/removeFromPlatform`, {
       platform: PLATFORM,
-      sender,
+      platformUserId: dcUserId,
+      serverId,
+      triggerKick: false,
     })
     .then((res) => {
       logger.debug(JSON.stringify(res.data));
