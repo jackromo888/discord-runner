@@ -23,6 +23,9 @@ function getErrorResult(error: Error): ErrorResult {
     } else if (error.code === 10013) {
       // Unknown User
       errorMsg = "cannot fetch member";
+    } else if (error.code === 10007) {
+      // Unknown Member
+      errorMsg = "user is not member";
     } else {
       errorMsg = "discord api error";
     }
