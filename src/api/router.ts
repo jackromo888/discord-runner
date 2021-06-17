@@ -38,6 +38,13 @@ const createRouter = () => {
     controller.isMember
   );
 
+  router.delete(
+    "/kick/:guildId/:userId",
+    validators.paramDiscordId("guildId"),
+    validators.paramDiscordId("userId"),
+    controller.removeUser
+  );
+
   return router;
 };
 

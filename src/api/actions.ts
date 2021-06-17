@@ -64,4 +64,12 @@ async function isMember(guildId: string, userId: string): Promise<UserResult> {
   return getUserResult(member);
 }
 
-export { manageRoles, generateInvite, isMember };
+async function removeUser(guildId: string, userId: string): Promise<void> {
+  const guild = await Main.Client.guilds.fetch(guildId);
+
+  const member = await guild.members.fetch(userId);
+
+  await member.kick();
+}
+
+export { manageRoles, generateInvite, isMember, removeUser };
