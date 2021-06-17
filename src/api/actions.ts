@@ -9,10 +9,10 @@ import {
 } from "./types";
 import { getUserResult } from "../utils/utils";
 
-async function manageRoles(
+const manageRoles = async (
   params: ManageRolesParams,
   isUpgrade: boolean
-): Promise<UserResult> {
+): Promise<UserResult> => {
   const guild = await Main.Client.guilds.fetch(params.guildId);
 
   const member = await guild.members.fetch(params.userId);
@@ -40,9 +40,9 @@ async function manageRoles(
   updatedMember.send(params.message).catch(logger.error);
 
   return getUserResult(updatedMember);
-}
+};
 
-async function generateInvite(guildId: string): Promise<InviteResult> {
+const generateInvite = async (guildId: string): Promise<InviteResult> => {
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const invite = await guild.systemChannel.createInvite({
@@ -54,22 +54,25 @@ async function generateInvite(guildId: string): Promise<InviteResult> {
   return {
     code: invite.code,
   };
-}
+};
 
-async function isMember(guildId: string, userId: string): Promise<UserResult> {
+const isMember = async (
+  guildId: string,
+  userId: string
+): Promise<UserResult> => {
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
   return getUserResult(member);
-}
+};
 
-async function removeUser(guildId: string, userId: string): Promise<void> {
+const removeUser = async (guildId: string, userId: string): Promise<void> => {
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
   await member.kick();
-}
+};
 
 export { manageRoles, generateInvite, isMember, removeUser };
