@@ -5,7 +5,11 @@ import logger from "./utils/logger";
 const API_BASE_URL = config.backendUrl;
 const PLATFORM = "discord";
 
-function userJoined(refId: string, idFromPlatform: string, sender: string) {
+const userJoined = (
+  refId: string,
+  idFromPlatform: string,
+  sender: string
+): void => {
   axios
     .post(`${API_BASE_URL}/user/joined`, {
       refId,
@@ -17,19 +21,20 @@ function userJoined(refId: string, idFromPlatform: string, sender: string) {
       logger.debug(JSON.stringify(res.data));
     })
     .catch(logger.error);
-}
+};
 
-function userRemoved(idFromPlatform: string, sender: string) {
+const userRemoved = (dcUserId: string, serverId: string): void => {
   axios
-    .post(`${API_BASE_URL}/user/removed`, {
-      idFromPlatform,
+    .post(`${API_BASE_URL}/user/removeFromPlatform`, {
       platform: PLATFORM,
-      sender,
+      platformUserId: dcUserId,
+      serverId,
+      triggerKick: false,
     })
     .then((res) => {
       logger.debug(JSON.stringify(res.data));
     })
     .catch(logger.error);
-}
+};
 
 export { userJoined, userRemoved };

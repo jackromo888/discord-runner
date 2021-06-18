@@ -2,7 +2,7 @@ import { createLogger, format, transports } from "winston";
 
 const { printf, combine, colorize, timestamp, errors } = format;
 
-function createDevLogger() {
+const createDevLogger = () => {
   const devLogFormat = printf(
     (log) => `${log.timestamp} ${log.level}: ${log.stack || log.message}`
   );
@@ -16,6 +16,6 @@ function createDevLogger() {
     ),
     transports: [new transports.Console()],
   });
-}
+};
 
 export default createDevLogger;

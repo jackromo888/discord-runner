@@ -2,18 +2,16 @@ import { DiscordAPIError, GuildMember } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import logger from "./logger";
 
-function getUserResult(member: GuildMember): UserResult {
-  return {
-    username: member.user.username,
-    discriminator: member.user.discriminator,
-    avatar: member.user.avatar,
-    roles: member.roles.cache
-      .filter((role) => role.id !== member.guild.roles.everyone.id)
-      .map((role) => role.id),
-  };
-}
+const getUserResult = (member: GuildMember): UserResult => ({
+  username: member.user.username,
+  discriminator: member.user.discriminator,
+  avatar: member.user.avatar,
+  roles: member.roles.cache
+    .filter((role) => role.id !== member.guild.roles.everyone.id)
+    .map((role) => role.id),
+});
 
-function getErrorResult(error: Error): ErrorResult {
+const getErrorResult = (error: Error): ErrorResult => {
   let errorMsg: string;
   let ids: string[];
   if (error instanceof DiscordAPIError) {
@@ -23,6 +21,9 @@ function getErrorResult(error: Error): ErrorResult {
     } else if (error.code === 10013) {
       // Unknown User
       errorMsg = "cannot fetch member";
+    } else if (error.code === 10007) {
+      // Unknown Member
+      errorMsg = "user is not member";
     } else {
       errorMsg = "discord api error";
     }
@@ -41,6 +42,6 @@ function getErrorResult(error: Error): ErrorResult {
       },
     ],
   };
-}
+};
 
 export { getUserResult, getErrorResult };
