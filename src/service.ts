@@ -7,15 +7,17 @@ const PLATFORM = "discord";
 
 const userJoined = (
   refId: string,
-  idFromPlatform: string,
-  sender: string
+  platformUserId: string,
+  serverId: string,
+  isJoinCode: boolean
 ): void => {
   axios
-    .post(`${API_BASE_URL}/user/joined`, {
+    .post(`${API_BASE_URL}/user/joinedPlatform`, {
       refId,
-      idFromPlatform,
       platform: PLATFORM,
-      sender,
+      platformUserId,
+      serverId,
+      isJoinCode,
     })
     .then((res) => {
       logger.debug(JSON.stringify(res.data));

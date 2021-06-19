@@ -25,7 +25,7 @@ abstract class Commands {
     logger.debug(
       `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
     );
-    userJoined(joinCode, command.author.id, command.guild.id);
+    userJoined(joinCode, command.author.id, command.guild.id, true);
     command.delete().then();
   }
 }

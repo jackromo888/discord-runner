@@ -56,17 +56,17 @@ abstract class Events {
         );
 
         const previousInvites = existingInvites.get(member.guild.id);
-        existingInvites[member.guild.id] = currentBotInvites.map((i) => i.code);
+        existingInvites.set(
+          member.guild.id,
+          currentBotInvites.map((i) => i.code)
+        );
 
         const usedInvites = previousInvites.filter(
           (i) => !currentBotInvites.has(i)
         );
 
         if (usedInvites && usedInvites.length === 1) {
-          logger.debug(
-            `${member.user.username} joined with the ${usedInvites[0]} invite`
-          );
-          userJoined(usedInvites[0], member.user.id, member.guild.id);
+          userJoined(usedInvites[0], member.user.id, member.guild.id, false);
         } else {
           // TODO: ask these members for invite code
           logger.debug("ambiguous invite code");
@@ -81,9 +81,6 @@ abstract class Events {
   @On("guildMemberRemove")
   onGuildMemberRemove(members: [GuildMember | PartialGuildMember]): void {
     members.forEach((member) => {
-      logger.debug(
-        `User removed from platform of the community (${member.user.id}, "discord", ${Main.Client.user.id})`
-      );
       userRemoved(member.user.id, member.guild.id);
     });
   }
