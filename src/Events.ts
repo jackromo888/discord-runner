@@ -68,12 +68,23 @@ abstract class Events {
         if (usedInvites && usedInvites.length === 1) {
           userJoined(usedInvites[0], member.user.id, member.guild.id, false);
         } else {
-          // TODO: ask these members for invite code
+          // TODO: get the url of the community and send it to the user
+          member.user
+            .send(
+              "Please use the provided join command to connect you discord account to Agora Space."
+            )
+            .catch(logger.error);
           logger.debug("ambiguous invite code");
         }
       });
     } else {
-      // TODO: ask these members for invite code
+      members.forEach((member) =>
+        member
+          .send(
+            "Please use the provided join command to connect you discord account to Agora Space."
+          )
+          .catch(logger.error)
+      );
       logger.debug("more than one join at the same time");
     }
   }
