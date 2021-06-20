@@ -1,8 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import { Description, On, Guard } from "@typeit/discord";
-import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
-import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
-import NotABot from "./Guards/NotABot";
+import { Description, On } from "@typeit/discord";
+import { GuildMember, Invite, PartialGuildMember } from "discord.js";
 import Main from "./Main";
 import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
@@ -29,14 +27,14 @@ abstract class Events {
     });
   }
 
-  @On("message")
-  @Guard(NotABot)
-  @Guard(IsAPrivateMessage)
-  onPrivateMessage(messages: [Message]): void {
-    messages.forEach((message) => {
-      message.channel.send("Please visit our website: <url>");
-    });
-  }
+  // @On("message")
+  // @Guard(NotABot)
+  // @Guard(IsAPrivateMessage)
+  // onPrivateMessage(messages: [Message]): void {
+  //   messages.forEach((message) => {
+  //     message.channel.send("Please visit our website: <url>");
+  //   });
+  // }
 
   @On("inviteCreate")
   onInviteCreated(invites: [Invite]) {
