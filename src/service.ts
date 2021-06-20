@@ -1,6 +1,5 @@
 import axios from "axios";
 import config from "./config";
-import logger from "./utils/logger";
 import { logBackendError } from "./utils/utils";
 
 const API_BASE_URL = config.backendUrl;
@@ -20,9 +19,6 @@ const userJoined = (
       serverId,
       isJoinCode,
     })
-    .then((res) => {
-      logger.debug(JSON.stringify(res.data));
-    })
     .catch(logBackendError);
 };
 
@@ -33,9 +29,6 @@ const userRemoved = (dcUserId: string, serverId: string): void => {
       platformUserId: dcUserId,
       serverId,
       triggerKick: false,
-    })
-    .then((res) => {
-      logger.debug(JSON.stringify(res.data));
     })
     .catch(logBackendError);
 };
