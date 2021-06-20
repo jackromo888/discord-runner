@@ -5,21 +5,25 @@ import { logBackendError } from "./utils/utils";
 const API_BASE_URL = config.backendUrl;
 const PLATFORM = "discord";
 
-const userJoined = (
+const userJoined = async (
   refId: string,
   platformUserId: string,
   serverId: string,
   isJoinCode: boolean
-): void => {
-  axios
-    .post(`${API_BASE_URL}/user/joinedPlatform`, {
+): Promise<boolean> => {
+  try {
+    await axios.post(`${API_BASE_URL}/user/joinedPlatform`, {
       refId,
       platform: PLATFORM,
       platformUserId,
       serverId,
       isJoinCode,
-    })
-    .catch(logBackendError);
+    });
+    return true;
+  } catch (error) {
+    logBackendError(error);
+    return false;
+  }
 };
 
 const userRemoved = (dcUserId: string, serverId: string): void => {

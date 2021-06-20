@@ -21,9 +21,16 @@ abstract class Commands {
   @Guard(NotABot)
   join(command: CommandMessage): void {
     const { joinCode } = command.args;
-    userJoined(joinCode, command.author.id, command.guild?.id, true);
+    userJoined(joinCode, command.author.id, command.guild?.id, true).then(
+      (ok) => {
+        const message = ok
+          ? "You have successfully joined."
+          : "Join failed. (wrong join code)";
+        command.author.send(message);
+      }
+    );
     if (command.channel.type !== "dm") {
-      command.delete().then();
+      command.delete();
     }
   }
 }
