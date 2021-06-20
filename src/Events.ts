@@ -69,7 +69,7 @@ abstract class Events {
           // TODO: get the url of the community and send it to the user
           member.user
             .send(
-              "Please use the provided join command to connect you discord account to Agora Space."
+              "Please use the provided join command to connect your discord account to Agora Space."
             )
             .catch(logger.error);
           logger.debug("ambiguous invite code");
@@ -79,7 +79,7 @@ abstract class Events {
       members.forEach((member) =>
         member
           .send(
-            "Please use the provided join command to connect you discord account to Agora Space."
+            "Please use the provided join command to connect your discord account to Agora Space."
           )
           .catch(logger.error)
       );
