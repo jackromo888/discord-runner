@@ -44,4 +44,12 @@ const getErrorResult = (error: Error): ErrorResult => {
   };
 };
 
-export { getUserResult, getErrorResult };
+const logBackendError = (error) => {
+  if (error.response.data.errors[0].msg) {
+    logger.error(error.response.data.errors[0].msg);
+  } else {
+    logger.error(error);
+  }
+};
+
+export { getUserResult, getErrorResult, logBackendError };

@@ -1,26 +1,29 @@
 import axios from "axios";
 import config from "./config";
-import logger from "./utils/logger";
+import { logBackendError } from "./utils/utils";
 
 const API_BASE_URL = config.backendUrl;
 const PLATFORM = "discord";
 
-const userJoined = (
+const userJoined = async (
   refId: string,
-  idFromPlatform: string,
-  sender: string
-): void => {
-  axios
-    .post(`${API_BASE_URL}/user/joined`, {
+  platformUserId: string,
+  serverId: string,
+  isJoinCode: boolean
+): Promise<boolean> => {
+  try {
+    await axios.post(`${API_BASE_URL}/user/joinedPlatform`, {
       refId,
-      idFromPlatform,
       platform: PLATFORM,
-      sender,
-    })
-    .then((res) => {
-      logger.debug(JSON.stringify(res.data));
-    })
-    .catch(logger.error);
+      platformUserId,
+      serverId,
+      isJoinCode,
+    });
+    return true;
+  } catch (error) {
+    logBackendError(error);
+    return false;
+  }
 };
 
 const userRemoved = (dcUserId: string, serverId: string): void => {
@@ -31,10 +34,7 @@ const userRemoved = (dcUserId: string, serverId: string): void => {
       serverId,
       triggerKick: false,
     })
-    .then((res) => {
-      logger.debug(JSON.stringify(res.data));
-    })
-    .catch(logger.error);
+    .catch(logBackendError);
 };
 
 export { userJoined, userRemoved };

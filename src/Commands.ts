@@ -4,7 +4,6 @@ import config from "./config";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { userJoined } from "./service";
-import logger from "./utils/logger";
 
 @Discord(config.prefix)
 abstract class Commands {
@@ -22,11 +21,17 @@ abstract class Commands {
   @Guard(NotABot)
   join(command: CommandMessage): void {
     const { joinCode } = command.args;
-    logger.debug(
-      `User joined (${joinCode}, "discord", ${command.author.id}, ${command.guild.id})`
+    userJoined(joinCode, command.author.id, command.guild?.id, true).then(
+      (ok) => {
+        const message = ok
+          ? "You have successfully joined."
+          : "Join failed. (wrong join code)";
+        command.author.send(message);
+      }
     );
-    userJoined(joinCode, command.author.id, command.guild.id);
-    command.delete().then();
+    if (command.channel.type !== "dm") {
+      command.delete();
+    }
   }
 }
 

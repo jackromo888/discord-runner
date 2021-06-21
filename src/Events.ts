@@ -1,8 +1,6 @@
 /* eslint-disable class-methods-use-this */
-import { Description, On, Guard } from "@typeit/discord";
-import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
-import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
-import NotABot from "./Guards/NotABot";
+import { Description, On } from "@typeit/discord";
+import { GuildMember, Invite, PartialGuildMember } from "discord.js";
 import Main from "./Main";
 import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
@@ -29,14 +27,14 @@ abstract class Events {
     });
   }
 
-  @On("message")
-  @Guard(NotABot)
-  @Guard(IsAPrivateMessage)
-  onPrivateMessage(messages: [Message]): void {
-    messages.forEach((message) => {
-      message.channel.send("Please visit our website: <url>");
-    });
-  }
+  // @On("message")
+  // @Guard(NotABot)
+  // @Guard(IsAPrivateMessage)
+  // onPrivateMessage(messages: [Message]): void {
+  //   messages.forEach((message) => {
+  //     message.channel.send("Please visit our website: <url>");
+  //   });
+  // }
 
   @On("inviteCreate")
   onInviteCreated(invites: [Invite]) {
@@ -56,24 +54,35 @@ abstract class Events {
         );
 
         const previousInvites = existingInvites.get(member.guild.id);
-        existingInvites[member.guild.id] = currentBotInvites.map((i) => i.code);
+        existingInvites.set(
+          member.guild.id,
+          currentBotInvites.map((i) => i.code)
+        );
 
         const usedInvites = previousInvites.filter(
           (i) => !currentBotInvites.has(i)
         );
 
         if (usedInvites && usedInvites.length === 1) {
-          logger.debug(
-            `${member.user.username} joined with the ${usedInvites[0]} invite`
-          );
-          userJoined(usedInvites[0], member.user.id, member.guild.id);
+          userJoined(usedInvites[0], member.user.id, member.guild.id, false);
         } else {
-          // TODO: ask these members for invite code
+          // TODO: get the url of the community and send it to the user
+          member.user
+            .send(
+              "Please use the provided join command to connect your discord account to Agora Space."
+            )
+            .catch(logger.error);
           logger.debug("ambiguous invite code");
         }
       });
     } else {
-      // TODO: ask these members for invite code
+      members.forEach((member) =>
+        member
+          .send(
+            "Please use the provided join command to connect your discord account to Agora Space."
+          )
+          .catch(logger.error)
+      );
       logger.debug("more than one join at the same time");
     }
   }
@@ -81,9 +90,6 @@ abstract class Events {
   @On("guildMemberRemove")
   onGuildMemberRemove(members: [GuildMember | PartialGuildMember]): void {
     members.forEach((member) => {
-      logger.debug(
-        `User removed from platform of the community (${member.user.id}, "discord", ${Main.Client.user.id})`
-      );
       userRemoved(member.user.id, member.guild.id);
     });
   }
