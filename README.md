@@ -29,6 +29,8 @@ Create a new file called .env and add the following environment variables:
 ```bash
 DISCORD_TOKEN="KJlrEsMLydUXvJaaSRZDSmvD.pLQtsV.FJUJliPzZjgPhujkuhkOiBroWBk"
 PREFIX="!"
+PORT=8990
+EMBED_COLOR="6366f1"
 BACKEND_URL="https://agora.space/api/"
 ```
 
@@ -38,12 +40,12 @@ Run the bot:
 # for development:
 npm run dev
 # or
-yarn run dev
+yarn dev
 
 # for production:
 npm run build && npm run prod
 # or
-yarn run build && yarn run prod
+yarn build && yarn prod
 ```
 
 ## Documentation
