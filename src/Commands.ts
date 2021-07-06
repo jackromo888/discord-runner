@@ -7,6 +7,8 @@ import { handleJoinCode } from "./utils/utils";
 
 @Discord(config.prefix)
 abstract class Commands {
+  static commands = ["ping", "join"];
+
   @Command("ping")
   @Guard(NotABot)
   ping(command: CommandMessage): void {

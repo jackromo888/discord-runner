@@ -1,6 +1,14 @@
 /* eslint-disable class-methods-use-this */
 import { Description, Guard, On } from "@typeit/discord";
-import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
+import {
+  GuildMember,
+  Invite,
+  Message,
+  MessageEmbed,
+  PartialGuildMember,
+} from "discord.js";
+import Commands from "./Commands";
+import config from "./config";
 import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
@@ -35,8 +43,22 @@ abstract class Events {
   @Guard(IsAPrivateMessage)
   onPrivateMessage(messages: [Message]): void {
     messages.forEach((message) => {
-      if (message.content.match(/^\d{4}$/)) {
-        handleJoinCode(message.content, message.author);
+      if (
+        !Commands.commands.some((command) =>
+          message.content.match(`${config.prefix}${command}( .*)?`)
+        )
+      ) {
+        if (message.content.match(/^\d{4}$/)) {
+          handleJoinCode(message.content, message.author);
+        } else {
+          const embed = new MessageEmbed({
+            title: "I'm sorry, but I couldn't interpret your request.",
+            color: config.embedColor,
+            description:
+              "You can find more information on the [Agora](https://app.agora.space/) website.",
+          });
+          message.channel.send(embed);
+        }
       }
     });
   }

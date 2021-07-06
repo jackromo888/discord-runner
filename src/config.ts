@@ -12,6 +12,7 @@ const api = {
   prefix: "/api",
   port: process.env.PORT || 8990,
 };
+const embedColor = process.env.EMBED_COLOR || "6366f1";
 
 if (!discordToken) {
   throw new Error(
@@ -27,4 +28,5 @@ export default {
   backendUrl,
   prefix,
   api,
+  embedColor,
 };

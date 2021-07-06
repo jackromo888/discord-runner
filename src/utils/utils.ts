@@ -1,5 +1,6 @@
 import { DiscordAPIError, GuildMember, MessageEmbed, User } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
+import config from "../config";
 import { userJoined } from "../service";
 import logger from "./logger";
 
@@ -66,7 +67,7 @@ const getRequestJoinCodeEmbed = () =>
   new MessageEmbed({
     title:
       "Please enter the provided 4-digit join code to connect your Discord account to Agora Space.",
-    color: "6366f1",
+    color: config.embedColor,
     image: {
       url: "https://cdn.discordapp.com/attachments/701319775925829693/861979264660668446/Slice_1.png",
     },
