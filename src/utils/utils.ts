@@ -56,10 +56,17 @@ const logBackendError = (error) => {
 
 const handleJoinCode = async (joinCode: string, author: User) => {
   userJoined(joinCode, author.id, true).then((ok) => {
-    const message = ok
-      ? "You have successfully joined."
-      : "Join failed. (wrong join code)";
-    author.send(message);
+    const embed = ok
+      ? new MessageEmbed({
+          title: "You have successfully joined.",
+          color: "44ef44",
+        })
+      : new MessageEmbed({
+          title: "Join failed.",
+          description: "Wrong join code.",
+          color: "ef4444",
+        });
+    author.send(embed);
   });
 };
 
