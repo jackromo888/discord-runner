@@ -1,9 +1,12 @@
 /* eslint-disable class-methods-use-this */
-import { Description, On } from "@typeit/discord";
-import { GuildMember, Invite, PartialGuildMember } from "discord.js";
+import { Description, Guard, On } from "@typeit/discord";
+import { GuildMember, Invite, Message, PartialGuildMember } from "discord.js";
+import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
+import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
+import { handleJoinCode } from "./utils/utils";
 
 const existingInvites: Map<string, string[]> = new Map();
 
@@ -27,14 +30,16 @@ abstract class Events {
     });
   }
 
-  // @On("message")
-  // @Guard(NotABot)
-  // @Guard(IsAPrivateMessage)
-  // onPrivateMessage(messages: [Message]): void {
-  //   messages.forEach((message) => {
-  //     message.channel.send("Please visit our website: <url>");
-  //   });
-  // }
+  @On("message")
+  @Guard(NotABot)
+  @Guard(IsAPrivateMessage)
+  onPrivateMessage(messages: [Message]): void {
+    messages.forEach((message) => {
+      if (message.content.match(/^\d{4}$/)) {
+        handleJoinCode(message.content, message.author);
+      }
+    });
+  }
 
   @On("inviteCreate")
   onInviteCreated(invites: [Invite]) {
@@ -64,7 +69,7 @@ abstract class Events {
         );
 
         if (usedInvites && usedInvites.length === 1) {
-          userJoined(usedInvites[0], member.user.id, member.guild.id, false);
+          userJoined(usedInvites[0], member.user.id, false);
         } else {
           // TODO: get the url of the community and send it to the user
           member.user

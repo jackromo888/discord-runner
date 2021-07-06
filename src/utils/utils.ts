@@ -1,5 +1,6 @@
-import { DiscordAPIError, GuildMember } from "discord.js";
+import { DiscordAPIError, GuildMember, User } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
+import { userJoined } from "../service";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -52,4 +53,13 @@ const logBackendError = (error) => {
   }
 };
 
-export { getUserResult, getErrorResult, logBackendError };
+const handleJoinCode = async (joinCode: string, author: User) => {
+  userJoined(joinCode, author.id, true).then((ok) => {
+    const message = ok
+      ? "You have successfully joined."
+      : "Join failed. (wrong join code)";
+    author.send(message);
+  });
+};
+
+export { getUserResult, getErrorResult, logBackendError, handleJoinCode };
