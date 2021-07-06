@@ -1,4 +1,4 @@
-import { DiscordAPIError, GuildMember, User } from "discord.js";
+import { DiscordAPIError, GuildMember, MessageEmbed, User } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import { userJoined } from "../service";
 import logger from "./logger";
@@ -62,4 +62,20 @@ const handleJoinCode = async (joinCode: string, author: User) => {
   });
 };
 
-export { getUserResult, getErrorResult, logBackendError, handleJoinCode };
+const getRequestJoinCodeEmbed = () =>
+  new MessageEmbed({
+    title:
+      "Please enter the provided 4-digit join code to connect your Discord account to Agora Space.",
+    color: "6366f1",
+    image: {
+      url: "https://cdn.discordapp.com/attachments/701319775925829693/861979264660668446/Slice_1.png",
+    },
+  });
+
+export {
+  getUserResult,
+  getErrorResult,
+  logBackendError,
+  handleJoinCode,
+  getRequestJoinCodeEmbed,
+};

@@ -6,7 +6,7 @@ import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
-import { handleJoinCode } from "./utils/utils";
+import { getRequestJoinCodeEmbed, handleJoinCode } from "./utils/utils";
 
 const existingInvites: Map<string, string[]> = new Map();
 
@@ -72,22 +72,16 @@ abstract class Events {
           userJoined(usedInvites[0], member.user.id, false);
         } else {
           // TODO: get the url of the community and send it to the user
-          member.user
-            .send(
-              "Please use the provided join command to connect your discord account to Agora Space."
-            )
-            .catch(logger.error);
+          const embed = getRequestJoinCodeEmbed();
+          member.send(embed);
           logger.debug("ambiguous invite code");
         }
       });
     } else {
-      members.forEach((member) =>
-        member
-          .send(
-            "Please use the provided join command to connect your discord account to Agora Space."
-          )
-          .catch(logger.error)
-      );
+      members.forEach((member) => {
+        const embed = getRequestJoinCodeEmbed();
+        member.send(embed);
+      });
       logger.debug("more than one join at the same time");
     }
   }
