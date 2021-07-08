@@ -8,7 +8,6 @@ const PLATFORM = "discord";
 const userJoined = async (
   refId: string,
   platformUserId: string,
-  serverId: string,
   isJoinCode: boolean
 ): Promise<boolean> => {
   try {
@@ -16,7 +15,6 @@ const userJoined = async (
       refId,
       platform: PLATFORM,
       platformUserId,
-      serverId,
       isJoinCode,
     });
     return true;

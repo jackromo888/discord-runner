@@ -1,9 +1,20 @@
 /* eslint-disable class-methods-use-this */
-import { Description, On } from "@typeit/discord";
-import { GuildMember, Invite, PartialGuildMember } from "discord.js";
+import { Description, Guard, On } from "@typeit/discord";
+import {
+  GuildMember,
+  Invite,
+  Message,
+  MessageEmbed,
+  PartialGuildMember,
+} from "discord.js";
+import Commands from "./Commands";
+import config from "./config";
+import IsAPrivateMessage from "./Guards/IsAPrivateMessage";
+import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { userJoined, userRemoved } from "./service";
 import logger from "./utils/logger";
+import { getRequestJoinCodeEmbed, handleJoinCode } from "./utils/utils";
 
 const existingInvites: Map<string, string[]> = new Map();
 
@@ -27,14 +38,30 @@ abstract class Events {
     });
   }
 
-  // @On("message")
-  // @Guard(NotABot)
-  // @Guard(IsAPrivateMessage)
-  // onPrivateMessage(messages: [Message]): void {
-  //   messages.forEach((message) => {
-  //     message.channel.send("Please visit our website: <url>");
-  //   });
-  // }
+  @On("message")
+  @Guard(NotABot)
+  @Guard(IsAPrivateMessage)
+  onPrivateMessage(messages: [Message]): void {
+    messages.forEach((message) => {
+      if (
+        !Commands.commands.some((command) =>
+          message.content.match(`${config.prefix}${command}( .*)?`)
+        )
+      ) {
+        if (message.content.match(/^\d{4}$/)) {
+          handleJoinCode(message.content, message.author);
+        } else {
+          const embed = new MessageEmbed({
+            title: "I'm sorry, but I couldn't interpret your request.",
+            color: config.embedColor,
+            description:
+              "You can find more information on the [Agora](https://app.agora.space/) website.",
+          });
+          message.channel.send(embed);
+        }
+      }
+    });
+  }
 
   @On("inviteCreate")
   onInviteCreated(invites: [Invite]) {
@@ -64,25 +91,19 @@ abstract class Events {
         );
 
         if (usedInvites && usedInvites.length === 1) {
-          userJoined(usedInvites[0], member.user.id, member.guild.id, false);
+          userJoined(usedInvites[0], member.user.id, false);
         } else {
           // TODO: get the url of the community and send it to the user
-          member.user
-            .send(
-              "Please use the provided join command to connect your discord account to Agora Space."
-            )
-            .catch(logger.error);
+          const embed = getRequestJoinCodeEmbed();
+          member.send(embed);
           logger.debug("ambiguous invite code");
         }
       });
     } else {
-      members.forEach((member) =>
-        member
-          .send(
-            "Please use the provided join command to connect your discord account to Agora Space."
-          )
-          .catch(logger.error)
-      );
+      members.forEach((member) => {
+        const embed = getRequestJoinCodeEmbed();
+        member.send(embed);
+      });
       logger.debug("more than one join at the same time");
     }
   }
