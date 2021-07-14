@@ -30,16 +30,25 @@ const manageRoles = async (
     throw new ActionError("missing role(s)", missingRoleIds);
   }
 
-  let updatedMember: GuildMember;
-  if (isUpgrade) {
-    updatedMember = await member.roles.add(rolesToManage);
-  } else {
-    updatedMember = await member.roles.remove(rolesToManage);
+  if (
+    (isUpgrade &&
+      params.roleIds.some((roleId) => !member.roles.cache.has(roleId))) ||
+    (!isUpgrade &&
+      params.roleIds.some((roleId) => member.roles.cache.has(roleId)))
+  ) {
+    let updatedMember: GuildMember;
+    if (isUpgrade) {
+      updatedMember = await member.roles.add(rolesToManage);
+    } else {
+      updatedMember = await member.roles.remove(rolesToManage);
+    }
+
+    updatedMember.send(params.message).catch(logger.error);
+
+    return getUserResult(updatedMember);
   }
 
-  updatedMember.send(params.message).catch(logger.error);
-
-  return getUserResult(updatedMember);
+  return getUserResult(member);
 };
 
 const generateInvite = async (guildId: string): Promise<InviteResult> => {
