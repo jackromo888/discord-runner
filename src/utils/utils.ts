@@ -47,7 +47,10 @@ const getErrorResult = (error: Error): ErrorResult => {
 };
 
 const logBackendError = (error) => {
-  if (error.response?.data?.errors[0]?.msg) {
+  if (
+    error.response?.data?.errors?.length > 0 &&
+    error.response?.data?.errors[0]?.msg
+  ) {
     logger.error(error.response.data.errors[0].msg);
   } else {
     logger.error(error);
