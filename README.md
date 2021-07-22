@@ -31,7 +31,7 @@ DISCORD_TOKEN="KJlrEsMLydUXvJaaSRZDSmvD.pLQtsV.FJUJliPzZjgPhujkuhkOiBroWBk"
 PREFIX="!"
 PORT=8990
 EMBED_COLOR="6366f1"
-BACKEND_URL="https://agora.space/api/"
+BACKEND_URL="https://api.agora.space/"
 ```
 
 Run the bot:
