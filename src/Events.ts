@@ -95,14 +95,14 @@ abstract class Events {
         } else {
           // TODO: get the url of the community and send it to the user
           const embed = getRequestJoinCodeEmbed();
-          member.send(embed);
+          member.send(embed).catch(logger.error);
           logger.debug("ambiguous invite code");
         }
       });
     } else {
       members.forEach((member) => {
         const embed = getRequestJoinCodeEmbed();
-        member.send(embed);
+        member.send(embed).catch(logger.error);
       });
       logger.debug("more than one join at the same time");
     }
