@@ -57,7 +57,7 @@ abstract class Events {
             description:
               "You can find more information on the [Agora](https://app.agora.space/) website.",
           });
-          message.channel.send(embed);
+          message.channel.send(embed).catch(logger.error);
         }
       }
     });

@@ -69,7 +69,7 @@ const handleJoinCode = async (joinCode: string, author: User) => {
           description: "Wrong join code.",
           color: "ef4444",
         });
-    author.send(embed);
+    author.send(embed).catch(logger.error);
   });
 };
 
