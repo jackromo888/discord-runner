@@ -3,7 +3,7 @@ import config from "./config";
 import { logBackendError } from "./utils/utils";
 
 const API_BASE_URL = config.backendUrl;
-const PLATFORM = "discord";
+const PLATFORM = "DISCORD";
 
 const userJoined = async (
   refId: string,
