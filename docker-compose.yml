@@ -6,7 +6,7 @@ services:
       context: .
     image: discord-runner:latest
     restart: always
-    env_files:
+    env_file:
       - .env
     networks:
       - runner-discord
