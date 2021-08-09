@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  discord-runner:
+    container_name: discord-runner
+    build:
+      context: .
+    image: discord-runner:latest
+    restart: always
+    env_files:
+      - .env
+    networks:
+      - runner-discord
+
+networks:
+  runner-discord:
+    external: true
