@@ -27,7 +27,7 @@ yarn install
 Create a new file called .env and add the following environment variables:
 
 ```bash
-DISCORD_TOKEN="KJlrEsMLydUXvJaaSRZDSmvD.pLQtsV.FJUJliPzZjgPhujkuhkOiBroWBk"
+DISCORD_TOKEN=KJlrEsMLydUXvJaaSRZDSmvD.pLQtsV.FJUJliPzZjgPhujkuhkOiBroWBk
 PREFIX="!"
 PORT=8990
 EMBED_COLOR="6366f1"
