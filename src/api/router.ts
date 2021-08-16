@@ -45,6 +45,39 @@ const createRouter = () => {
     controller.removeUser
   );
 
+  router.post(
+    "/role",
+    validators.bodyDiscordId("serverId"),
+    validators.roleNameValidator,
+    controller.createRole
+  );
+
+  router.patch(
+    "/role",
+    validators.bodyDiscordId("serverId"),
+    validators.bodyDiscordId("roleId"),
+    validators.roleNameValidator,
+    controller.updateRole
+  );
+
+  router.get(
+    "/isIn/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.isIn
+  );
+
+  router.get(
+    "/channels/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.channels
+  );
+
+  router.get(
+    "/administeredServers/:userId",
+    validators.paramDiscordId("userId"),
+    controller.administeredServers
+  );
+
   return router;
 };
 

@@ -1,8 +1,10 @@
-import { Collection, GuildMember, Role } from "discord.js";
+import { Collection, Guild, GuildMember, Permissions, Role } from "discord.js";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
   ActionError,
+  CreateRoleResult,
+  DiscordChannel,
   InviteResult,
   ManageRolesParams,
   UserResult,
@@ -92,4 +94,111 @@ const removeUser = async (guildId: string, userId: string): Promise<void> => {
   await member.kick();
 };
 
-export { manageRoles, generateInvite, isMember, removeUser };
+const createRole = async (
+  guildId: string,
+  roleName: string
+): Promise<CreateRoleResult> => {
+  logger.verbose(`createRole params: ${guildId}, ${roleName}`);
+  const guild = await Main.Client.guilds.fetch(guildId);
+
+  const role = await guild.roles.create({
+    data: { name: roleName, hoist: true },
+    reason: `Created by ${Main.Client.user.username} for an Agora Space community level.`,
+  });
+  logger.verbose(`role created: ${role.id}`);
+
+  return { id: role.id };
+};
+
+const updateRoleName = async (
+  guildId: string,
+  roleId: string,
+  newRoleName: string
+) => {
+  logger.verbose(
+    `updateRoleName params: ${guildId}, ${roleId}, ${newRoleName}`
+  );
+  const guild = await Main.Client.guilds.fetch(guildId);
+
+  const role = await guild.roles.fetch(roleId);
+
+  const updatedRole = await role.edit(
+    { name: newRoleName },
+    `Updated by ${Main.Client.user.username} because the level name changed in Agora Space.`
+  );
+
+  return updatedRole;
+};
+
+const isIn = async (guildId: string): Promise<boolean> => {
+  logger.verbose(`isIn params: ${guildId}`);
+
+  try {
+    await Main.Client.guilds.fetch(guildId);
+    logger.verbose("isIn: true");
+    return true;
+  } catch (error) {
+    if (error.code === 50001) {
+      logger.verbose("isIn: false");
+      return false;
+    }
+    logger.verbose("isIn: error");
+    throw error;
+  }
+};
+
+const listChannels = async (
+  guildId: string
+): Promise<DiscordChannel[] | undefined> => {
+  logger.verbose(`listChannels params: ${guildId}`);
+  let guild: Guild;
+  try {
+    guild = await Main.Client.guilds.fetch(guildId);
+  } catch (error) {
+    if (error.code === 50001) {
+      logger.verbose(`listChannels: guild not found`);
+      throw new ActionError("Guild not found.", [guildId]);
+    }
+    throw error;
+  }
+
+  const channels = guild.channels.cache
+    .filter(
+      (c) =>
+        c.type === "text" &&
+        c
+          .permissionsFor(guild.roles.everyone)
+          .has(Permissions.FLAGS.VIEW_CHANNEL)
+    )
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      category: c.parent.name.toUpperCase(),
+    }));
+
+  logger.verbose(`listChannels result: ${JSON.stringify(channels)}`);
+  return channels;
+};
+
+const listAdministeredServers = async (userId: string) => {
+  logger.verbose(`listAdministeredServers params: ${userId}`);
+
+  const administeredServers = Main.Client.guilds.cache
+    .filter((g) => g.member(userId)?.hasPermission("ADMINISTRATOR"))
+    .map((g) => ({ name: g.name, id: g.id }));
+
+  logger.verbose(`listAdministeredServers result: ${administeredServers}`);
+  return administeredServers;
+};
+
+export {
+  manageRoles,
+  generateInvite,
+  isMember,
+  removeUser,
+  createRole,
+  updateRoleName,
+  isIn,
+  listChannels,
+  listAdministeredServers,
+};

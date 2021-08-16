@@ -29,6 +29,15 @@ class ActionError extends Error {
   }
 }
 
+type CreateRoleResult = {
+  id: string;
+};
+
+type DiscordChannel = {
+  id: string;
+  name: string;
+};
+
 type LevelInfo = {
   name: string;
   levels: string[];
@@ -40,5 +49,7 @@ export {
   InviteResult,
   ErrorResult,
   ActionError,
+  CreateRoleResult,
+  DiscordChannel,
   LevelInfo,
 };
