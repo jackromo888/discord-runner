@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
-import { getErrorResult } from "../utils/utils";
+import { getErrorResult, getUserHash } from "../utils/utils";
 import {
   createRole,
   generateInvite,
@@ -81,8 +81,8 @@ const controller = {
       return;
     }
 
-    const { guildId, userId } = req.params;
-    isMember(guildId, userId)
+    const { guildId, userHash } = req.params;
+    isMember(guildId, userHash)
       .then((result) => {
         res.status(200).json(result);
       })
@@ -100,8 +100,8 @@ const controller = {
       return;
     }
 
-    const { guildId, userId } = req.params;
-    removeUser(guildId, userId)
+    const { guildId, userHash } = req.params;
+    removeUser(guildId, userHash)
       .then(() => res.status(200).send())
       .catch((error) => {
         const errorMsg = getErrorResult(error);
@@ -185,13 +185,30 @@ const controller = {
       return;
     }
 
-    const { userId } = req.params;
-    listAdministeredServers(userId)
+    const { userHash } = req.params;
+    listAdministeredServers(userHash)
       .then((result) => res.status(200).json(result))
       .catch((error) => {
         const errorMsg = getErrorResult(error);
         res.status(400).json(errorMsg);
       });
+  },
+
+  hashUserId: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { userId } = req.params;
+      const userHash = await getUserHash(userId);
+      res.status(200).json(userHash);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
   },
 };
 
