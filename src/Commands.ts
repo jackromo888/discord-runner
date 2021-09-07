@@ -52,21 +52,21 @@ abstract class Commands {
               const roleManager = await guild.roles.fetch();
               const rolesToAdd: Collection<string, Role> =
                 roleManager.cache.filter((role) =>
-                  c.accessedRoles.includes(role.id)
+                  c.accessedRoles?.includes(role.id)
                 );
               const rolesToRemove: Collection<string, Role> =
                 roleManager.cache.filter((role) =>
-                  c.notAccessedRoles.includes(role.id)
+                  c.notAccessedRoles?.includes(role.id)
                 );
 
-              if (rolesToAdd.size !== c.accessedRoles.length) {
+              if (rolesToAdd?.size !== c.accessedRoles.length) {
                 const missingRoleIds = c.accessedRoles.filter(
                   (roleId) =>
                     !rolesToAdd.map((role) => role.id).includes(roleId)
                 );
                 throw new Error(`missing role(s): ${missingRoleIds}`);
               }
-              if (rolesToRemove.size !== c.notAccessedRoles.length) {
+              if (rolesToRemove?.size !== c.notAccessedRoles.length) {
                 const missingRoleIds = c.notAccessedRoles.filter(
                   (roleId) =>
                     !rolesToRemove.map((role) => role.id).includes(roleId)
@@ -74,11 +74,11 @@ abstract class Commands {
                 throw new Error(`missing role(s): ${missingRoleIds}`);
               }
 
-              if (rolesToAdd.size) {
+              if (rolesToAdd?.size) {
                 await member.roles.add(rolesToAdd);
               }
 
-              if (rolesToRemove.size) {
+              if (rolesToRemove?.size) {
                 await member.roles.remove(rolesToRemove);
               }
             })
