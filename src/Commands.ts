@@ -6,7 +6,7 @@ import NotABot from "./Guards/NotABot";
 import Main from "./Main";
 import { statusUpdate } from "./service";
 import logger from "./utils/logger";
-import { getUserHash } from "./utils/utils";
+import { getUserDiscordId, getUserHash } from "./utils/utils";
 
 @Discord(config.prefix)
 abstract class Commands {
@@ -33,6 +33,7 @@ abstract class Commands {
     const userHash = command.args.userHash
       ? command.args.userHash
       : await getUserHash(command.author.id);
+    const authorId = command.args.userHash ? await getUserDiscordId(command.args.userHash): command.author.id;
     logger.verbose(
       `status command was used by ${command.author.username}#${
         command.author.discriminator
@@ -47,7 +48,7 @@ abstract class Commands {
           await Promise.all(
             levelInfo.map(async (c) => {
               const guild = await Main.Client.guilds.fetch(c.discordServerId);
-              const member = guild.member(command.author.id);
+              const member = guild.member(authorId);
               const roleManager = await guild.roles.fetch();
               const rolesToAdd: Collection<string, Role> =
                 roleManager.cache.filter((role) =>
@@ -86,7 +87,7 @@ abstract class Commands {
           const embed = new MessageEmbed({
             author: {
               name: `${command.author.username}'s communities and levels`,
-              iconURL: `https://cdn.discordapp.com/avatars/${command.author.id}/${command.author.avatar}.png`,
+              iconURL: `https://cdn.discordapp.com/avatars/${authorId}/${command.author.avatar}.png`,
             },
             color: config.embedColor,
           });
