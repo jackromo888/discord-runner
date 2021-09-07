@@ -33,11 +33,11 @@ abstract class Commands {
     const userHash = command.args.userHash
       ? command.args.userHash
       : await getUserHash(command.author.id);
-    const authorId = command.args.userHash ? await getUserDiscordId(command.args.userHash): command.author.id;
+    const userId = await getUserDiscordId(userHash);
     logger.verbose(
       `status command was used by ${command.author.username}#${
         command.author.discriminator
-      } -  targeted: ${!!command.args.userHash} userHash: ${userHash}`
+      } -  targeted: ${!!command.args.userHash} userHash: ${userHash} userId: ${userId}`
     );
     command.channel.send(
       `I'll update your community accesses as soon as possible. (It could take up to 2 minutes.)\nYour user hash: \`${userHash}\``
@@ -48,7 +48,8 @@ abstract class Commands {
           await Promise.all(
             levelInfo.map(async (c) => {
               const guild = await Main.Client.guilds.fetch(c.discordServerId);
-              const member = guild.member(authorId);
+              const member = guild.member(userId);
+              logger.verbose(`${JSON.stringify(member)}`);
               const roleManager = await guild.roles.fetch();
               const rolesToAdd: Collection<string, Role> =
                 roleManager.cache.filter((role) =>
@@ -87,7 +88,7 @@ abstract class Commands {
           const embed = new MessageEmbed({
             author: {
               name: `${command.author.username}'s communities and levels`,
-              iconURL: `https://cdn.discordapp.com/avatars/${authorId}/${command.author.avatar}.png`,
+              iconURL: `https://cdn.discordapp.com/avatars/${userId}/${command.author.avatar}.png`,
             },
             color: config.embedColor,
           });
