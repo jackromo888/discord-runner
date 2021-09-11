@@ -73,6 +73,15 @@ const createRouter = () => {
     controller.channels
   );
 
+  router.post(
+    "/channels/create",
+    validators.bodyDiscordId("guildId"),
+    validators.bodyDiscordId("roleId"),
+    validators.channelNameValidator,
+    validators.categoryNameValidator,
+    controller.createChannel
+  );
+
   router.get(
     "/administeredServers/:userHash",
     validators.paramUserHash("userHash"),
