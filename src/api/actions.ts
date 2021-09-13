@@ -167,9 +167,13 @@ const createChannel = async (params: CreateChannelParams) => {
     {
       id: roleId,
       allow: [
-        Permissions.FLAGS.VIEW_CHANNEL,
-        Permissions.FLAGS.SEND_MESSAGES,
         Permissions.FLAGS.ADD_REACTIONS,
+        Permissions.FLAGS.ATTACH_FILES,
+        Permissions.FLAGS.EMBED_LINKS,
+        Permissions.FLAGS.READ_MESSAGE_HISTORY,
+        Permissions.FLAGS.SEND_MESSAGES,
+        Permissions.FLAGS.USE_EXTERNAL_EMOJIS,
+        Permissions.FLAGS.VIEW_CHANNEL,
       ],
     },
   ]);
