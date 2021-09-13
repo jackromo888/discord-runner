@@ -134,41 +134,45 @@ const createChannel = async (params: CreateChannelParams) => {
   const { guildId, roleId, channelName, categoryName } = params;
   const guild = await Main.Client.guilds.fetch(guildId);
 
-  const everyone = await guild.roles.cache.find((r) => r.name === "@everyone");
+  const everyone = guild.roles.cache.find((r) => r.name === "@everyone");
   logger.verbose(`createChannel params: ${JSON.stringify(everyone)}`);
 
   const createdChannel = await guild.channels.create(channelName, {
     type: "text",
-    permissionOverwrites: [
-      {
-        id: everyone.id,
-        deny: ["VIEW_CHANNEL"],
-      },
-      {
-        id: roleId,
-        allow: ["SEND_MESSAGES", "ADD_REACTIONS", "ATTACH_FILES"],
-      },
-    ],
   });
-  // TODO modify below
+  // TODO modify  and simplify below
   if (guildId === "886314998131982336") {
     const category = guild.channels.cache.find(
       (c) => c.name.toUpperCase() === "GUILDS" && c.type === "category"
     );
 
-    const updatedChannel = await createdChannel.setParent(category.id);
-    return updatedChannel;
+    await guild.channels.cache
+      .find((c) => c.name === channelName)
+      .setParent(category.id);
   }
   if (categoryName) {
     const category = guild.channels.cache.find(
       (c) => c.name === categoryName && c.type === "category"
     );
     if (category) {
-      const updatedChannel = await createdChannel.setParent(category.id);
-      return updatedChannel;
+      await createdChannel.setParent(category.id);
     }
   }
 
+  createdChannel.overwritePermissions([
+    {
+      id: everyone.id,
+      deny: Permissions.FLAGS.VIEW_CHANNEL,
+    },
+    {
+      id: roleId,
+      allow: [
+        Permissions.FLAGS.VIEW_CHANNEL,
+        Permissions.FLAGS.SEND_MESSAGES,
+        Permissions.FLAGS.ADD_REACTIONS,
+      ],
+    },
+  ]);
   return createdChannel;
 };
 
