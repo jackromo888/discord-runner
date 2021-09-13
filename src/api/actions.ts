@@ -130,14 +130,18 @@ const removeUser = async (guildId: string, userHash: string): Promise<void> => {
 };
 
 const createChannel = async (params: CreateChannelParams) => {
-  logger.verbose(`createChannel params: ${params}`);
+  logger.verbose(`createChannel params: ${JSON.stringify(params)}`);
   const { guildId, roleId, channelName, categoryName } = params;
   const guild = await Main.Client.guilds.fetch(guildId);
+
+  const everyone = await guild.roles.cache.find((r) => r.name === "@everyone");
+  logger.verbose(`createChannel params: ${JSON.stringify(everyone)}`);
+
   const createdChannel = await guild.channels.create(channelName, {
     type: "text",
     permissionOverwrites: [
       {
-        id: guild.roles.everyone.id,
+        id: everyone.id,
         deny: ["VIEW_CHANNEL"],
       },
       {
@@ -146,15 +150,17 @@ const createChannel = async (params: CreateChannelParams) => {
       },
     ],
   });
-  const category = guild.channels.cache.find(
-    (c) => c.name === categoryName && c.type === "category"
-  );
-  if (category) {
-    const updatedChannel = await createdChannel.setParent(category.id);
-    return updatedChannel;
-  } 
-    return createdChannel;
-  
+  if (categoryName) {
+    const category = guild.channels.cache.find(
+      (c) => c.name === categoryName && c.type === "category"
+    );
+    if (category) {
+      const updatedChannel = await createdChannel.setParent(category.id);
+      return updatedChannel;
+    }
+  }
+
+  return createdChannel;
 };
 
 const createRole = async (
