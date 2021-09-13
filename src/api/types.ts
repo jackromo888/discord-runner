@@ -9,7 +9,7 @@ type CreateChannelParams = {
   guildId: string;
   roleId: string;
   channelName: string;
-  categoryName: string;
+  categoryName?: string;
 };
 
 type UserResult = {
