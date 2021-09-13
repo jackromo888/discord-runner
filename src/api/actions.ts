@@ -150,6 +150,15 @@ const createChannel = async (params: CreateChannelParams) => {
       },
     ],
   });
+  // TODO modify below
+  if (guildId === "886314998131982336") {
+    const category = guild.channels.cache.find(
+      (c) => c.name.toUpperCase() === "GUILDS" && c.type === "category"
+    );
+
+    const updatedChannel = await createdChannel.setParent(category.id);
+    return updatedChannel;
+  }
   if (categoryName) {
     const category = guild.channels.cache.find(
       (c) => c.name === categoryName && c.type === "category"
