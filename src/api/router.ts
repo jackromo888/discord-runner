@@ -32,7 +32,7 @@ const createRouter = () => {
     controller.getInvite
   );
 
-  router.get(
+  router.post(
     "/isMember",
     validators.bodyDiscordId("serverId"),
     validators.bodyUserHash("userHash"),
