@@ -33,9 +33,9 @@ const createRouter = () => {
   );
 
   router.get(
-    "/isMember/:guildId/:userHash",
-    validators.paramDiscordId("guildId"),
-    validators.paramUserHash("userHash"),
+    "/isMember",
+    validators.bodyDiscordId("serverId"),
+    validators.bodyUserHash("userHash"),
     controller.isMember
   );
 

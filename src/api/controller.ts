@@ -82,7 +82,7 @@ const controller = {
       return;
     }
 
-    const { guildId, userHash } = req.params;
+    const { guildId, userHash } = req.body;
     isMember(guildId, userHash)
       .then((result) => {
         res.status(200).json(result);
