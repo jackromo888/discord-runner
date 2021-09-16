@@ -82,8 +82,8 @@ const controller = {
       return;
     }
 
-    const { guildId, userHash } = req.body;
-    isMember(guildId, userHash)
+    const { serverId, userHash } = req.body;
+    isMember(serverId, userHash)
       .then((result) => {
         res.status(200).json(result);
       })
