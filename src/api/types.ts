@@ -58,10 +58,6 @@ type InviteData = {
   inviteChannelId: string;
 };
 
-type GetCategoriesParams = {
-  inviteCode: string;
-};
-
 export {
   ManageRolesParams,
   CreateChannelParams,
@@ -73,5 +69,4 @@ export {
   DiscordChannel,
   LevelInfo,
   InviteData,
-  GetCategoriesParams,
 };

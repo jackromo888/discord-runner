@@ -14,11 +14,7 @@ import {
   removeUser,
   updateRoleName,
 } from "./actions";
-import {
-  CreateChannelParams,
-  GetCategoriesParams,
-  ManageRolesParams,
-} from "./types";
+import { CreateChannelParams, ManageRolesParams } from "./types";
 
 const controller = {
   upgrade: (req: Request, res: Response): void => {
@@ -242,8 +238,8 @@ const controller = {
       return;
     }
     try {
-      const params: GetCategoriesParams = req.body;
-      const categories = await getCategories(params.inviteCode);
+      const { inviteCode } = req.params;
+      const categories = await getCategories(inviteCode);
 
       res.status(200).json(categories);
     } catch (error) {
