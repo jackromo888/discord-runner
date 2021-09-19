@@ -95,7 +95,7 @@ const createRouter = () => {
   );
 
   router.get(
-    "/categories",
+    "/categories/:inviteCode",
     validators.inviteCodeValidator,
     controller.getCategories
   );

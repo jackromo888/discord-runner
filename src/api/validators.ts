@@ -24,7 +24,7 @@ export default {
     .isString()
     .trim()
     .isLength({ min: 1 }),
-  inviteCodeValidator: body("inviteCode")
+  inviteCodeValidator: param("inviteCode")
     .isString()
     .trim()
     .isLength({ min: 1 }),
