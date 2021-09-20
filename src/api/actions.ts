@@ -150,9 +150,10 @@ const createChannel = async (params: CreateChannelParams) => {
       .find((c) => c.name === channelName)
       .setParent(category.id);
   }
+  // categoryName param is ID, TODO modify
   if (categoryName) {
     const category = guild.channels.cache.find(
-      (c) => c.name === categoryName && c.type === "category"
+      (c) => c.id === categoryName && c.type === "category"
     );
     if (category) {
       await createdChannel.setParent(category.id);
