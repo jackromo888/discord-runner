@@ -223,7 +223,7 @@ const controller = {
     try {
       const params: CreateChannelParams = req.body;
       const createdChannel = await createChannel(params);
-      res.status(200).json(createdChannel.name);
+      res.status(200).json(createdChannel.id);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);
