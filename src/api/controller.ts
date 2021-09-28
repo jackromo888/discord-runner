@@ -4,6 +4,7 @@ import { getErrorResult, getUserHash } from "../utils/utils";
 import {
   createChannel,
   createRole,
+  deleteChannelAndRole,
   generateInvite,
   getCategories,
   isIn,
@@ -14,7 +15,11 @@ import {
   removeUser,
   updateRoleName,
 } from "./actions";
-import { CreateChannelParams, ManageRolesParams } from "./types";
+import {
+  CreateChannelParams,
+  DeleteChannelAndRoleParams,
+  ManageRolesParams,
+} from "./types";
 
 const controller = {
   upgrade: (req: Request, res: Response): void => {
@@ -224,6 +229,23 @@ const controller = {
       const params: CreateChannelParams = req.body;
       const createdChannel = await createChannel(params);
       res.status(200).json(createdChannel.id);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  deleteChannelAndRole: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const params: DeleteChannelAndRoleParams = req.body;
+      const deleted = await deleteChannelAndRole(params);
+      res.status(200).json(deleted);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

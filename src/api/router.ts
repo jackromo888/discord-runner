@@ -82,6 +82,14 @@ const createRouter = () => {
     controller.createChannel
   );
 
+  router.post(
+    "/channels/delete",
+    validators.bodyDiscordId("guildId"),
+    validators.bodyDiscordId("roleId"),
+    validators.channelNameValidator,
+    controller.deleteChannelAndRole
+  );
+
   router.get(
     "/administeredServers/:userHash",
     validators.paramUserHash("userHash"),

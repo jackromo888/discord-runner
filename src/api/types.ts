@@ -12,6 +12,12 @@ type CreateChannelParams = {
   categoryName?: string;
 };
 
+type DeleteChannelAndRoleParams = {
+  guildId: string;
+  roleId: string;
+  channelName: string;
+};
+
 type UserResult = {
   username: string;
   discriminator: string;
@@ -61,6 +67,7 @@ type InviteData = {
 export {
   ManageRolesParams,
   CreateChannelParams,
+  DeleteChannelAndRoleParams,
   UserResult,
   InviteResult,
   ErrorResult,

@@ -1,16 +1,28 @@
-import { Collection, Guild, GuildMember, Permissions, Role } from "discord.js";
+import {
+  Channel,
+  Collection,
+  Guild,
+  GuildMember,
+  Permissions,
+  Role,
+} from "discord.js";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
   ActionError,
   CreateChannelParams,
   CreateRoleResult,
+  DeleteChannelAndRoleParams,
   DiscordChannel,
   InviteResult,
   ManageRolesParams,
   UserResult,
 } from "./types";
-import { getUserDiscordId, getUserResult } from "../utils/utils";
+import {
+  getErrorResult,
+  getUserDiscordId,
+  getUserResult,
+} from "../utils/utils";
 
 const manageRoles = async (
   params: ManageRolesParams,
@@ -181,6 +193,39 @@ const createChannel = async (params: CreateChannelParams) => {
   return createdChannel;
 };
 
+const deleteRole = async (guildId: string, roleId: string): Promise<Role> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const deletedRole = guild.roles.cache.find((r) => r.id === roleId).delete();
+  return deletedRole;
+};
+
+const deleteChannel = async (
+  guildId: string,
+  channelName: string
+): Promise<Channel> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const deletedChannel = guild.channels.cache
+    .find((r) => r.name.toLowerCase() === channelName.toLowerCase())
+    .delete();
+  return deletedChannel;
+};
+
+const deleteChannelAndRole = async (
+  params: DeleteChannelAndRoleParams
+): Promise<boolean> => {
+  logger.verbose(`deleteChannelAndRole params: ${JSON.stringify(params)}`);
+  const { guildId, roleId, channelName } = params;
+
+  try {
+    const deletedRole = await deleteRole(guildId, roleId);
+    const deletedChannel = await deleteChannel(guildId, channelName);
+    return !!deletedRole && !!deletedChannel;
+  } catch (error) {
+    logger.error(getErrorResult(error));
+    return false;
+  }
+};
+
 const createRole = async (
   guildId: string,
   roleName: string
@@ -305,4 +350,5 @@ export {
   listAdministeredServers,
   createChannel,
   getCategories,
+  deleteChannelAndRole,
 };
