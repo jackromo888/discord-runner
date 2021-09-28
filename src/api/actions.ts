@@ -217,9 +217,9 @@ const deleteChannelAndRole = async (
   const { guildId, roleId, channelName } = params;
 
   try {
-    const deletedRole = await deleteRole(guildId, roleId);
-    const deletedChannel = await deleteChannel(guildId, channelName);
-    return !!deletedRole && !!deletedChannel;
+    await deleteRole(guildId, roleId);
+    await deleteChannel(guildId, channelName);
+    return true;
   } catch (error) {
     logger.error(getErrorResult(error));
     return false;
