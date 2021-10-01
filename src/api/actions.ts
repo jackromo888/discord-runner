@@ -188,6 +188,7 @@ const createChannel = async (params: CreateChannelParams) => {
         Permissions.FLAGS.USE_EXTERNAL_EMOJIS,
         Permissions.FLAGS.VIEW_CHANNEL,
       ],
+      deny: [Permissions.FLAGS.CREATE_INSTANT_INVITE],
     },
   ]);
   return createdChannel;
