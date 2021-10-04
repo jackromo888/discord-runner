@@ -70,7 +70,7 @@ const notifyAccessedChannels = async (
 
   sortedChannels.forEach((channel, key) => {
     embed.addField(
-      `${categoryEmoji}${key}`,
+      `${categoryEmoji}${key || "Without Category"}`,
       channel
         .map(
           (c) =>
