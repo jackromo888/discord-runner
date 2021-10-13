@@ -230,7 +230,7 @@ const createChannel = async (params: CreateChannelParams) => {
   // TODO modify  and simplify below
   if (guildId === "886314998131982336") {
     const category = guild.channels.cache.find(
-      (c) => c.name.toUpperCase() === "GUILDS-2" && c.type === "category"
+      (c) => c.name.toUpperCase() === "GUILDS-3" && c.type === "category"
     );
 
     await guild.channels.cache
