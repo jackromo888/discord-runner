@@ -88,7 +88,7 @@ const manageRoles = async (
   isUpgrade: boolean
 ): Promise<UserResult> => {
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}, ${isUpgrade}`);
-  const { userHash, guildId, roleIds, message, isGuild } = params;
+  const { userHash, guildId, roleName, message } = params;
 
   const guild = await Main.Client.guilds.fetch(guildId);
   const discordId = await getUserDiscordId(userHash);
@@ -99,6 +99,12 @@ const manageRoles = async (
   const member = await guild.members.fetch(discordId);
 
   const roleManager = await guild.roles.fetch();
+
+  const roleIds = [
+    roleManager.cache.find(
+      (r) => r.name.toLowerCase() === roleName.toLowerCase()
+    ).id,
+  ];
 
   const rolesToManage: Collection<string, Role> = roleManager.cache.filter(
     (role) => roleIds.includes(role.id)
@@ -122,22 +128,8 @@ const manageRoles = async (
       updatedMember = await member.roles.remove(rolesToManage);
     }
 
-    if (JSON.parse(isGuild)) {
-      if (isUpgrade) {
-        await notifyAccessedChannels(updatedMember, rolesToManage, message);
-      }
-    } else {
-      updatedMember
-        .send(
-          `You ${
-            isUpgrade ? "got" : "no longer have"
-          } access to the **${rolesToManage
-            .map((r) => r.name)
-            .join("**,** ")}** level${
-            rolesToManage.size === 1 ? "" : "s"
-          } on **${message}**!`
-        )
-        .catch(logger.error);
+    if (isUpgrade) {
+      await notifyAccessedChannels(updatedMember, rolesToManage, message);
     }
 
     return getUserResult(updatedMember);
@@ -269,9 +261,11 @@ const createChannel = async (params: CreateChannelParams) => {
   return createdChannel;
 };
 
-const deleteRole = async (guildId: string, roleId: string): Promise<Role> => {
+const deleteRole = async (guildId: string, roleName: string): Promise<Role> => {
   const guild = await Main.Client.guilds.fetch(guildId);
-  const deletedRole = guild.roles.cache.find((r) => r.id === roleId).delete();
+  const deletedRole = guild.roles.cache
+    .find((r) => r.name === roleName)
+    .delete();
   return deletedRole;
 };
 
@@ -290,10 +284,10 @@ const deleteChannelAndRole = async (
   params: DeleteChannelAndRoleParams
 ): Promise<boolean> => {
   logger.verbose(`deleteChannelAndRole params: ${JSON.stringify(params)}`);
-  const { guildId, roleId, channelName } = params;
+  const { guildId, roleName, channelName } = params;
 
   try {
-    await deleteRole(guildId, roleId);
+    await deleteRole(guildId, roleName);
     await deleteChannel(guildId, channelName);
     return true;
   } catch (error) {
@@ -414,6 +408,35 @@ const getCategories = async (inviteCode: string) => {
   };
 };
 
+const updateRoleByName = async (
+  guildId: string,
+  channelId: string,
+  oldRoleName: string,
+  newRoleName: string
+) => {
+  logger.verbose(
+    `updateRoleByName params: ${guildId}, ${oldRoleName}, ${newRoleName}`
+  );
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const roles = await guild.roles.cache.filter((r) => r.name === oldRoleName);
+  const channel = await guild.channels.cache.find((c) => c.id === channelId);
+  const rolesUpdated = await Promise.all(
+    roles.map(async (r) => {
+      if (channel.permissionsFor(r).any("SEND_MESSAGES")) {
+        const updatedRole = await r.edit(
+          { name: newRoleName },
+          `Updated by ${Main.Client.user.username} because the Guild name changed.`
+        );
+
+        return updatedRole;
+      }
+      return undefined;
+    })
+  );
+
+  return rolesUpdated.filter((r) => r !== undefined);
+};
+
 export {
   manageRoles,
   generateInvite,
@@ -427,4 +450,5 @@ export {
   createChannel,
   getCategories,
   deleteChannelAndRole,
+  updateRoleByName,
 };

@@ -9,10 +9,8 @@ const createRouter = () => {
     "/upgrade",
     validators.bodyDiscordId("guildId"),
     validators.bodyUserHash("userHash"),
-    validators.roleIdsArrayValidator,
-    validators.bodyDiscordId("roleIds.*"),
+    validators.roleNameValidator,
     validators.messageValidator,
-    validators.isGuildValidator,
     controller.upgrade
   );
 
@@ -20,10 +18,8 @@ const createRouter = () => {
     "/downgrade",
     validators.bodyDiscordId("guildId"),
     validators.bodyUserHash("userHash"),
-    validators.roleIdsArrayValidator,
-    validators.bodyDiscordId("roleIds.*"),
+    validators.roleNameValidator,
     validators.messageValidator,
-    validators.isGuildValidator,
     controller.downgrade
   );
 
@@ -63,6 +59,15 @@ const createRouter = () => {
     controller.updateRole
   );
 
+  router.post(
+    "/role/byName",
+    validators.bodyDiscordId("serverId"),
+    validators.bodyDiscordId("channelId"),
+    validators.oldRoleNameValidator,
+    validators.roleNameValidator,
+    controller.updateRoleByName
+  );
+
   router.get(
     "/isIn/:guildId",
     validators.paramDiscordId("guildId"),
@@ -87,7 +92,7 @@ const createRouter = () => {
   router.post(
     "/channels/delete",
     validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("roleId"),
+    validators.roleNameValidator,
     validators.channelNameValidator,
     controller.deleteChannelAndRole
   );
