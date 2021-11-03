@@ -69,14 +69,15 @@ const notifyAccessedChannels = async (
     Main.Client.emojis.cache.get("893836025699377192");
 
   sortedChannels.forEach((channel, key) => {
+    const fieldValue = channel
+      .map(
+        (c) =>
+          `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${member.guild.id}/${c.id})`
+      )
+      .join("\n");
     embed.addField(
       `${categoryEmoji}${key || "Without Category"}`,
-      channel
-        .map(
-          (c) =>
-            `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${member.guild.id}/${c.id})`
-        )
-        .join("\n")
+      fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
     );
   });
 
