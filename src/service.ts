@@ -60,4 +60,19 @@ const statusUpdate = async (
   }
 };
 
-export { userJoined, userRemoved, statusUpdate };
+const guildStatusUpdate = async(guildId: string): Promise<boolean> => {
+  logger.verbose(`guildStatusUpdate: ${guildId}`);
+  try {
+    const response = await axios.post(`${API_BASE_URL}/guild/statusUpdate`, {
+      guildId,
+    });
+    logAxiosResponse(response);
+    return response.data;
+  } catch (error) {
+    logger.verbose("guildStatusUpdate error");
+    logBackendError(error);
+    return undefined;
+  }
+};
+
+export { userJoined, userRemoved, statusUpdate, guildStatusUpdate };

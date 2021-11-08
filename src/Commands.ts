@@ -4,7 +4,7 @@ import { Collection, MessageEmbed, Role } from "discord.js";
 import config from "./config";
 import NotABot from "./Guards/NotABot";
 import Main from "./Main";
-import { statusUpdate } from "./service";
+import { guildStatusUpdate, statusUpdate } from "./service";
 import logger from "./utils/logger";
 import { getUserDiscordId, getUserHash } from "./utils/utils";
 
@@ -25,6 +25,26 @@ abstract class Commands {
         }ms. API Latency is ${Math.round(Main.Client.ws.ping)}ms`
       )
       .catch(logger.error);
+  }
+
+
+
+  @Command("guildStatus :guildId")
+  @Guard(NotABot)
+  async guildStatus(command: CommandMessage): Promise<void> {
+    const guildId = command.args.guildId;
+    logger.verbose(
+      `guildStatus command was used by ${command.author.username}#${
+        command.author.discriminator
+      } guildId: ${guildId}`
+    );
+        command.channel
+      .send(
+        `I'll update the whole Guild accesses as soon as possible. (\nGuildID: \`${guildId}\``
+      )
+      .catch(logger.error);
+    guildStatusUpdate(guildId).then().catch(logger.error);
+      
   }
 
   @Command("status :userHash")
