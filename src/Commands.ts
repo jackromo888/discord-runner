@@ -43,7 +43,7 @@ abstract class Commands {
         `I'll update the whole Guild accesses as soon as possible. (\nGuildID: \`${guildId}\``
       )
       .catch(logger.error);
-    guildStatusUpdate(guildId).then().catch(logger.error);
+    guildStatusUpdate(+guildId).then().catch(logger.error);
       
   }
 

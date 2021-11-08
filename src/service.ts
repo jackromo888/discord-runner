@@ -60,7 +60,7 @@ const statusUpdate = async (
   }
 };
 
-const guildStatusUpdate = async(guildId: string): Promise<boolean> => {
+const guildStatusUpdate = async(guildId: number): Promise<boolean> => {
   logger.verbose(`guildStatusUpdate: ${guildId}`);
   try {
     const response = await axios.post(`${API_BASE_URL}/guild/statusUpdate`, {
