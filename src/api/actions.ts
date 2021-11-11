@@ -64,9 +64,9 @@ const notifyAccessedChannels = async (
     color: config.embedColor,
   });
 
-  const categoryEmoji = Main.Client.emojis.cache.get("893836008712441858");
+  const categoryEmoji = Main.Client.emojis.cache.get("908440435138117762");
   const privateChannelEmoji =
-    Main.Client.emojis.cache.get("893836025699377192");
+    Main.Client.emojis.cache.get("908440435138117762");
 
   sortedChannels.forEach((channel, key) => {
     const fieldValue = channel
