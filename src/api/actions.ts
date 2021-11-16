@@ -397,7 +397,6 @@ const getCategories = async (inviteCode: string) => {
   const categories = invite.guild.channels.cache
     .filter((c) => c.type === "category")
     .map((c) => ({ id: c.id, name: c.name }));
-  if(categories.length < 1) throw new Error("The bot is not added to this server-")
   return {
     serverId: invite.guild.id,
     categories,
