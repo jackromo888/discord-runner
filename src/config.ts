@@ -11,12 +11,12 @@ const hmacAlgorithm = process.env.HMAC_ALGORITHM || "sha256";
 const hmacSecret = process.env.HMAC_SECRET;
 const discordToken = process.env.DISCORD_TOKEN;
 const backendUrl = process.env.BACKEND_URL;
-const prefix = process.env.PREFIX || "!";
 const api = {
   prefix: "/api",
   port: process.env.PORT || 8990,
 };
 const embedColor = process.env.EMBED_COLOR || "6366f1";
+const guildUrl = process.env.GUILD_URL;
 
 if (!discordToken)
   throw new Error(
@@ -38,7 +38,7 @@ export default {
   hmacSecret,
   discordToken,
   backendUrl,
-  prefix,
   api,
   embedColor,
+  guildUrl,
 };

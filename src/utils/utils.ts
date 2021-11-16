@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { createHmac } from "crypto";
-import { DiscordAPIError, GuildMember } from "discord.js";
+import { GuildMember, DiscordAPIError } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import redisClient from "../database";
@@ -55,9 +55,9 @@ const logBackendError = (error) => {
   ) {
     logger.error(error.response.data.errors[0].msg);
   } else if (error.response?.data) {
-    logger.error(error.response.data);
+    logger.error(JSON.stringify(error.response.data));
   } else {
-    logger.error(error);
+    logger.error(JSON.stringify(error));
   }
 };
 
@@ -85,6 +85,9 @@ const getUserDiscordId = async (
   return platformUserId || undefined;
 };
 
+const isNumber = (value: any) =>
+  typeof value === "number" && Number.isFinite(value);
+
 export {
   getUserResult,
   getErrorResult,
@@ -92,4 +95,5 @@ export {
   logAxiosResponse,
   getUserHash,
   getUserDiscordId,
+  isNumber,
 };

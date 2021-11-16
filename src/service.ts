@@ -7,10 +7,7 @@ import { getUserHash, logAxiosResponse, logBackendError } from "./utils/utils";
 const API_BASE_URL = config.backendUrl;
 const PLATFORM = "DISCORD";
 
-const userJoined = async (
-  platformUserId: string,
-  serverId: string
-): Promise<boolean> => {
+const userJoined = async (platformUserId: string, serverId: string) => {
   logger.verbose(`userJoined params: ${platformUserId}, ${serverId}`);
   try {
     const userHash = await getUserHash(platformUserId);
@@ -22,11 +19,11 @@ const userJoined = async (
     });
     logger.verbose(`joinedPlatform result:`);
     logAxiosResponse(response);
-    return true;
+    return response.data;
   } catch (error) {
     logger.verbose("joinedPlatform error");
     logBackendError(error);
-    return false;
+    return null;
   }
 };
 
@@ -60,7 +57,21 @@ const statusUpdate = async (
   }
 };
 
-const guildStatusUpdate = async(guildId: number): Promise<boolean> => {
+const getGuildsOfServer = async (serverId: string) => {
+  logger.verbose(`getGuildsOfServer params: ${serverId}`);
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/guild/platformId/${serverId}`
+    );
+    logAxiosResponse(response);
+    return response.data;
+  } catch (error) {
+    logger.verbose("getGuildsOfServer error");
+    return [];
+  }
+};
+
+const guildStatusUpdate = async (guildId: number): Promise<boolean> => {
   logger.verbose(`guildStatusUpdate: ${guildId}`);
   try {
     const response = await axios.post(`${API_BASE_URL}/guild/statusUpdate`, {
@@ -75,4 +86,10 @@ const guildStatusUpdate = async(guildId: number): Promise<boolean> => {
   }
 };
 
-export { userJoined, userRemoved, statusUpdate, guildStatusUpdate };
+export {
+  userJoined,
+  userRemoved,
+  statusUpdate,
+  getGuildsOfServer,
+  guildStatusUpdate,
+};
