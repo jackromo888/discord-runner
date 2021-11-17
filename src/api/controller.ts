@@ -7,6 +7,8 @@ import {
   deleteChannelAndRole,
   generateInvite,
   getCategories,
+  getGuild,
+  getRole,
   isIn,
   isMember,
   listAdministeredServers,
@@ -264,6 +266,41 @@ const controller = {
       const categories = await getCategories(inviteCode);
 
       res.status(200).json(categories);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  getGuildNameByGuildId: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { guildId } = req.params;
+      const guildName = await getGuild(guildId);
+
+      res.status(200).json(guildName);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  getRoleNameByRoleId: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { guildId, roleId } = req.params;
+      const result = await getRole(guildId, roleId);
+      res.status(200).json(result);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);
