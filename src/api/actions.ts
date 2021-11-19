@@ -6,8 +6,8 @@ import {
   Permissions,
   GuildChannel,
   MessageEmbed,
-  Guild,
   Channel,
+  TextChannel,
 } from "discord.js";
 import Main from "../Main";
 import logger from "../utils/logger";
@@ -16,12 +16,12 @@ import {
   CreateChannelParams,
   CreateRoleResult,
   DeleteChannelAndRoleParams,
-  DiscordChannel,
   InviteResult,
   ManageRolesParams,
   UserResult,
 } from "./types";
 import {
+  createJoinButton,
   getErrorResult,
   getUserDiscordId,
   getUserResult,
@@ -203,7 +203,7 @@ const removeUser = async (guildId: string, userHash: string): Promise<void> => {
 
 const createChannel = async (params: CreateChannelParams) => {
   logger.verbose(`createChannel params: ${JSON.stringify(params)}`);
-  const { guildId, roleId, channelName, categoryName } = params;
+  const { guildId, roleId, channelName } = params;
   const guild = await Main.Client.guilds.fetch(guildId);
 
   const everyone = guild.roles.cache.find((r) => r.name === "@everyone");
@@ -212,27 +212,15 @@ const createChannel = async (params: CreateChannelParams) => {
   const createdChannel = await guild.channels.create(channelName, {
     type: "GUILD_TEXT",
   });
-  // TODO modify  and simplify below
-  if (guildId === "886314998131982336") {
-    const category = guild.channels.cache.find(
-      (c) => c.name.toUpperCase() === "GUILDS-3" && c.type === "GUILD_CATEGORY"
-    );
+  const category = guild.channels.cache.find(
+    (c) => c.name.toUpperCase() === "GUILDS-3" && c.type === "GUILD_CATEGORY"
+  );
 
-    await (
-      guild.channels.cache.find(
-        (c) => c.name === createdChannel.name && !c.isThread()
-      ) as GuildChannel
-    ).setParent(category.id);
-  }
-  // categoryName param is ID, TODO modify
-  if (categoryName) {
-    const category = guild.channels.cache.find(
-      (c) => c.id === categoryName && c.type === "GUILD_CATEGORY"
-    );
-    if (category) {
-      await createdChannel.setParent(category.id);
-    }
-  }
+  await (
+    guild.channels.cache.find(
+      (c) => c.name === createdChannel.name && !c.isThread()
+    ) as GuildChannel
+  ).setParent(category.id);
 
   createdChannel.permissionOverwrites.set([
     {
@@ -343,37 +331,43 @@ const isIn = async (guildId: string): Promise<boolean> => {
   }
 };
 
-const listChannels = async (
-  guildId: string
-): Promise<DiscordChannel[] | undefined> => {
-  logger.verbose(`listChannels params: ${guildId}`);
-  let guild: Guild;
+const listChannels = async (inviteCode: string) => {
+  logger.verbose(`listChannels params: ${inviteCode}`);
   try {
-    guild = await Main.Client.guilds.fetch(guildId);
+    const invite = await Main.Client.fetchInvite(inviteCode);
+    try {
+      const guild = await Main.Client.guilds.fetch(invite.guild.id);
+      const channels = guild?.channels.cache
+        .filter(
+          (c) =>
+            c.type === "GUILD_TEXT" &&
+            c
+              .permissionsFor(guild.roles.everyone)
+              .has(Permissions.FLAGS.VIEW_CHANNEL)
+        )
+        .map((c) => ({
+          id: c?.id,
+          name: c?.name,
+        }));
+
+      logger.verbose(`listChannels result: ${JSON.stringify(channels)}`);
+      return {
+        serverId: invite.guild.id,
+        channels,
+      };
+    } catch (error) {
+      return {
+        serverId: invite.guild.id,
+        channels: [],
+      };
+    }
   } catch (error) {
     if (error.code === 50001) {
-      logger.verbose(`listChannels: guild not found`);
-      throw new ActionError("Guild not found.", [guildId]);
+      logger.verbose(`listChannels: guild or inviteCode not found`);
+      throw new ActionError("guild or inviteCode not found.", [inviteCode]);
     }
     throw error;
   }
-
-  const channels = guild.channels.cache
-    .filter(
-      (c) =>
-        c.type === "GUILD_TEXT" &&
-        c
-          .permissionsFor(guild.roles.everyone)
-          .has(Permissions.FLAGS.VIEW_CHANNEL)
-    )
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      category: c.parent.name.toUpperCase(),
-    }));
-
-  logger.verbose(`listChannels result: ${JSON.stringify(channels)}`);
-  return channels;
 };
 
 const listAdministeredServers = async (userHash: string) => {
@@ -420,6 +414,19 @@ const getRole = async (guildId: string, roleId: string) => {
   return { serverName: guild.name, roleName: role.name };
 };
 
+const sendJoinButton = async (guildId: string, channelId: string) => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const channel = guild.channels.cache.find((c) => c.id === channelId);
+  const row = createJoinButton();
+
+  (<TextChannel>channel).send({
+    content: "Click the button to join guilds!",
+    components: [row],
+  });
+
+  return true;
+};
+
 export {
   manageRoles,
   generateInvite,
@@ -435,4 +442,6 @@ export {
   getGuild,
   getRole,
   deleteChannelAndRole,
+  deleteRole,
+  sendJoinButton,
 };

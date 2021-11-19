@@ -16,6 +16,8 @@ import {
   manageRoles,
   removeUser,
   updateRoleName,
+  sendJoinButton,
+  deleteRole,
 } from "./actions";
 import {
   CreateChannelParams,
@@ -152,6 +154,23 @@ const controller = {
       });
   },
 
+  deleteRole: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { guildId, roleId } = req.body;
+      const deleted = await deleteRole(guildId, roleId);
+      res.status(200).json(deleted);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
   isIn: (req: Request, res: Response): void => {
     const errors = validationResult(req);
 
@@ -177,8 +196,8 @@ const controller = {
       return;
     }
 
-    const { guildId } = req.params;
-    listChannels(guildId)
+    const { inviteCode } = req.params;
+    listChannels(inviteCode)
       .then((result) => res.status(200).json(result))
       .catch((error) => {
         const errorMsg = getErrorResult(error);
@@ -300,6 +319,26 @@ const controller = {
     try {
       const { guildId, roleId } = req.params;
       const result = await getRole(guildId, roleId);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  sendJoinButtonToChannel: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { guildId, channelId } = req.body;
+      const result = await sendJoinButton(guildId, channelId);
       res.status(200).json(result);
     } catch (error) {
       const errorMsg = getErrorResult(error);
