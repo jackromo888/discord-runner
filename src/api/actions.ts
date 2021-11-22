@@ -140,34 +140,24 @@ const generateInvite = async (
   guildId: string,
   inviteChannelId: string
 ): Promise<InviteResult> => {
-  logger.verbose(`generateInvite params: ${guildId}`);
+  logger.verbose(`generateInvite params: ${guildId} ${inviteChannelId}`);
   const cachedInvite = Main.inviteDataCache.get(guildId);
   logger.verbose(`cached invite code: ${cachedInvite?.code}`);
 
-  if (cachedInvite && cachedInvite.inviteChannelId === inviteChannelId) {
+  if (cachedInvite) {
     return {
       code: cachedInvite.code,
     };
   }
 
   const guild = await Main.Client.guilds.fetch(guildId);
-  const invite = await guild.invites.create(inviteChannelId, { maxAge: 0 });
+  const invite = guild.invites.cache.first();
   logger.verbose(`generated invite code: ${invite.code}`);
 
   Main.inviteDataCache.set(guildId, {
     code: invite.code,
-    inviteChannelId,
+    inviteChannelId: invite.channel.id,
   });
-
-  if (cachedInvite && cachedInvite.inviteChannelId !== inviteChannelId) {
-    logger.verbose(`deleting old invite: ${cachedInvite.code}`);
-    guild.invites.fetch().then((invites) => {
-      invites
-        .find((i) => i.code === cachedInvite.code)
-        ?.delete()
-        .catch(logger.error);
-    });
-  }
 
   return {
     code: invite.code,
