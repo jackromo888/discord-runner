@@ -163,14 +163,11 @@ const generateInvite = async (
       code: invite.code,
     };
   }
-  const newInvite = await guild.invites.create(
-    guild.channels.cache.first().id,
-    { maxAge: 0 }
-  );
+  const newInvite = await guild.invites.create(inviteChannelId, { maxAge: 0 });
   logger.verbose(`generated invite code: ${newInvite?.code}`);
   Main.inviteDataCache.set(guildId, {
-    code: invite.code,
-    inviteChannelId: newInvite.channel.id,
+    code: newInvite.code,
+    inviteChannelId,
   });
   return {
     code: newInvite.code,
