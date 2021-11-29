@@ -21,12 +21,13 @@ import {
   UserResult,
 } from "./types";
 import {
-  createJoinButton,
+  createJoinInteractionPayload,
   getErrorResult,
   getUserDiscordId,
   getUserResult,
 } from "../utils/utils";
 import config from "../config";
+import { getGuildsOfServer } from "../service";
 
 const DiscordServerNames: { [guildId: string]: [name: string] } = {};
 
@@ -252,11 +253,11 @@ const deleteRole = async (guildId: string, roleId: string): Promise<Role> => {
 
 const deleteChannel = async (
   guildId: string,
-  channelName: string
+  channelId: string
 ): Promise<Channel> => {
   const guild = await Main.Client.guilds.fetch(guildId);
   const deletedChannel = guild.channels.cache
-    .find((r) => r.name.toLowerCase() === channelName.toLowerCase())
+    .find((r) => r.id === channelId)
     .delete();
   return deletedChannel;
 };
@@ -265,11 +266,11 @@ const deleteChannelAndRole = async (
   params: DeleteChannelAndRoleParams
 ): Promise<boolean> => {
   logger.verbose(`deleteChannelAndRole params: ${JSON.stringify(params)}`);
-  const { guildId, roleId, channelName } = params;
+  const { guildId, roleId, channelId } = params;
 
   try {
     await deleteRole(guildId, roleId);
-    await deleteChannel(guildId, channelName);
+    await deleteChannel(guildId, channelId);
     return true;
   } catch (error) {
     logger.error(getErrorResult(error));
@@ -417,12 +418,10 @@ const getRole = async (guildId: string, roleId: string) => {
 const sendJoinButton = async (guildId: string, channelId: string) => {
   const guild = await Main.Client.guilds.fetch(guildId);
   const channel = guild.channels.cache.find((c) => c.id === channelId);
-  const row = createJoinButton();
+  const guilds = await getGuildsOfServer(guildId);
+  const payload = createJoinInteractionPayload(guilds[0]);
 
-  (<TextChannel>channel).send({
-    content: "Click the button to join guilds!",
-    components: [row],
-  });
+  (<TextChannel>channel).send(payload);
 
   return true;
 };
