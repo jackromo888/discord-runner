@@ -103,7 +103,7 @@ const createJoinInteractionPayload = (guild: {
 }) => {
   const button = new MessageButton({
     customId: "join-button",
-    label: `Join ${guild.name || "Guild"}`,
+    label: `Join ${guild?.name || "Guild"}`,
     emoji: "🔗",
     style: "PRIMARY",
   });
@@ -111,7 +111,7 @@ const createJoinInteractionPayload = (guild: {
   return {
     embeds: [
       new MessageEmbed({
-        title: guild.name || "Guild",
+        title: guild?.name || "Guild",
         url: `${config.guildUrl}/guild/${guild.urlName}`,
         description: guild.description,
         color: guild.themeColor as ColorResolvable,
