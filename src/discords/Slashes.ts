@@ -146,7 +146,7 @@ abstract class Slashes {
       interaction.reply("Use this command in a server to spawn a join button!");
       return;
     }
-    const guild = await getGuildsOfServer(interaction.guild.id)[0];
+    const guild = (await getGuildsOfServer(interaction.guild.id))[0];
     const payload = createJoinInteractionPayload(guild);
 
     await interaction.channel.send(payload);
