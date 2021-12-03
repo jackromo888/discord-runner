@@ -97,14 +97,14 @@ abstract class Slashes {
       `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
     );
 
-    interaction.reply({
+    await interaction.reply({
       content: "I'll update your accesses as soon as possible.",
       ephemeral: true,
     });
 
-    const message = await join(interaction.user.id, interaction.guild.id);
+    const result = await join(interaction.user.id, interaction.guild.id);
 
-    interaction.editReply(message);
+    await interaction.editReply(result.message);
   }
 
   @Slash("guilds")
@@ -141,13 +141,38 @@ abstract class Slashes {
   }
 
   @Slash("join-button")
-  async joinButton(interaction: CommandInteraction) {
+  async joinButton(
+    @SlashOption("messagetext", {
+      required: false,
+      description: "The text that will be shown in the embed message.",
+    })
+    messageText: string,
+    @SlashOption("buttontext", {
+      required: false,
+      description: "The text that will be shown on the button.",
+    })
+    buttonText: string,
+    interaction: CommandInteraction
+  ) {
     if (interaction.channel.type === "DM") {
       interaction.reply("Use this command in a server to spawn a join button!");
       return;
     }
+
     const guild = (await getGuildsOfServer(interaction.guild.id))[0];
-    const payload = createJoinInteractionPayload(guild);
+    if (!guild) {
+      await interaction.reply({
+        content: "There are no guilds in this server.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const payload = createJoinInteractionPayload(
+      guild,
+      messageText,
+      buttonText
+    );
 
     await interaction.channel.send(payload);
 

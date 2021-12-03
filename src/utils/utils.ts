@@ -11,6 +11,7 @@ import {
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import redisClient from "../database";
+import { getGuildsOfServer } from "../service";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -95,15 +96,19 @@ const getUserDiscordId = async (
 const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
-const createJoinInteractionPayload = (guild: {
-  name: string;
-  urlName: string;
-  description: string;
-  themeColor: string;
-}) => {
+const createJoinInteractionPayload = (
+  guild: {
+    name: string;
+    urlName: string;
+    description: string;
+    themeColor: string;
+  },
+  messageText: string,
+  buttonText: string
+) => {
   const button = new MessageButton({
     customId: "join-button",
-    label: `Join ${guild?.name || "Guild"}`,
+    label: buttonText || `Join ${guild?.name || "Guild"}`,
     emoji: "🔗",
     style: "PRIMARY",
   });
@@ -116,12 +121,38 @@ const createJoinInteractionPayload = (guild: {
         description: guild.description,
         color: guild.themeColor as ColorResolvable,
         footer: {
-          text: "Click the button to get access for the desired Guild(s)!",
+          text:
+            messageText ||
+            "Click the button to get access for the desired Guild(s)!",
         },
       }),
     ],
     components: [row],
   };
+};
+
+const getJoinReplyMessage = async (
+  channelIds: string[],
+  guildId: string,
+  userId: string
+) => {
+  let message: string;
+  if (channelIds && channelIds.length !== 0) {
+    if (channelIds.length === 1) {
+      message = `✅ You got access to this channel: <#${channelIds[0]}>`;
+    } else {
+      message = `✅ You got access to these channels:\n${channelIds
+        .map((c: string) => `<#${c}>`)
+        .join("\n")}`;
+    }
+  } else if (channelIds) {
+    message = "❌ You don't have access to any guilds in this server.";
+  } else {
+    const guildsOfServer = await getGuildsOfServer(guildId);
+    message = `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`;
+  }
+
+  return message;
 };
 
 export {
@@ -133,4 +164,5 @@ export {
   getUserDiscordId,
   isNumber,
   createJoinInteractionPayload,
+  getJoinReplyMessage,
 };
