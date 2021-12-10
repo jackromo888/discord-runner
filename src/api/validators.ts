@@ -1,10 +1,10 @@
 import { body, param } from "express-validator";
 
 const getIdValidatorForParam = (fieldName: string) =>
-  param(fieldName).isString().trim().isLength({ min: 18, max: 18 }).isNumeric();
+  param(fieldName).isString().trim().isLength({ min: 17, max: 18 }).isNumeric();
 
 const getIdValidatorForBody = (fieldName: string) =>
-  body(fieldName).isString().trim().isLength({ min: 18, max: 18 }).isNumeric();
+  body(fieldName).isString().trim().isLength({ min: 17, max: 18 }).isNumeric();
 
 const getHashValidatorForParam = (fieldName: string) =>
   param(fieldName).isString().trim().isLength({ min: 44, max: 64 });
