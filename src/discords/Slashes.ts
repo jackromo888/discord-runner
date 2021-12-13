@@ -163,6 +163,13 @@ abstract class Slashes {
       return;
     }
 
+    if (interaction.guild.id === "886314998131982336") {
+      interaction.reply(
+        "You can't use this command in the Official Guild Server!"
+      );
+      return;
+    }
+
     const guild = (await getGuildsOfServer(interaction.guild.id))[0];
     if (!guild) {
       await interaction.reply({
