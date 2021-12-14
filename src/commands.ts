@@ -20,32 +20,12 @@ const status = async (user: User, userHash: string) => {
         const member = guild.members.cache.get(user.id);
         logger.verbose(`${JSON.stringify(member)}`);
         const roleManager = await guild.roles.fetch();
-        const rolesToAdd = roleManager.filter((role) =>
-          c.accessedRoles?.includes(role.id)
-        );
-        const rolesToRemove = roleManager.filter((role) =>
-          c.notAccessedRoles?.includes(role.id)
+        const roleToAdd = roleManager.filter(
+          (role) => c.accessedRole === role.id
         );
 
-        if (rolesToAdd?.size !== c.accessedRoles.length) {
-          const missingRoleIds = c.accessedRoles.filter(
-            (roleId) => !rolesToAdd.map((role) => role.id).includes(roleId)
-          );
-          throw new Error(`missing role(s): ${missingRoleIds}`);
-        }
-        if (rolesToRemove?.size !== c.notAccessedRoles.length) {
-          const missingRoleIds = c.notAccessedRoles.filter(
-            (roleId) => !rolesToRemove.map((role) => role.id).includes(roleId)
-          );
-          throw new Error(`missing role(s): ${missingRoleIds}`);
-        }
-
-        if (rolesToAdd?.size) {
-          await member.roles.add(rolesToAdd);
-        }
-
-        if (rolesToRemove?.size) {
-          await member.roles.remove(rolesToRemove);
+        if (roleToAdd) {
+          await member.roles.add(roleToAdd);
         }
       })
     );
@@ -58,9 +38,7 @@ const status = async (user: User, userHash: string) => {
       color: `#${config.embedColor}`,
     });
     levelInfo.forEach((c) => {
-      if (c.levels.length) {
-        embed.addField(c.name, c.levels.join(", "));
-      }
+      embed.addField(c.name, c.name.join(", "));
     });
     return embed;
   }
