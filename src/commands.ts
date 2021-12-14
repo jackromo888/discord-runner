@@ -38,7 +38,7 @@ const status = async (user: User, userHash: string) => {
       color: `#${config.embedColor}`,
     });
     levelInfo.forEach((c) => {
-      embed.addField(c.name, c.name.join(", "));
+      embed.addField("Guild", c.name);
     });
     return embed;
   }
