@@ -17,7 +17,7 @@ jobs:
 
   test:
     name: Test container build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       
@@ -53,7 +53,7 @@ jobs:
   push:
     name: Build and publish the conatiner image
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'push' || github.event.pull_request.merged == true
     steps:
       - uses: actions/checkout@v2
