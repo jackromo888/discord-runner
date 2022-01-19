@@ -76,8 +76,8 @@ abstract class SimpleCommands {
       `${command.prefix}join command was used by ${command.message.author.username}#${command.message.author.discriminator}`
     );
 
-    const guild = (await getGuildsOfServer(command.message.guildId))[0];
-    const payload = createJoinInteractionPayload(guild, null, null);
+    const guild = await getGuildsOfServer(command.message.guildId);
+    const payload = createJoinInteractionPayload(guild[0], null, null);
     await command.message.reply(payload);
   }
 }

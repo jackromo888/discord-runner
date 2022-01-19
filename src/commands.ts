@@ -15,7 +15,7 @@ const status = async (user: User, userHash: string) => {
   const levelInfo = await statusUpdate(userHash);
   if (levelInfo) {
     await Promise.all(
-      levelInfo.map(async (c) => {
+      levelInfo?.map(async (c) => {
         const guild = await Main.Client.guilds.fetch(c.discordServerId);
         const member = guild.members.cache.get(user.id);
         logger.verbose(`${JSON.stringify(member)}`);
@@ -78,7 +78,7 @@ const guilds = async (serverId: string): Promise<MessageEmbed[]> => {
     return null;
   }
 
-  const pages: MessageEmbed[] = guildsResult.map(
+  const pages: MessageEmbed[] = guildsResult?.map(
     (g, i) =>
       new MessageEmbed({
         title: g.name,
@@ -90,7 +90,7 @@ const guilds = async (serverId: string): Promise<MessageEmbed[]> => {
           {
             name: "Requirements",
             value: g.requirements
-              .map((r) => {
+              ?.map((r) => {
                 let minmax;
                 try {
                   minmax = JSON.parse(r?.value?.toString());

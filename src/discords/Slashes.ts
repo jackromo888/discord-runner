@@ -170,7 +170,7 @@ abstract class Slashes {
       return;
     }
 
-    const guild = (await getGuildsOfServer(interaction.guild.id))[0];
+    const guild = await getGuildsOfServer(interaction.guild.id);
     if (!guild) {
       await interaction.reply({
         content: "There are no guilds in this server.",
@@ -180,7 +180,7 @@ abstract class Slashes {
     }
 
     const payload = createJoinInteractionPayload(
-      guild,
+      guild[0],
       messageText,
       buttonText
     );

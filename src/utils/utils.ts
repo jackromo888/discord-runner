@@ -6,7 +6,6 @@ import {
   MessageButton,
   MessageActionRow,
   MessageEmbed,
-  ColorResolvable,
   Guild,
   Collection,
   GuildChannel,
@@ -123,7 +122,7 @@ const createJoinInteractionPayload = (
         title: guild?.name || "Guild",
         url: `${config.guildUrl}/${guild.urlName}`,
         description: guild.description,
-        color: guild.themeColor as ColorResolvable,
+        color: "DARKER_GREY",
         footer: {
           text:
             messageText ||
