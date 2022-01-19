@@ -87,75 +87,75 @@ const guilds = async (serverId: string): Promise<MessageEmbed[]> => {
         color: g.themeColor as ColorResolvable,
         footer: { text: `Page ${i + 1} of ${guildsResult.length}` },
         fields: [
-          {
-            name: "Requirements",
-            value: g.requirements
-              ?.map((r) => {
-                let minmax;
-                try {
-                  minmax = JSON.parse(r?.value?.toString());
-                } catch (_) {
-                  minmax = null;
-                }
+          // {
+          //   name: "Requirements",
+          //   value: g.requirements
+          //     ?.map((r) => {
+          //       let minmax;
+          //       try {
+          //         minmax = JSON.parse(r?.value?.toString());
+          //       } catch (_) {
+          //         minmax = null;
+          //       }
 
-                switch (r.type) {
-                  case "ERC721":
-                    if (r.key) {
-                      return `Own a(n) ${
-                        r.symbol === "-" &&
-                        r.address?.toLowerCase() ===
-                          "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
-                          ? "ENS"
-                          : r.name
-                      } ${
-                        r.value && r.key
-                          ? `with ${
-                              Array.isArray(minmax) &&
-                              minmax.length === 2 &&
-                              minmax.every((x) => typeof x === "number")
-                                ? `${minmax[0]}-${minmax[1]}`
-                                : r.value
-                            } ${r.key}`
-                          : ""
-                      }`;
-                    }
-                    return `Own a(n) [${
-                      r.symbol === "-" &&
-                      r.address?.toLowerCase() ===
-                        "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
-                        ? "ENS"
-                        : r.name
-                    }](https://etherscan.io/token/${r.address})`;
+          //       switch (r.type) {
+          //         case "ERC721":
+          //           if (r.key) {
+          //             return `Own a(n) ${
+          //               r.symbol === "-" &&
+          //               r.address?.toLowerCase() ===
+          //                 "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
+          //                 ? "ENS"
+          //                 : r.name
+          //             } ${
+          //               r.value && r.key
+          //                 ? `with ${
+          //                     Array.isArray(minmax) &&
+          //                     minmax.length === 2 &&
+          //                     minmax.every((x) => typeof x === "number")
+          //                       ? `${minmax[0]}-${minmax[1]}`
+          //                       : r.value
+          //                   } ${r.key}`
+          //                 : ""
+          //             }`;
+          //           }
+          //           return `Own a(n) [${
+          //             r.symbol === "-" &&
+          //             r.address?.toLowerCase() ===
+          //               "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85"
+          //               ? "ENS"
+          //               : r.name
+          //           }](https://etherscan.io/token/${r.address})`;
 
-                  case "POAP":
-                    return `Own the ${r.value} POAP`;
+          //         case "POAP":
+          //           return `Own the ${r.value} POAP`;
 
-                  case "ERC20":
-                  case "ETHER":
-                    return `Hold ${
-                      +r.value > 0 ? `at least ${r.value}` : "any amount of"
-                    } ${
-                      r.type === "ETHER"
-                        ? r.symbol
-                        : `[${r.symbol}](https://etherscan.io/token/${r.address})`
-                    }`;
+          //         case "ERC20":
+          //         case "ETHER":
+          //           return `Hold ${
+          //             +r.value > 0 ? `at least ${r.value}` : "any amount of"
+          //           } ${
+          //             r.type === "ETHER"
+          //               ? r.symbol
+          //               : `[${r.symbol}](https://etherscan.io/token/${r.address})`
+          //           }`;
 
-                  case "SNAPSHOT":
-                    return `[${
-                      r.key.charAt(0).toUpperCase() + r.key.slice(1)
-                    }](https://github.com/snapshot-labs/snapshot-strategies/tree/master/src/strategies/${
-                      r.key
-                    }) snapshot strategy`;
+          //         case "SNAPSHOT":
+          //           return `[${
+          //             r.key.charAt(0).toUpperCase() + r.key.slice(1)
+          //           }](https://github.com/snapshot-labs/snapshot-strategies/tree/master/src/strategies/${
+          //             r.key
+          //           }) snapshot strategy`;
 
-                  case "WHITELIST":
-                    return "Be included in whitelist";
+          //         case "WHITELIST":
+          //           return "Be included in whitelist";
 
-                  default:
-                    return "-";
-                }
-              })
-              .join(`\n${g.logic}\n`),
-          },
+          //         default:
+          //           return "-";
+          //       }
+          //     })
+          //     .join(`\n${g.logic}\n`),
+          // },
           {
             name: "Members",
             value: g.members?.length.toString() || "0",
