@@ -71,16 +71,16 @@ const getGuildsOfServer = async (serverId: string) => {
   }
 };
 
-const guildStatusUpdate = async (roleId: number): Promise<boolean> => {
-  logger.verbose(`RoleStatusUpdate: ${roleId}`);
+const guildStatusUpdate = async (guildId: number): Promise<boolean> => {
+  logger.verbose(`guildStatusUpdate: ${guildId}`);
   try {
     const response = await axios.post(`${API_BASE_URL}/role/statusUpdate`, {
-      roleId,
+      guildId,
     });
     logAxiosResponse(response);
     return response.data;
   } catch (error) {
-    logger.verbose("RoleStatusUpdate error");
+    logger.verbose("guildStatusUpdate error");
     logBackendError(error);
     return undefined;
   }
