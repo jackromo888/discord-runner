@@ -146,7 +146,11 @@ const manageRoles = async (
     }
 
     if (isUpgrade && !redisValue) {
-      await notifyAccessedChannels(updatedMember, rolesToManage, message);
+      try {
+        await notifyAccessedChannels(updatedMember, rolesToManage, message);
+      } catch (error) {
+        logger.error(error);
+      }
     }
 
     return getUserResult(updatedMember);
