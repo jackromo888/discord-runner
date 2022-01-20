@@ -17,7 +17,7 @@ const status = async (user: User, userHash: string) => {
     await Promise.all(
       levelInfo?.map(async (c) => {
         const guild = await Main.Client.guilds.fetch(c.discordServerId);
-        const member = guild.members.cache.get(user.id);
+        const member = await guild.members.fetch(user.id);
         logger.verbose(`${JSON.stringify(member)}`);
         const roleManager = await guild.roles.fetch();
         const roleToAdd = roleManager.filter(
