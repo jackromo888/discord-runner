@@ -21,7 +21,7 @@ const status = async (user: User, userHash: string) => {
         logger.verbose(`${JSON.stringify(member)}`);
         const roleManager = await guild.roles.fetch();
         const roleToAdd = roleManager.filter(
-          (role) => c.accessedRole === role.id
+          (role) => c.accessedRoles === role.id
         );
 
         if (roleToAdd) {
