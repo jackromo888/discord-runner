@@ -58,11 +58,17 @@ const notifyAccessedChannels = async (
     return acc;
   }, new Map());
 
-  const multipleChannels = accessedChannels.size > 1;
+  let message: string;
+  if (accessedChannels.size === 0) {
+    message = `You got access to the \`${guildName}\` guild in \`${member.guild.name}\`.`;
+  } else {
+    message = `You got access to ${
+      accessedChannels.size > 1 ? "these channels" : "this channel"
+    } with the \`${guildName}\` guild in \`${member.guild.name}\`:`;
+  }
+
   const embed = new MessageEmbed({
-    title: `You got access to ${
-      multipleChannels ? "these channels" : "this channel"
-    } with the \`${guildName}\` guild in \`${member.guild.name}\`:`,
+    title: message,
     color: `#${config.embedColor}`,
   });
 
