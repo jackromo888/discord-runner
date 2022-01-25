@@ -149,6 +149,21 @@ const manageRoles = async (
       updatedMember = await member.roles.add(rolesToManage);
     } else {
       updatedMember = await member.roles.remove(rolesToManage);
+      const embed = new MessageEmbed({
+        title: `You no longer have access to the \`${message}\` guild in \`${guild.name}\`, because you have not fulfilled the requirements or just left it.`,
+        color: `#${config.embedColor}`,
+      });
+      try {
+        await updatedMember.send({ embeds: [embed] });
+      } catch (error) {
+        if (error?.code === 50007) {
+          logger.verbose(
+            `Cannot send messages to ${updatedMember.user.username}#${updatedMember.user.discriminator}`
+          );
+        } else {
+          logger.error(JSON.stringify(error));
+        }
+      }
     }
 
     if (isUpgrade && !redisValue) {
