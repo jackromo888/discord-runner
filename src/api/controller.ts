@@ -355,8 +355,8 @@ const controller = {
       return;
     }
     try {
-      const { guildId, userId } = req.params;
-      const result = await getServerOwner(guildId, userId);
+      const { guildId, userHash } = req.body;
+      const result = await getServerOwner(guildId, userHash);
       res.status(200).json(result);
     } catch (error) {
       const errorMsg = getErrorResult(error);

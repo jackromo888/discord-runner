@@ -132,10 +132,10 @@ const createRouter = () => {
     controller.getCategories
   );
 
-  router.get(
-    "/owner/:guildId/:userId",
-    validators.paramDiscordId("guildId"),
-    validators.paramDiscordId("userId"),
+  router.post(
+    "/owner/",
+    validators.bodyDiscordId("guildId"),
+    validators.bodyUserHash("userHash"),
     controller.getServerOwner
   );
 

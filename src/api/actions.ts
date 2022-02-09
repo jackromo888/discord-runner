@@ -469,8 +469,9 @@ const sendJoinButton = async (guildId: string, channelId: string) => {
   return true;
 };
 
-const getServerOwner = async (guildId: string, userId: string) => {
+const getServerOwner = async (guildId: string, userHash: string) => {
   const guild = await Main.Client.guilds.fetch(guildId);
+  const userId = await getUserDiscordId(userHash);
   return guild.ownerId === userId;
 };
 
