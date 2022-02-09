@@ -109,22 +109,18 @@ const manageRoles = async (
 
   const roleManager = await guild.roles.fetch();
 
-  const roleIds = [roleManager.find((r) => r.id === roleId).id];
+  const foundRole = roleManager.find((r) => r.id === roleId);
+  const rolesToManage = roleManager.filter((role) => role.id === roleId);
 
-  const rolesToManage = roleManager.filter((role) => roleIds.includes(role.id));
-
-  if (rolesToManage.size !== roleIds.length) {
-    const missingRoleIds = roleIds.filter(
-      (id) => !rolesToManage.map((role) => role.id).includes(id)
-    );
-    throw new ActionError("missing role(s)", missingRoleIds);
+  if (foundRole) {
+    throw new ActionError(`missing role ${roleId}`, []);
   }
 
   const redisKey = `joining:${member.guild.id}:${member.id}`;
   const redisValue: string = await redisClient.getAsync(redisKey);
   if (redisValue) {
     const messageText = await getJoinReplyMessage(
-      roleIds,
+      [roleId],
       member.guild,
       member.id
     );
@@ -141,14 +137,14 @@ const manageRoles = async (
   }
 
   if (
-    (isUpgrade && roleIds.some((id) => !member.roles.cache.has(id))) ||
-    (!isUpgrade && roleIds.some((id) => member.roles.cache.has(id)))
+    (isUpgrade && !member.roles.cache.has(roleId)) ||
+    (!isUpgrade && member.roles.cache.has(roleId))
   ) {
     let updatedMember: GuildMember;
     if (isUpgrade) {
-      updatedMember = await member.roles.add(rolesToManage);
+      updatedMember = await member.roles.add(roleId);
     } else {
-      updatedMember = await member.roles.remove(rolesToManage);
+      updatedMember = await member.roles.remove(roleId);
       const embed = new MessageEmbed({
         title: `You no longer have access to the \`${message}\` guild in \`${guild.name}\`, because you have not fulfilled the requirements or just left it.`,
         color: `#${config.embedColor}`,
