@@ -132,6 +132,13 @@ const createRouter = () => {
     controller.getCategories
   );
 
+  router.get(
+    "/owner/:guildId/:userId",
+    validators.bodyDiscordId("guildId"),
+    validators.paramDiscordId("userId"),
+    controller.getServerOwner
+  );
+
   return router;
 };
 

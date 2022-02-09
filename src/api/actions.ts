@@ -469,6 +469,11 @@ const sendJoinButton = async (guildId: string, channelId: string) => {
   return true;
 };
 
+const getServerOwner = async (guildId: string, userId: string) => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  return guild.ownerId === userId;
+};
+
 export {
   manageRoles,
   generateInvite,
@@ -486,4 +491,5 @@ export {
   deleteChannelAndRole,
   deleteRole,
   sendJoinButton,
+  getServerOwner,
 };
