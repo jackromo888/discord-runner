@@ -134,7 +134,7 @@ const createRouter = () => {
 
   router.get(
     "/owner/:guildId/:userId",
-    validators.bodyDiscordId("guildId"),
+    validators.paramDiscordId("guildId"),
     validators.paramDiscordId("userId"),
     controller.getServerOwner
   );
