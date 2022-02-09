@@ -20,12 +20,13 @@ const status = async (user: User, userHash: string) => {
         const member = await guild.members.fetch(user.id);
         logger.verbose(`${JSON.stringify(member)}`);
         const roleManager = await guild.roles.fetch();
-        const roleToAdd = roleManager.filter(
+        const roleToAdd = roleManager.find(
           (role) => c.accessedRoles === role.id
         );
 
         if (roleToAdd) {
-          await member.roles.add(roleToAdd);
+          await member.roles.add(c.accessedRoles);
+          logger.verbose(`${JSON.stringify(roleToAdd)}`);
         }
       })
     );
