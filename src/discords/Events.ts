@@ -32,7 +32,7 @@ abstract class Events {
       title: "I'm sorry, but I couldn't interpret your request.",
       color: `#${config.embedColor}`,
       description:
-        "You can find more information on [agora.xyz](https://agora.xyz) or on [alpha.guild.xyz](https://alpha.guild.xyz).",
+        "You can find more information on [agora.xyz](https://agora.xyz) or on [guild.xyz](https://guild.xyz).",
     });
     message.channel.send({ embeds: [embed] }).catch(logger.error);
   }

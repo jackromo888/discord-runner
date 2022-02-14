@@ -48,7 +48,7 @@ const status = async (user: User, userHash: string) => {
     title: "It seems you haven't joined any communities yet.",
     color: `#${config.embedColor}`,
     description:
-      "You can find more information on [agora.xyz](https://agora.xyz) or on [alpha.guild.xyz](https://alpha.guild.xyz).",
+      "You can find more information on [agora.xyz](https://agora.xyz) or on [guild.xyz](https://guild.xyz).",
   });
 };
 
