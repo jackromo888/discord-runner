@@ -1,5 +1,4 @@
 import { AxiosResponse } from "axios";
-import { createHmac } from "crypto";
 import {
   GuildMember,
   DiscordAPIError,
@@ -10,10 +9,10 @@ import {
   Collection,
   GuildChannel,
   Permissions,
+  MessageOptions,
 } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
-import redisClient from "../database";
 import { getGuildsOfServer } from "../service";
 import logger from "./logger";
 
@@ -64,11 +63,11 @@ const logBackendError = (error) => {
     error.response?.data?.errors?.length > 0 &&
     error.response?.data?.errors[0]?.msg
   ) {
-    logger.error(error.response.data.errors[0].msg);
+    logger.verbose(error.response.data.errors[0].msg);
   } else if (error.response?.data) {
-    logger.error(JSON.stringify(error.response.data));
+    logger.verbose(JSON.stringify(error.response.data));
   } else {
-    logger.error(JSON.stringify(error));
+    logger.verbose(JSON.stringify(error));
   }
 };
 
@@ -76,24 +75,6 @@ const logAxiosResponse = (res: AxiosResponse<any>) => {
   logger.verbose(
     `${res.status} ${res.statusText} data:${JSON.stringify(res.data)}`
   );
-};
-
-const getUserHash = async (platformUserId: string): Promise<string> => {
-  const hmac = createHmac(config.hmacAlgorithm, config.hmacSecret);
-  hmac.update(platformUserId);
-  const hashedId = hmac.digest("base64");
-  const user = await redisClient.getAsync(hashedId);
-  if (!user) {
-    redisClient.client.SET(hashedId, platformUserId);
-  }
-  return hashedId;
-};
-
-const getUserDiscordId = async (
-  userHash: string
-): Promise<string | undefined> => {
-  const platformUserId = await redisClient.getAsync(userHash);
-  return platformUserId || undefined;
 };
 
 const isNumber = (value: any) =>
@@ -122,11 +103,11 @@ const createJoinInteractionPayload = (
         title: guild?.name || "Guild",
         url: `${config.guildUrl}/${guild.urlName}`,
         description: guild.description,
-        color: "DARKER_GREY",
+        color: `#${config.embedColor}`,
         footer: {
           text:
             messageText ||
-            "Click the button to get access for the desired Guild(s)!",
+            "Click the button to get access for the desired Role(s)!",
         },
       }),
     ],
@@ -150,8 +131,8 @@ const getJoinReplyMessage = async (
   roleIds: string[],
   guild: Guild,
   userId: string
-) => {
-  let message: string;
+): Promise<MessageOptions> => {
+  let message: MessageOptions;
   if (roleIds && roleIds.length !== 0) {
     const channelIds = getAccessedChannelsByRoles(guild, roleIds).map(
       (c) => c.id
@@ -161,21 +142,39 @@ const getJoinReplyMessage = async (
       const roleNames = guild.roles.cache
         .filter((role) => roleIds.some((roleId) => roleId === role.id))
         .map((role) => role.name);
-      message = `✅ You got the \`${roleNames.join(", ")}\` role${
-        roleNames.length > 1 ? "s" : ""
-      }.`;
+      message = {
+        content: `✅ You got the \`${roleNames.join(", ")}\` role${
+          roleNames.length > 1 ? "s" : ""
+        }.`,
+      };
     } else if (channelIds.length === 1) {
-      message = `✅ You got access to this channel: <#${channelIds[0]}>`;
+      message = {
+        content: `✅ You got access to this channel: <#${channelIds[0]}>`,
+      };
     } else {
-      message = `✅ You got access to these channels:\n${channelIds
-        .map((c: string) => `<#${c}>`)
-        .join("\n")}`;
+      message = {
+        content: `✅ You got access to these channels:\n${channelIds
+          .map((c: string) => `<#${c}>`)
+          .join("\n")}`,
+      };
     }
   } else if (roleIds) {
-    message = "❌ You don't have access to any guilds in this server.";
+    message = {
+      content: "❌ You don't have access to any guilds in this server.",
+    };
   } else {
     const guildsOfServer = await getGuildsOfServer(guild.id);
-    message = `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`;
+
+    const button = new MessageButton({
+      label: "Join",
+      style: "LINK",
+      url: `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`,
+    });
+
+    return {
+      components: [new MessageActionRow({ components: [button] })],
+      content: `This is **your** join link. Do **NOT** share it with anyone!`,
+    };
   }
 
   return message;
@@ -186,8 +185,6 @@ export {
   getErrorResult,
   logBackendError,
   logAxiosResponse,
-  getUserHash,
-  getUserDiscordId,
   isNumber,
   createJoinInteractionPayload,
   getJoinReplyMessage,

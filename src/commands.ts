@@ -1,4 +1,10 @@
-import { ColorResolvable, Guild, MessageEmbed, User } from "discord.js";
+import {
+  ColorResolvable,
+  Guild,
+  MessageEmbed,
+  MessageOptions,
+  User,
+} from "discord.js";
 import config from "./config";
 import redisClient from "./database";
 import Main from "./Main";
@@ -11,9 +17,9 @@ const ping = (createdTimestamp: number) =>
     Main.Client.ws.ping
   )}ms`;
 
-const status = async (user: User, userHash: string) => {
-  const levelInfo = await statusUpdate(userHash);
-  if (levelInfo) {
+const status = async (user: User) => {
+  const levelInfo = await statusUpdate(user.id);
+  if (levelInfo && levelInfo.length > 0) {
     await Promise.all(
       levelInfo?.map(async (c) => {
         const guild = await Main.Client.guilds.fetch(c.discordServerId);
@@ -41,6 +47,7 @@ const status = async (user: User, userHash: string) => {
     levelInfo.forEach((c) => {
       embed.addField("Guild", c.name);
     });
+
     return embed;
   }
 
@@ -56,7 +63,7 @@ const join = async (
   userId: string,
   guild: Guild,
   interactionToken: string
-): Promise<string> => {
+): Promise<MessageOptions> => {
   const roleIds = await userJoined(userId, guild.id);
 
   const message = await getJoinReplyMessage(roleIds, guild, userId);

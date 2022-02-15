@@ -1,7 +1,6 @@
 import {
   GuildMember,
   PartialGuildMember,
-  Collection,
   Role,
   Permissions,
   GuildChannel,
@@ -26,7 +25,6 @@ import {
   getAccessedChannelsByRoles,
   getErrorResult,
   getJoinReplyMessage,
-  getUserDiscordId,
   getUserResult,
 } from "../utils/utils";
 import config from "../config";
@@ -37,15 +35,11 @@ const DiscordServerNames: { [guildId: string]: [name: string] } = {};
 
 const notifyAccessedChannels = async (
   member: GuildMember | PartialGuildMember,
-  addedRoles: Collection<string, Role>,
+  roleId: string,
   guildName: string
 ) => {
-  const accessedRoleIds = addedRoles.map((r) => r.id);
+  const accessedChannels = getAccessedChannelsByRoles(member.guild, [roleId]);
 
-  const accessedChannels = getAccessedChannelsByRoles(
-    member.guild,
-    accessedRoleIds
-  );
   const sortedChannels = accessedChannels.reduce<
     Map<string | null, GuildChannel[]>
   >((acc, value) => {
@@ -97,34 +91,17 @@ const manageRoles = async (
   isUpgrade: boolean
 ): Promise<UserResult> => {
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}, ${isUpgrade}`);
-  const { userHash, guildId, roleId, message } = params;
+  const { platformUserId: userId, guildId, roleId, message } = params;
 
   const guild = await Main.Client.guilds.fetch(guildId);
-  const discordId = await getUserDiscordId(userHash);
 
-  if (!discordId)
-    throw new Error(`PlatformUserId doesn't exists for ${userHash} userHash.`);
-
-  const member = await guild.members.fetch(discordId);
-
-  const roleManager = await guild.roles.fetch();
-
-  const roleIds = [roleManager.find((r) => r.id === roleId).id];
-
-  const rolesToManage = roleManager.filter((role) => roleIds.includes(role.id));
-
-  if (rolesToManage.size !== roleIds.length) {
-    const missingRoleIds = roleIds.filter(
-      (id) => !rolesToManage.map((role) => role.id).includes(id)
-    );
-    throw new ActionError("missing role(s)", missingRoleIds);
-  }
+  const member = await guild.members.fetch(userId);
 
   const redisKey = `joining:${member.guild.id}:${member.id}`;
   const redisValue: string = await redisClient.getAsync(redisKey);
   if (redisValue) {
     const messageText = await getJoinReplyMessage(
-      roleIds,
+      [roleId],
       member.guild,
       member.id
     );
@@ -140,15 +117,14 @@ const manageRoles = async (
     }
   }
 
-  if (
-    (isUpgrade && roleIds.some((id) => !member.roles.cache.has(id))) ||
-    (!isUpgrade && roleIds.some((id) => member.roles.cache.has(id)))
-  ) {
+  const hasRole = member.roles.cache.has(roleId);
+
+  if ((isUpgrade && !hasRole) || (!isUpgrade && hasRole)) {
     let updatedMember: GuildMember;
     if (isUpgrade) {
-      updatedMember = await member.roles.add(rolesToManage);
+      updatedMember = await member.roles.add(roleId);
     } else {
-      updatedMember = await member.roles.remove(rolesToManage);
+      updatedMember = await member.roles.remove(roleId);
       const embed = new MessageEmbed({
         title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements or just left it.`,
         color: `#${config.embedColor}`,
@@ -168,7 +144,7 @@ const manageRoles = async (
 
     if (isUpgrade && !redisValue) {
       try {
-        await notifyAccessedChannels(updatedMember, rolesToManage, message);
+        await notifyAccessedChannels(updatedMember, roleId, message);
       } catch (error) {
         logger.error(error);
       }
@@ -220,27 +196,19 @@ const generateInvite = async (
 
 const isMember = async (
   guildId: string,
-  userHash: string
+  userId: string
 ): Promise<UserResult> => {
   const guild = await Main.Client.guilds.fetch(guildId);
-  const discordId = await getUserDiscordId(userHash);
 
-  if (!discordId)
-    throw new Error(`PlatformUserId doesn't exists for ${userHash} userHash.`);
-
-  const member = await guild.members.fetch(discordId);
+  const member = await guild.members.fetch(userId);
 
   return getUserResult(member);
 };
 
-const removeUser = async (guildId: string, userHash: string): Promise<void> => {
+const removeUser = async (guildId: string, userId: string): Promise<void> => {
   const guild = await Main.Client.guilds.fetch(guildId);
-  const discordId = await getUserDiscordId(userHash);
 
-  if (!discordId)
-    throw new Error(`PlatformUserId doesn't exists for ${userHash} userHash.`);
-
-  const member = await guild.members.fetch(discordId);
+  const member = await guild.members.fetch(userId);
 
   await member.kick();
 };
@@ -414,16 +382,12 @@ const listChannels = async (inviteCode: string) => {
   }
 };
 
-const listAdministeredServers = async (userHash: string) => {
-  logger.verbose(`listAdministeredServers params: ${userHash}`);
-  const discordId = await getUserDiscordId(userHash);
-
-  if (!discordId)
-    throw new Error(`PlatformUserId doesn't exists for ${userHash} userHash.`);
+const listAdministeredServers = async (userId: string) => {
+  logger.verbose(`listAdministeredServers params: ${userId}`);
 
   const administeredServers = Main.Client.guilds.cache
     .filter((g) =>
-      g.members.cache.get(discordId)?.permissions.has("ADMINISTRATOR")
+      g.members.cache.get(userId)?.permissions.has("ADMINISTRATOR")
     )
     .map((g) => ({ name: g.name, id: g.id }));
 
@@ -469,9 +433,8 @@ const sendJoinButton = async (guildId: string, channelId: string) => {
   return true;
 };
 
-const getServerOwner = async (guildId: string, userHash: string) => {
+const getServerOwner = async (guildId: string, userId: string) => {
   const guild = await Main.Client.guilds.fetch(guildId);
-  const userId = await getUserDiscordId(userHash);
   return guild.ownerId === userId;
 };
 
