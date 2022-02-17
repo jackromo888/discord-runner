@@ -347,8 +347,10 @@ const listChannels = async (inviteCode: string) => {
   logger.verbose(`listChannels params: ${inviteCode}`);
   try {
     const invite = await Main.Client.fetchInvite(inviteCode);
+    logger.verbose(`${JSON.stringify(invite)}`);
     try {
       const guild = await Main.Client.guilds.fetch(invite.guild.id);
+      logger.verbose(`${JSON.stringify(guild)}`);
       const channels = guild?.channels.cache
         .filter(
           (c) =>
