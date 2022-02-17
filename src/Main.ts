@@ -29,6 +29,7 @@ class Main {
       ],
       classes: [`${__dirname}/discords/*.{js,ts}`],
       partials: ["CHANNEL"],
+      retryLimit: Infinity,
     });
 
     this._client.on("ready", async () => {
