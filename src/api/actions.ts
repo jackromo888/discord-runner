@@ -28,7 +28,7 @@ import {
   getUserResult,
 } from "../utils/utils";
 import config from "../config";
-import { getGuildsOfServer, getInviteByApi } from "../service";
+import { getGuildsOfServer } from "../service";
 import redisClient from "../database";
 
 const DiscordServerNames: { [guildId: string]: [name: string] } = {};
@@ -346,7 +346,7 @@ const isIn = async (guildId: string): Promise<boolean> => {
 const listChannels = async (inviteCode: string) => {
   logger.verbose(`listChannels params: ${inviteCode}`);
   try {
-    const invite = await getInviteByApi(inviteCode);
+    const invite = await Main.Client.fetchInvite(inviteCode);
     logger.verbose(`${JSON.stringify(invite)}`);
     try {
       const guild = await Main.Client.guilds.fetch(invite.guild.id);

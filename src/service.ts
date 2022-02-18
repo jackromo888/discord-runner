@@ -69,22 +69,6 @@ const getGuildsOfServer = async (serverId: string) => {
   }
 };
 
-const getInviteByApi = async (inviteCode: string) => {
-  logger.verbose(`getInviteByApi params: ${inviteCode}`);
-  try {
-    const response = await axios.get(
-      `https://discord.com/api/invites/${inviteCode}`
-    );
-    if (response.status === 200) {
-      return response.data;
-    }
-    throw new Error("Cannot GET");
-  } catch (error) {
-    logger.verbose(`getInviteByApi error ${error.message}`);
-    return {};
-  }
-};
-
 const guildStatusUpdate = async (guildId: number): Promise<boolean> => {
   logger.verbose(`guildStatusUpdate: ${guildId}`);
   try {
@@ -106,5 +90,4 @@ export {
   statusUpdate,
   getGuildsOfServer,
   guildStatusUpdate,
-  getInviteByApi,
 };
