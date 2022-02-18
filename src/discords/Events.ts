@@ -5,6 +5,7 @@ import {
   Message,
   MessageEmbed,
   PartialGuildMember,
+  RateLimitData,
 } from "discord.js";
 import { Discord, Guard, On } from "discordx";
 import IsDM from "../guards/IsDM";
@@ -19,6 +20,11 @@ abstract class Events {
   @On("ready")
   onReady(): void {
     logger.info("Bot logged in.");
+  }
+
+  @On("rateLimit")
+  onRateLimit(rateLimited: RateLimitData): void {
+    logger.warn(`BOT Rate Limited. ${JSON.stringify(rateLimited)}`);
   }
 
   @On("messageCreate")
