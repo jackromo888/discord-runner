@@ -22,17 +22,23 @@ const status = async (user: User) => {
   if (levelInfo && levelInfo.length > 0) {
     await Promise.all(
       levelInfo?.map(async (c) => {
-        const guild = await Main.Client.guilds.fetch(c.discordServerId);
-        const member = await guild.members.fetch(user.id);
-        logger.verbose(`${JSON.stringify(member)}`);
-        const roleManager = await guild.roles.fetch();
-        const roleToAdd = roleManager.find(
-          (role) => c.accessedRoles === role.id
-        );
+        try {
+          const guild = await Main.Client.guilds.fetch(c.discordServerId);
+          const member = await guild.members.fetch(user.id);
+          logger.verbose(`${JSON.stringify(member)}`);
+          const roleManager = await guild.roles.fetch();
+          const roleToAdd = roleManager.find(
+            (role) => c.accessedRoles === role.id
+          );
 
-        if (roleToAdd) {
-          await member.roles.add(c.accessedRoles);
-          logger.verbose(`${JSON.stringify(roleToAdd)}`);
+          if (roleToAdd) {
+            await member.roles.add(c.accessedRoles);
+            logger.verbose(`${JSON.stringify(roleToAdd)}`);
+          }
+        } catch (error) {
+          logger.verbose(
+            `Cannot add role to member. Missing permissions. GuildID: ${c.discordServerId}`
+          );
         }
       })
     );
