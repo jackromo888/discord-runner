@@ -35,7 +35,7 @@ abstract class SimpleCommands {
 
     if (!guildId) {
       await command.message.author.send(
-        "❌ You have to provide a guild-id.\nFor example: `!guild-id 123456789012345678`"
+        "❌ You have to provide a guild-id.\nFor example: `!guild-status 123456789012345678`"
       );
       return;
     }
