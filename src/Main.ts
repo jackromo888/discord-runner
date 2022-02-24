@@ -31,6 +31,7 @@ class Main {
       partials: ["CHANNEL"],
       retryLimit: Infinity,
       rejectOnRateLimit: ["/"],
+      restGlobalRateLimit: 50,
     });
 
     this._client.on("ready", async () => {
