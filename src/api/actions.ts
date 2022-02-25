@@ -66,19 +66,21 @@ const notifyAccessedChannels = async (
     color: `#${config.embedColor}`,
   });
 
-  const categoryEmoji = Main.Client.emojis.cache.get("908436219317342208");
+  const categoryEmoji = Main.Client.emojis.cache.get("893836008712441858");
   const privateChannelEmoji =
-    Main.Client.emojis.cache.get("908436261444915230");
+    Main.Client.emojis.cache.get("893836025699377192");
 
   sortedChannels.forEach((channel, key) => {
     const fieldValue = channel
       .map(
         (c) =>
-          `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${member.guild.id}/${c.id})`
+          `[${privateChannelEmoji || ""}${
+            c.name
+          }](https://discord.com/channels/${member.guild.id}/${c.id})`
       )
       .join("\n");
     embed.addField(
-      `${categoryEmoji}${key || "Without Category"}`,
+      `${categoryEmoji || ""}${key || "Without Category"}`,
       fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
     );
   });
