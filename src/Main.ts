@@ -29,8 +29,8 @@ class Main {
       ],
       classes: [`${__dirname}/discords/*.{js,ts}`],
       partials: ["CHANNEL"],
-      retryLimit: Infinity,
-      rejectOnRateLimit: ["/"],
+      retryLimit: 3,
+      // rejectOnRateLimit: ["/"],
       restGlobalRateLimit: 50,
     });
 
