@@ -6,13 +6,14 @@ import {
   MessageEmbed,
   PartialGuildMember,
   RateLimitData,
+  Role,
 } from "discord.js";
 import { Discord, Guard, On } from "discordx";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
 import NotACommand from "../guards/NotACommand";
 import Main from "../Main";
-import { userJoined, userRemoved } from "../service";
+import { getGuildsOfServer, userJoined, userRemoved } from "../service";
 import logger from "../utils/logger";
 
 @Discord()
@@ -75,6 +76,17 @@ abstract class Events {
           });
       }
     });
+  }
+
+  @On("roleCreate")
+  async onRoleCreate([role]: [Role]): Promise<void> {
+    const guildOfServer = await getGuildsOfServer(role.guild.id);
+
+    if (!guildOfServer?.[0]?.isGuarded) {
+      return;
+    }
+
+    await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
   }
 }
 
