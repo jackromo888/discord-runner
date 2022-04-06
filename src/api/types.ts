@@ -60,6 +60,42 @@ type InviteData = {
   inviteChannelId: string;
 };
 
+type NewPoll = {
+  channelId: string;
+  question: string;
+  options: string[];
+  reactions: string[];
+  expDate: string;
+};
+
+type Poll = {
+  id: number;
+  question: string;
+  startDate: number;
+  expDate: number;
+  options: string[];
+  reactions: string[];
+  roleId: number;
+};
+
+type Reaction = {
+  name: string;
+  users: string[];
+};
+
+type Vote = {
+  platform: "DISCORD" | "TELEGRAM";
+  pollId: number;
+  platformUserId: string;
+  optionIndex: number;
+};
+
+type UserVote = {
+  tgId: string;
+  dcId: string;
+  balance: number;
+};
+
 export {
   ManageRolesParams,
   CreateChannelParams,
@@ -72,4 +108,9 @@ export {
   DiscordChannel,
   LevelInfo,
   InviteData,
+  NewPoll,
+  Poll,
+  Reaction,
+  Vote,
+  UserVote,
 };
