@@ -364,7 +364,6 @@ const listChannels = async (guildId: string) => {
   logger.verbose(`listChannels params: ${guildId}`);
   try {
     const guild = await Main.Client.guilds.fetch(guildId);
-    logger.verbose(`${JSON.stringify(guild)}`);
     const { icon: iconId, name: serverName } = guild;
     const serverIcon =
       iconId === null
