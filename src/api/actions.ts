@@ -110,6 +110,8 @@ const manageRoles = async (
       member.id
     );
 
+    logger.verbose(`redisValue at join : ${redisValue}`);
+
     try {
       await axios.patch(
         `https://discord.com/api/v8/webhooks/${Main.Client.application.id}/${redisValue}/messages/@original`,

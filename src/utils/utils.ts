@@ -153,6 +153,7 @@ const getJoinReplyMessage = async (
   userId: string
 ): Promise<MessageOptions> => {
   let message: MessageOptions;
+  logger.verbose(`getJoinReply - ${roleIds} ${guild.id} ${userId}`);
   if (roleIds && roleIds.length !== 0) {
     const channelIds = getAccessedChannelsByRoles(guild, roleIds).map(
       (c) => c.id
