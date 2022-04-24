@@ -1,4 +1,6 @@
-import { NewPoll } from "./types";
+import { NewPoll, SelectMenuOption, RequirementDict } from "./types";
+
+type NewPollRes = Map<string, NewPoll>;
 
 const pollOfUser: Map<string, NewPoll> = new Map();
 const userStep: Map<string, number> = new Map();
@@ -11,6 +13,9 @@ const getUserStep = (userId: string): number => userStep.get(userId);
 
 const initPoll = (userId: string, channelId: string): void => {
   pollOfUser.set(userId, {
+    roles: [],
+    requirements: {},
+    requirementId: 0,
     channelId,
     question: "",
     options: [],
@@ -18,15 +23,24 @@ const initPoll = (userId: string, channelId: string): void => {
     expDate: "",
   });
 
-  setUserStep(userId, 1);
+  setUserStep(userId, 0);
 };
 
-const savePollQuestion = (userId: string, question: string): void => {
-  const poll = pollOfUser.get(userId);
-
-  poll.question = question;
-  pollOfUser.set(userId, poll);
+const saveRoles = (userId: string, roles: SelectMenuOption[]): void => {
+  pollOfUser.set(userId, { ...pollOfUser.get(userId), roles });
 };
+
+const saveRequirements = (
+  userId: string,
+  requirements: RequirementDict
+): NewPollRes =>
+  pollOfUser.set(userId, { ...pollOfUser.get(userId), requirements });
+
+const saveReqId = (userId: string, requirementId: number): NewPollRes =>
+  pollOfUser.set(userId, { ...pollOfUser.get(userId), requirementId });
+
+const savePollQuestion = (userId: string, question: string): NewPollRes =>
+  pollOfUser.set(userId, { ...pollOfUser.get(userId), question });
 
 const savePollOption = (userId: string, option: string): boolean => {
   const poll = pollOfUser.get(userId);
@@ -54,12 +68,8 @@ const savePollReaction = (userId: string, reaction: string): boolean => {
   return true;
 };
 
-const savePollExpDate = (userId: string, expDate: string): void => {
-  const poll = pollOfUser.get(userId);
-
-  poll.expDate = expDate;
-  pollOfUser.set(userId, poll);
-};
+const savePollExpDate = (userId: string, expDate: string): NewPollRes =>
+  pollOfUser.set(userId, { ...pollOfUser.get(userId), expDate });
 
 const getPoll = (userId: string) => pollOfUser.get(userId);
 
@@ -72,6 +82,9 @@ export default {
   initPoll,
   setUserStep,
   getUserStep,
+  saveRoles,
+  saveRequirements,
+  saveReqId,
   savePollQuestion,
   savePollOption,
   savePollReaction,

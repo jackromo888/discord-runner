@@ -60,7 +60,18 @@ type InviteData = {
   inviteChannelId: string;
 };
 
+type SelectMenuOption = {
+  label: string;
+  description: string;
+  value: string;
+};
+
+type RequirementDict = { [k: string]: SelectMenuOption[] };
+
 type NewPoll = {
+  roles: SelectMenuOption[];
+  requirements: RequirementDict;
+  requirementId: number;
   channelId: string;
   question: string;
   options: string[];
@@ -108,6 +119,8 @@ export {
   DiscordChannel,
   LevelInfo,
   InviteData,
+  SelectMenuOption,
+  RequirementDict,
   NewPoll,
   Poll,
   Reaction,

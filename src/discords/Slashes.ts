@@ -1,13 +1,21 @@
 /* eslint-disable class-methods-use-this */
-import { CommandInteraction, GuildMember, Permissions } from "discord.js";
+import {
+  CommandInteraction,
+  GuildMember,
+  MessageActionRow,
+  MessageSelectMenu,
+  Permissions,
+} from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
+import axios from "axios";
 import { join, ping, status } from "../commands";
 import logger from "../utils/logger";
-import { createPoll, endPoll } from "../api/polls";
+import { createPoll /* endPoll */ } from "../api/polls";
 import pollStorage from "../api/pollStorage";
-import { createJoinInteractionPayload } from "../utils/utils";
+import { createJoinInteractionPayload, logAxiosResponse } from "../utils/utils";
 import { getGuildsOfServer } from "../service";
 import config from "../config";
+import { RequirementDict } from "../api/types";
 
 @Discord()
 abstract class Slashes {
@@ -135,39 +143,121 @@ abstract class Slashes {
     });
   }
 
-  // Slash commands for voting
-
   @Slash("poll", { description: "Creates a poll." })
   async poll(interaction: CommandInteraction) {
     if (interaction.channel.type !== "DM" && !interaction.user.bot) {
-      const owner = await interaction.guild.fetchOwner();
       const userId = interaction.user.id;
 
-      if (userId === owner.id) {
-        const userStep = pollStorage.getUserStep(userId);
+      const userStep = pollStorage.getUserStep(userId);
 
-        if (userStep) {
+      if (userStep) {
+        interaction.reply({
+          content:
+            "You already have an ongoing poll creation process.\n" +
+            "You can cancel it using **/cancel**.",
+          ephemeral: true,
+        });
+
+        return;
+      }
+
+      const { channel } = interaction;
+      const dcGuildId = channel.guildId;
+
+      const isAdminRes = await axios.get(
+        `${config.backendUrl}/guild/isAdmin/${dcGuildId}/${userId}`
+      );
+
+      logAxiosResponse(isAdminRes);
+
+      const isAdmin = isAdminRes.data;
+
+      if (isAdmin) {
+        const guildIdRes = await axios.get(
+          `${config.backendUrl}/guild/platformId/${dcGuildId}`
+        );
+
+        logAxiosResponse(guildIdRes);
+
+        const guildId = guildIdRes.data.id;
+
+        const guildRes = await axios.get(
+          `${config.backendUrl}/guild/${guildId}`
+        );
+
+        logAxiosResponse(guildRes);
+
+        if (!guildRes) {
+          interaction.reply({
+            content: "Something went wrong. Please try again or contact us.",
+            ephemeral: true,
+          });
+
+          return;
+        }
+
+        const reqs = Object.fromEntries(
+          guildRes.data.roles.map((role) => [
+            role.id,
+            role.requirements.filter(
+              (requirement) => requirement.type === "ERC20"
+            ),
+          ])
+        );
+
+        const roles = guildRes.data.roles
+          .filter((role) => reqs[role.id].length > 0)
+          .map((role) => ({
+            label: role.name,
+            description: "",
+            value: `${role.id}`,
+          }));
+
+        if (roles.length === 0) {
           interaction.reply({
             content:
-              "You already have an ongoing poll creation process.\n" +
-              "You can cancel it using **/cancel**.",
+              "Your guild has no role with appropriate requirements.\n" +
+              "Weighted polls only support ERC20.",
             ephemeral: true,
           });
-        } else {
-          pollStorage.initPoll(userId, interaction.channel.id);
-
-          await interaction.user.send(
-            "Give me the subject of the poll. For example:\n" +
-              '"Do you think drinking milk is cool?"'
-          );
-          interaction.reply({
-            content: "Check your DM's",
-            ephemeral: true,
-          });
+          return;
         }
+
+        pollStorage.initPoll(userId, channel.id);
+
+        const requirements = Object.fromEntries(
+          Object.entries(reqs).map(([k, v]) => [
+            k,
+            v.map((req) => ({
+              label: req.symbol,
+              description: `${req.name} on ${req.chain}`,
+              value: `${req.id}`,
+            })),
+          ])
+        );
+
+        pollStorage.saveRequirements(userId, requirements as RequirementDict);
+        pollStorage.saveRoles(userId, roles);
+
+        const row = new MessageActionRow().addComponents(
+          new MessageSelectMenu()
+            .setCustomId("role-menu")
+            .setPlaceholder("No role selected")
+            .addOptions(roles)
+        );
+
+        await interaction.user.send({
+          content: "Please choose a role",
+          components: [row],
+        });
+
+        interaction.reply({
+          content: "Check your DM's",
+          ephemeral: true,
+        });
       } else {
         interaction.reply({
-          content: "Seems like you are not the guild owner.",
+          content: "Seems like you are not a guild admin.",
           ephemeral: true,
         });
       }
@@ -194,7 +284,7 @@ abstract class Slashes {
         pollStorage.setUserStep(userId, 3);
 
         interaction.reply(
-          "Give me the end date of the poll in the DD:HH:mm format"
+          "Please give me the duration of the poll in the DD:HH:mm format (days:hours:minutes)"
         );
       } else {
         interaction.reply("You didn't finish the previous steps.");
@@ -243,11 +333,24 @@ abstract class Slashes {
 
       pollStorage.deleteMemory(userId);
       pollStorage.initPoll(userId, poll.channelId);
-      pollStorage.setUserStep(userId, 1);
+      pollStorage.saveRequirements(userId, poll.requirements);
+      pollStorage.saveRoles(userId, poll.roles);
 
-      interaction.reply({
+      await interaction.reply({
         content: "The current poll creation procedure has been restarted.",
         ephemeral: interaction.channel.type !== "DM",
+      });
+
+      const row = new MessageActionRow().addComponents(
+        new MessageSelectMenu()
+          .setCustomId("role-menu")
+          .setPlaceholder("No role selected")
+          .addOptions(poll.roles)
+      );
+
+      await interaction.user.send({
+        content: "Please choose a role",
+        components: [row],
       });
     } else {
       interaction.reply({
@@ -276,6 +379,7 @@ abstract class Slashes {
     }
   }
 
+  /*
   @Slash("endpoll", { description: "Closes a poll." })
   async endPoll(
     @SlashOption("id", {
@@ -288,6 +392,7 @@ abstract class Slashes {
   ) {
     endPoll(`${id}`, interaction);
   }
+  */
 }
 
 export default Slashes;
