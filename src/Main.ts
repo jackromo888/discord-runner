@@ -1,10 +1,13 @@
 /* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
+import axios from "axios";
+import { importx } from "@discordx/importer";
 import { Intents, MessageComponentInteraction } from "discord.js";
 import { Client } from "discordx";
 import api from "./api/api";
 import { InviteData } from "./api/types";
 import config from "./config";
 import logger from "./utils/logger";
+import { logAxiosResponse } from "./utils/utils";
 
 class Main {
   private static _client: Client;
@@ -15,8 +18,11 @@ class Main {
 
   public static inviteDataCache: Map<string, InviteData>;
 
-  static start(): void {
+  static async start(): Promise<void> {
     api();
+
+    // log all axios responses
+    axios.interceptors.response.use(logAxiosResponse);
 
     this._client = new Client({
       intents: [
@@ -29,7 +35,6 @@ class Main {
         Intents.FLAGS.DIRECT_MESSAGES,
         Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
       ],
-      classes: [`${__dirname}/discords/*.{js,ts}`],
       partials: ["MESSAGE", "CHANNEL", "REACTION"],
       retryLimit: 3,
       // rejectOnRateLimit: ["/"],
@@ -58,6 +63,8 @@ class Main {
       }
       this._client.executeInteraction(interaction);
     });
+
+    await importx(`${__dirname}/discords/*.{ts,js}`);
 
     this._client.login(config.discordToken);
 
