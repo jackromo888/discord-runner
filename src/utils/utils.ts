@@ -179,7 +179,7 @@ const getJoinReplyMessage = async (
           .join("\n")}`,
       };
     }
-  } else if (roleIds) {
+  } else if (roleIds && roleIds[0] !== "") {
     message = {
       content: "❌ You don't have access to any guilds in this server.",
     };

@@ -2,16 +2,11 @@
 import {
   GuildMember,
   Invite,
-  Message,
-  MessageEmbed,
   PartialGuildMember,
   RateLimitData,
   Role,
 } from "discord.js";
-import { Discord, Guard, On } from "discordx";
-import IsDM from "../guards/IsDM";
-import NotABot from "../guards/NotABot";
-import NotACommand from "../guards/NotACommand";
+import { Discord, On } from "discordx";
 import Main from "../Main";
 import { getGuildsOfServer, userJoined, userRemoved } from "../service";
 import logger from "../utils/logger";
@@ -26,21 +21,6 @@ abstract class Events {
   @On("rateLimit")
   onRateLimit(rateLimited: RateLimitData): void {
     logger.warn(`BOT Rate Limited. ${JSON.stringify(rateLimited)}`);
-  }
-
-  @On("messageCreate")
-  @Guard(NotABot, IsDM, NotACommand)
-  onPrivateMessage([message]: [Message]): void {
-    logger.verbose(
-      `unkown request: ${message.author.username}#${message.author.discriminator}: ${message.content}`
-    );
-    const embed = new MessageEmbed({
-      title: "I'm sorry, but I couldn't interpret your request.",
-      color: `#ff0000`,
-      description:
-        "You can find more information on [agora.xyz](https://agora.xyz) or on [guild.xyz](https://guild.xyz).",
-    });
-    message.channel.send({ embeds: [embed] }).catch(logger.error);
   }
 
   @On("guildMemberAdd")
