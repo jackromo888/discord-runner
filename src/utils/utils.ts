@@ -310,6 +310,14 @@ const updateAccessedChannelsOfRole = (
         VIEW_CHANNEL: true,
       })
     ),
+    ...channelsToAllow.map((channelToAllowAccessTo) =>
+      channelToAllowAccessTo.permissionOverwrites.create(
+        Main.Client.guilds.cache.get(serverId).roles.everyone.id,
+        {
+          VIEW_CHANNEL: false,
+        }
+      )
+    ),
   ]);
 };
 
