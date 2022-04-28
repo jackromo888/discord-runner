@@ -228,14 +228,6 @@ const denyViewEntryChannelForRole = async (
 };
 
 const getChannelsByCategoryWithRoles = (guild: Guild) => {
-  // get the roles that can view channels
-  const defaultRoles = guild.roles.cache
-    .filter(
-      (r) =>
-        !r.permissions.has("ADMINISTRATOR") && r.permissions.has("VIEW_CHANNEL")
-    )
-    .map((r) => r.id);
-
   // sort channels by categoryId
   const channelsByCategoryId = guild.channels.cache.reduce<
     Map<string, { id: string; name: string; roles: string[] }[]>
@@ -253,33 +245,20 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
       acc.set(parentId, []);
     }
 
-    // update viewer roles according to permission overwrites
-    let roles: Set<string>;
-    if (
-      ch.permissionOverwrites.cache
-        .get(guild.roles.everyone.id)
-        ?.deny?.has("VIEW_CHANNEL")
-    ) {
-      roles = new Set();
-    } else {
-      roles = new Set(defaultRoles);
-    }
-    ch.permissionOverwrites.cache.forEach((po) => {
-      if (po.type === "role") {
-        if (po.allow.has("VIEW_CHANNEL")) {
-          roles.add(po.id);
-        }
-        if (po.deny.has("VIEW_CHANNEL")) {
-          roles.delete(po.id);
-        }
-      }
-    });
+    // filter for roles that have explicit permission overwrites
+    const roles = guild.roles.cache
+      .filter((role) =>
+        ch.permissionOverwrites.cache
+          .get(role.id)
+          ?.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
+      )
+      .map((role) => role.id);
 
     // add channel info to the category's array
     acc.get(parentId).push({
       id: ch.id,
       name: ch.name,
-      roles: [...roles],
+      roles,
     });
     return acc;
   }, new Map());
@@ -313,13 +292,17 @@ const updateAccessedChannelsOfRole = (
 
   const [channelsToAllow, channelsToDeny] = channels.partition(
     (channel) =>
-      shouldHaveAccess.has(channel.id) || shouldHaveAccess.has(channel.parentId)
+      shouldHaveAccess.has(channel.id) ||
+      shouldHaveAccess.has(channel.parentId) ||
+      (channel.type !== "GUILD_CATEGORY" &&
+        !channel.parent &&
+        shouldHaveAccess.has("-"))
   );
 
   return Promise.all([
     ...channelsToDeny.map((channelToDenyAccessTo) =>
       channelToDenyAccessTo.permissionOverwrites.create(roleId, {
-        VIEW_CHANNEL: false,
+        VIEW_CHANNEL: null,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
