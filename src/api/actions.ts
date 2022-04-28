@@ -26,6 +26,7 @@ import {
   createJoinInteractionPayload,
   denyViewEntryChannelForRole,
   getAccessedChannelsByRoles,
+  getChannelsByCategoryWithRoles,
   getErrorResult,
   getJoinReplyMessage,
   getUserResult,
@@ -361,7 +362,7 @@ const isIn = async (guildId: string): Promise<boolean> => {
   }
 };
 
-const listChannels = async (guildId: string) => {
+const getServerInfo = async (guildId: string, includeDetails: boolean) => {
   logger.verbose(`listChannels params: ${guildId}`);
   try {
     const guild = await Main.Client.guilds.fetch(guildId);
@@ -385,6 +386,10 @@ const listChannels = async (guildId: string) => {
       };
     }
 
+    const roles: Collection<string, Role> = guild?.roles.cache.filter(
+      (r) => r.id !== guild.roles.everyone.id
+    );
+
     const channels = guild?.channels.cache
       .filter(
         (c) =>
@@ -398,9 +403,10 @@ const listChannels = async (guildId: string) => {
         name: c?.name,
       }));
 
-    const roles = guild?.roles.cache.filter(
-      (r) => r.id !== guild.roles.everyone.id
-    );
+    let categories: any[];
+    if (includeDetails) {
+      categories = getChannelsByCategoryWithRoles(guild);
+    }
 
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
@@ -408,15 +414,15 @@ const listChannels = async (guildId: string) => {
       0
     );
 
-    logger.verbose(`listChannels result: ${JSON.stringify(channels)}`);
     return {
       serverIcon,
       serverName,
       serverId: guildId,
-      channels,
+      categories,
       roles,
       isAdmin: true,
       membersWithoutRole,
+      channels,
     };
   } catch (error) {
     return {
@@ -664,7 +670,7 @@ export {
   createRole,
   updateRoleName,
   isIn,
-  listChannels,
+  getServerInfo,
   listAdministeredServers,
   createChannel,
   getGuild,
