@@ -42,9 +42,15 @@ class Main {
     });
 
     this._client.on("messageCreate", (message) => {
-      if (!message.author.bot) {
-        this._client.executeCommand(message);
+      this._client.on("messageCreate", (message) => {
+      try {
+        if (!message.author.bot) {
+          this._client.executeCommand(message);
+        }
+      } catch (error) {
+        logger.error(`messageCreate error - ${error.message}`);
       }
+    });
     });
 
     this._client.on("interactionCreate", (interaction) => {
