@@ -24,12 +24,14 @@ import {
   InviteResult,
   ManageRolesParams,
   Poll,
+  SendJoinMeta,
   UserResult,
 } from "./types";
 import {
   createJoinInteractionPayload,
   denyViewEntryChannelForRole,
   getAccessedChannelsByRoles,
+  getChannelsByCategoryWithRoles,
   getErrorResult,
   getJoinReplyMessage,
   getUserResult,
@@ -366,11 +368,10 @@ const isIn = async (guildId: string): Promise<boolean> => {
   }
 };
 
-const listChannels = async (guildId: string) => {
+const getServerInfo = async (guildId: string, includeDetails: boolean) => {
   logger.verbose(`listChannels params: ${guildId}`);
   try {
     const guild = await Main.Client.guilds.fetch(guildId);
-    logger.verbose(`${JSON.stringify(guild)}`);
     const { icon: iconId, name: serverName } = guild;
     const serverIcon =
       iconId === null
@@ -391,6 +392,10 @@ const listChannels = async (guildId: string) => {
       };
     }
 
+    const roles: Collection<string, Role> = guild?.roles.cache.filter(
+      (r) => r.id !== guild.roles.everyone.id
+    );
+
     const channels = guild?.channels.cache
       .filter(
         (c) =>
@@ -404,9 +409,10 @@ const listChannels = async (guildId: string) => {
         name: c?.name,
       }));
 
-    const roles = guild?.roles.cache.filter(
-      (r) => r.id !== guild.roles.everyone.id
-    );
+    let categories: any[];
+    if (includeDetails) {
+      categories = getChannelsByCategoryWithRoles(guild);
+    }
 
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
@@ -414,15 +420,15 @@ const listChannels = async (guildId: string) => {
       0
     );
 
-    logger.verbose(`listChannels result: ${JSON.stringify(channels)}`);
     return {
       serverIcon,
       serverName,
       serverId: guildId,
-      channels,
+      categories,
       roles,
       isAdmin: true,
       membersWithoutRole,
+      channels,
     };
   } catch (error) {
     return {
@@ -465,7 +471,11 @@ const getRole = async (guildId: string, roleId: string) => {
   return { serverName: guild.name, roleName: role.name };
 };
 
-const sendJoinButton = async (guildId: string, channelId: string) => {
+const sendJoinButton = async (
+  guildId: string,
+  channelId: string,
+  meta?: SendJoinMeta
+) => {
   const guild = await Main.Client.guilds.fetch(guildId);
   const channel = guild.channels.cache.find((c) => c.id === channelId);
 
@@ -474,7 +484,12 @@ const sendJoinButton = async (guildId: string, channelId: string) => {
   }
 
   const guilds = await getGuildsOfServer(guildId);
-  const payload = createJoinInteractionPayload(guilds[0]);
+  const payload = createJoinInteractionPayload(
+    guilds[0],
+    meta?.title,
+    meta?.description,
+    meta?.button
+  );
 
   const message = await channel.send(payload);
   await message.react(config.joinButtonEmojis.emoji1);
@@ -682,7 +697,7 @@ export {
   createRole,
   updateRoleName,
   isIn,
-  listChannels,
+  getServerInfo,
   listAdministeredServers,
   createChannel,
   getGuild,
