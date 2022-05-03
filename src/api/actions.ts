@@ -674,6 +674,14 @@ const setupGuildGuard = async (
   return createdEntryChannelId;
 };
 
+const getMembersByRoleId = async (serverId: string, roleId: string) => {
+  const server = await Main.Client.guilds.fetch(serverId);
+
+  const role = await server.roles.fetch(roleId);
+
+  return [...role.members.keys()];
+};
+
 const sendPollMessage = async (
   channelId: string,
   poll: Poll
@@ -696,6 +704,7 @@ const sendPollMessage = async (
 };
 
 export {
+  getMembersByRoleId,
   manageRoles,
   manageMigratedActions,
   generateInvite,
