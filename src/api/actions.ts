@@ -140,12 +140,54 @@ const manageRoles = async (
       updatedMember = await member.roles.add(roleId);
     } else {
       updatedMember = await member.roles.remove(roleId);
+
+      const guildsOfServer = await getGuildsOfServer(guild.id);
+      const guildRoleIds = getGuildRoleIds(guildsOfServer);
+
+      const memberRoles = member.roles.cache
+        .filter((role) => role.id !== guild.roles.everyone.id)
+        .map((role) => role.id);
+
+      const accessedRoleIds = guildRoleIds.filter((guildRoleId) =>
+        memberRoles.some((memberRoleId) => memberRoleId === guildRoleId)
+      );
+      const accessedRoleNames = getRoleNames(guild, accessedRoleIds);
+
+      const notAccessedRoleIds = getNotAccessedRoleIds(
+        guildRoleIds,
+        accessedRoleIds
+      );
+      const notAccessedRoleNames = getRoleNames(guild, notAccessedRoleIds);
+
+      const fields = getCategoryFieldValues(guild, [roleId]);
+
+      const description = `You don't satisfy the requirements anymore with your connected addresses.\n\n${printRoleNames(
+        accessedRoleNames,
+        true
+      )}\n${printRoleNames(
+        notAccessedRoleNames,
+        false,
+        message
+      )}\n...revoking your access from the following channels:\n`;
+
       const embed = new MessageEmbed({
-        title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-        color: `#${config.embedColor}`,
+        title: `You lost a role in ${member.guild.name}!`,
+        description,
+        color: 0xff0000,
+        fields,
       });
+
+      const button = getLinkButton(
+        "View details / connect new address",
+        `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${member.id}`
+      );
+
+      const messages = {
+        components: [new MessageActionRow({ components: [button] })],
+        embeds: [embed],
+      };
       try {
-        await updatedMember.send({ embeds: [embed] });
+        await updatedMember.send(messages);
       } catch (error) {
         if (error?.code === 50007) {
           logger.verbose(

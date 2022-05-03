@@ -224,13 +224,25 @@ const getCategoryNameById = (guild, categoryId) => {
 const getCategoryFieldValues = (guild, roleIds) => {
   const fields = [];
 
+  const categoryEmoji = Main.Client.emojis.cache.get("893836008712441858");
+  const privateChannelEmoji =
+    Main.Client.emojis.cache.get("893836025699377192");
+
   const categories = getCategoriesWithChannels(guild, roleIds);
 
   Object.keys(categories).forEach((categoryId) => {
     fields.push({
-      name: getCategoryNameById(guild, categoryId),
+      name: `${categoryEmoji || "▶️"} ${getCategoryNameById(
+        guild,
+        categoryId
+      )}`,
       value: `\n${categories[categoryId]
-        .map((c: string) => `${c}`)
+        .map(
+          (c) =>
+            `[${privateChannelEmoji || "#"}${
+              c.name
+            }](https://discord.com/channels/${guild.id}/${c.id})`
+        )
         .join("\n")}`,
     });
   });
@@ -263,7 +275,7 @@ const printRoleNames = (
 
   if (modifiedRoleName !== "") {
     result = `${
-      accessed ? `✅🆕 ${modifiedRoleName}\n` : `❌🆕 ${modifiedRoleName}\n`
+      accessed ? `✅ 🆕 ${modifiedRoleName}\n` : `❌ 🆕 ${modifiedRoleName}\n`
     }`;
     filteredRoleNames = roleNames.filter((rn) => rn !== modifiedRoleName);
   }
