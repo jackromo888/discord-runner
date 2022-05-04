@@ -41,7 +41,6 @@ class Main {
       await this._client.initApplicationPermissions();
     });
 
-    this._client.on("messageCreate", (message) => {
       this._client.on("messageCreate", (message) => {
       try {
         if (!message.author.bot) {
@@ -50,7 +49,6 @@ class Main {
       } catch (error) {
         logger.error(`messageCreate error - ${error.message}`);
       }
-    });
     });
 
     this._client.on("interactionCreate", (interaction) => {
