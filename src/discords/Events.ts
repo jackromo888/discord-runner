@@ -49,8 +49,8 @@ const messageReactionCommon = async (
     const msg = reaction.message;
 
     const result = msg.embeds[0]?.title
-      .match(/Poll #(.*?): /g)
-      .map((str: string) => str?.substring(6, str.length - 2));
+      ?.match(/Poll #(.*?): /g)
+      ?.map((str: string) => str?.substring(6, str.length - 2));
 
     if (result?.length === 1) {
       try {
