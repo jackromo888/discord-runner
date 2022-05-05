@@ -50,7 +50,7 @@ const messageReactionCommon = async (
 
     const result = msg.embeds[0]?.title
       .match(/Poll #(.*?): /g)
-      .map((str: string) => str.substring(6, str.length - 2));
+      .map((str: string) => str?.substring(6, str.length - 2));
 
     if (result?.length === 1) {
       try {
