@@ -21,7 +21,6 @@ import dayjs from "dayjs";
 import axios from "axios";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
-import NotACommand from "../guards/NotACommand";
 import Main from "../Main";
 import { getGuildsOfServer, userJoined, userRemoved } from "../service";
 import logger from "../utils/logger";
@@ -159,7 +158,7 @@ abstract class Events {
   }
 
   @On("messageCreate")
-  @Guard(NotABot, IsDM, NotACommand)
+  @Guard(NotABot, IsDM)
   async onPrivateMessage([message]: [Message]): Promise<void> {
     const userId = message.author.id;
     const poll = pollStorage.getPoll(userId);
