@@ -19,8 +19,10 @@ import axios from "axios";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
+  ChannelObj,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
+  Emote,
   InviteResult,
   ManageRolesParams,
   Poll,
@@ -64,7 +66,7 @@ const notifyAccessedChannels = async (
 
   let message: string;
   if (accessedChannels.size === 0) {
-    message = `You got access to the \`${guildName}\` role in \`${member.guild.name}\`.`;
+    message = `You got access to the \`${guildName}\` role  in \`${member.guild.name}\`.`;
   } else {
     message = `You got access to ${
       accessedChannels.size > 1 ? "these channels" : "this channel"
@@ -745,6 +747,30 @@ const sendPollMessage = async (
   return +msg.id;
 };
 
+const getEmoteList = async (guildId: string): Promise<Emote[]> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const emotes = await guild.emojis.fetch();
+
+  return emotes.map((emote) => ({
+    name: emote.name,
+    id: emote.id,
+    image: emote.url,
+    animated: emote.animated,
+  }));
+};
+
+const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const channels = await guild.channels.fetch();
+
+  return channels
+    .filter((channel) => !channel.type.match(/^GUILD_(CATEGORY|VOICE)$/))
+    .map((channel) => ({
+      name: channel.name,
+      id: channel.id,
+    }));
+};
+
 export {
   getMembersByRoleId,
   manageRoles,
@@ -765,6 +791,8 @@ export {
   sendJoinButton,
   getUser,
   setupGuildGuard,
-  resetGuildGuard,
   sendPollMessage,
+  getEmoteList,
+  getChannelList,
+  resetGuildGuard,
 };

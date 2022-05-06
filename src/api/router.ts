@@ -172,6 +172,18 @@ const createRouter = () => {
     controller.createPoll
   );
 
+  router.get(
+    "/emotes/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getEmotes
+  );
+
+  router.get(
+    "/channels/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getChannels
+  );
+
   return router;
 };
 

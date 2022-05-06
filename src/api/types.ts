@@ -66,11 +66,9 @@ type SelectMenuOption = {
   value: string;
 };
 
-type RequirementDict = { [k: string]: SelectMenuOption[] };
-
 type NewPoll = {
   roles: SelectMenuOption[];
-  requirements: RequirementDict;
+  requirements: SelectMenuOption[];
   requirementId: number;
   channelId: string;
   question: string;
@@ -86,7 +84,6 @@ type Poll = {
   expDate: number;
   options: string[];
   reactions: string[];
-  roleId: number;
 };
 
 type Reaction = {
@@ -106,6 +103,18 @@ type SendJoinMeta = Partial<{
   button: string;
 }>;
 
+type Emote = {
+  name: string;
+  id: string;
+  image: string;
+  animated: boolean;
+};
+
+type ChannelObj = {
+  name: string;
+  id: string;
+};
+
 export {
   SendJoinMeta,
   ManageRolesParams,
@@ -120,9 +129,10 @@ export {
   LevelInfo,
   InviteData,
   SelectMenuOption,
-  RequirementDict,
   NewPoll,
   Poll,
   Reaction,
   Vote,
+  Emote,
+  ChannelObj,
 };
