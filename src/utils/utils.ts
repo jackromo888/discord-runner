@@ -303,17 +303,17 @@ const updateAccessedChannelsOfRole = (
 
   return Promise.all([
     ...channelsToDeny.map((channelToDenyAccessTo) =>
-      channelToDenyAccessTo.permissionOverwrites.create(roleId, {
+      channelToDenyAccessTo.permissionOverwrites.edit(roleId, {
         VIEW_CHANNEL: null,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.create(roleId, {
+      channelToAllowAccessTo.permissionOverwrites.edit(roleId, {
         VIEW_CHANNEL: true,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.create(
+      channelToAllowAccessTo.permissionOverwrites.edit(
         Main.Client.guilds.cache.get(serverId).roles.everyone.id,
         {
           VIEW_CHANNEL: false,
