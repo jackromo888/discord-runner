@@ -213,6 +213,7 @@ const denyViewEntryChannelForRole = async (
       entryChannelId
     ) as GuildChannel;
     if (
+      !!entryChannel &&
       !entryChannel.permissionOverwrites.cache
         .get(role.id)
         ?.deny.has(Permissions.FLAGS.VIEW_CHANNEL)
