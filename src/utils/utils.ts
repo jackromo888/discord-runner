@@ -75,8 +75,11 @@ const logBackendError = (error) => {
 };
 
 const logAxiosResponse = (res: AxiosResponse<any>) => {
+  const data = JSON.stringify(res.data);
   logger.verbose(
-    `${res.status} ${res.statusText} data:${JSON.stringify(res.data)}`
+    `${res.status} ${res.statusText} data:${
+      data.length > 2000 ? " hidden" : data
+    }`
   );
   return res;
 };
