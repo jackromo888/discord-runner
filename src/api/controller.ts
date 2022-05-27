@@ -150,7 +150,13 @@ const controller = {
         entryChannelId
       );
 
-      await updateAccessedChannelsOfRole(serverId, roleId, gatedChannels);
+      await updateAccessedChannelsOfRole(
+        serverId,
+        roleId,
+        gatedChannels,
+        isGuarded,
+        entryChannelId
+      );
 
       res.status(201).json(roleId);
     } catch (error) {
@@ -185,7 +191,13 @@ const controller = {
         entryChannelId
       );
 
-      await updateAccessedChannelsOfRole(serverId, roleId, gatedChannels);
+      await updateAccessedChannelsOfRole(
+        serverId,
+        roleId,
+        gatedChannels,
+        isGuarded,
+        entryChannelId
+      );
 
       res.status(200).send();
     } catch (error) {

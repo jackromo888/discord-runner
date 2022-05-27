@@ -285,7 +285,9 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
 const updateAccessedChannelsOfRole = (
   serverId: string,
   roleId: string,
-  channelIds: string[]
+  channelIds: string[],
+  isGuarded: boolean,
+  entryChannelId: string
 ) => {
   const shouldHaveAccess = new Set(channelIds);
 
@@ -295,6 +297,11 @@ const updateAccessedChannelsOfRole = (
     string,
     GuildChannel
   >;
+
+  if (isGuarded) {
+    shouldHaveAccess.delete(entryChannelId);
+    channels.delete(entryChannelId);
+  }
 
   const [channelsToAllow, channelsToDeny] = channels.partition(
     (channel) =>
