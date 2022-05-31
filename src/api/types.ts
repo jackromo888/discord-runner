@@ -49,12 +49,6 @@ type DiscordChannel = {
   name: string;
 };
 
-type LevelInfo = {
-  name: string;
-  discordServerId: string;
-  accessedRoles: string;
-};
-
 type InviteData = {
   code: string;
   inviteChannelId: string;
@@ -126,7 +120,6 @@ export {
   ActionError,
   CreateRoleResult,
   DiscordChannel,
-  LevelInfo,
   InviteData,
   SelectMenuOption,
   NewPoll,

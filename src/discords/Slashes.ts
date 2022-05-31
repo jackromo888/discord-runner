@@ -13,8 +13,8 @@ import logger from "../utils/logger";
 import { createPoll, pollBuildResponse } from "../api/polls";
 import pollStorage from "../api/pollStorage";
 import { createJoinInteractionPayload } from "../utils/utils";
-import { getGuildsOfServer } from "../service";
 import config from "../config";
+import Main from "../Main";
 
 @Discord()
 abstract class Slashes {
@@ -43,7 +43,7 @@ abstract class Slashes {
       ephemeral: true,
     });
 
-    const embed = await status(interaction.user);
+    const embed = await status(interaction.guild.id, interaction.user);
 
     await interaction.editReply({
       content: null,
@@ -116,7 +116,7 @@ abstract class Slashes {
       return;
     }
 
-    const guild = await getGuildsOfServer(interaction.guild.id);
+    const guild = await Main.platform.guild.get(interaction.guild.id);
     if (!guild) {
       await interaction.reply({
         content: "❌ There are no guilds in this server.",
@@ -126,7 +126,7 @@ abstract class Slashes {
     }
 
     const payload = createJoinInteractionPayload(
-      guild[0],
+      guild,
       title,
       messageText,
       buttonText

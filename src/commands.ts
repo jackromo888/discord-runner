@@ -2,36 +2,46 @@ import { Guild, MessageEmbed, MessageOptions, User } from "discord.js";
 import config from "./config";
 import redisClient from "./database";
 import Main from "./Main";
-import { statusUpdate, userJoined } from "./service";
+import { userJoined } from "./service";
 import logger from "./utils/logger";
 import { getJoinReplyMessage } from "./utils/utils";
 
 const ping = (createdTimestamp: number) =>
   `Latency is ${Date.now() - createdTimestamp}ms. API Latency is ${Math.round(
-    Main.Client.ws.ping
+    Main.client.ws.ping
   )}ms`;
 
-const status = async (user: User) => {
-  const levelInfo = await statusUpdate(user.id);
-  if (levelInfo && levelInfo.length > 0) {
+const status = async (serverId: string, user: User) => {
+  const statusResult = await Main.platform.user.status(serverId, user.id);
+
+  if (statusResult?.length > 0) {
+    // for logging purposes
+    let currentGuildId = null;
     await Promise.all(
-      levelInfo?.map(async (c) => {
+      statusResult.map(async (sr) => {
         try {
-          const guild = await Main.Client.guilds.fetch(c.discordServerId);
+          const guild = await Main.client.guilds.fetch(sr.platformGuildId);
+          currentGuildId = guild.id;
           const member = await guild.members.fetch(user.id);
-          logger.verbose(`${JSON.stringify(member)}`);
+
+          const discordRoleIds = sr.roles.map((r) => r.platformRoleId);
+
           const roleManager = await guild.roles.fetch();
-          const roleToAdd = roleManager.find(
-            (role) => c.accessedRoles === role.id
+          const roleToAdd = roleManager.filter((r) =>
+            discordRoleIds.includes(r.id)
           );
 
           if (roleToAdd) {
-            await member.roles.add(c.accessedRoles);
-            logger.verbose(`${JSON.stringify(roleToAdd)}`);
+            logger.verbose(
+              `status: add roles ${roleToAdd.map((r) => r.id)} to ${
+                user.id
+              } in ${guild.id}`
+            );
+            await member.roles.add(roleToAdd);
           }
         } catch (error) {
           logger.verbose(
-            `Cannot add role to member. Missing permissions. GuildID: ${c.discordServerId}`
+            `Cannot add role to member. Missing permissions? GuildID: ${currentGuildId} ${error.message}`
           );
         }
       })
@@ -44,8 +54,8 @@ const status = async (user: User) => {
       },
       color: `#${config.embedColor}`,
     });
-    levelInfo.forEach((c) => {
-      embed.addField("Guild", c.name);
+    statusResult.forEach((sr) => {
+      embed.addField(sr.guildName, sr.roles.map((r) => r.name).join(", "));
     });
 
     return embed;

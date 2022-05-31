@@ -1,5 +1,4 @@
 import axios from "axios";
-import { LevelInfo } from "./api/types";
 import config from "./config";
 import logger from "./utils/logger";
 import { logBackendError } from "./utils/utils";
@@ -27,48 +26,6 @@ const userJoined = async (platformUserId: string, serverId: string) => {
   }
 };
 
-const userRemoved = async (platformUserId: string, serverId: string) => {
-  logger.verbose(`userRemoved userId - ${platformUserId}`);
-
-  axios
-    .post(`${API_BASE_URL}/user/removeFromPlatform`, {
-      platform: config.platform,
-      platformUserId,
-      serverId,
-      triggerKick: false,
-    })
-    .catch(logBackendError);
-};
-
-const statusUpdate = async (
-  platformUserId: string
-): Promise<LevelInfo[] | undefined> => {
-  logger.verbose(`statusUpdate params: ${platformUserId}`);
-  try {
-    const response = await axios.post(`${API_BASE_URL}/user/statusUpdate`, {
-      discordId: platformUserId,
-    });
-    return response.data;
-  } catch (error) {
-    logger.verbose("statusUpdate error");
-    logBackendError(error);
-    return undefined;
-  }
-};
-
-const getGuildsOfServer = async (serverId: string) => {
-  logger.verbose(`getGuildsOfServer params: ${serverId}`);
-  try {
-    const response = await axios.get(
-      `${API_BASE_URL}/guild/platformId/${serverId}`
-    );
-    return [response.data];
-  } catch (error) {
-    logger.verbose("getGuildsOfServer error");
-    return [];
-  }
-};
-
 const guildStatusUpdate = async (guildId: number): Promise<boolean> => {
   logger.verbose(`guildStatusUpdate: ${guildId}`);
   try {
@@ -83,10 +40,4 @@ const guildStatusUpdate = async (guildId: number): Promise<boolean> => {
   }
 };
 
-export {
-  userJoined,
-  userRemoved,
-  statusUpdate,
-  getGuildsOfServer,
-  guildStatusUpdate,
-};
+export { userJoined, guildStatusUpdate };

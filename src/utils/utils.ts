@@ -13,10 +13,10 @@ import {
   MessageOptions,
   Role,
 } from "discord.js";
+import { GetGuildResponse } from "@guildxyz/sdk";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import Main from "../Main";
-import { getGuildsOfServer } from "../service";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -88,13 +88,7 @@ const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
 const createJoinInteractionPayload = (
-  guild: {
-    name: string;
-    urlName: string;
-    description: string;
-    themeColor: string;
-    imageUrl: string;
-  },
+  guild: GetGuildResponse,
   title: string = "Verify your wallet",
   messageText: string = null,
   buttonText?: string
@@ -190,12 +184,12 @@ const getJoinReplyMessage = async (
       content: "❌ You don't have access to any guilds in this server.",
     };
   } else {
-    const guildsOfServer = await getGuildsOfServer(guild.id);
+    const guildOfServer = await Main.platform.guild.get(guild.id);
 
     const button = new MessageButton({
       label: "Join",
       style: "LINK",
-      url: `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`,
+      url: `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${userId}`,
     });
 
     return {
@@ -291,7 +285,7 @@ const updateAccessedChannelsOfRole = (
 ) => {
   const shouldHaveAccess = new Set(channelIds);
 
-  const channels = Main.Client.guilds.cache
+  const channels = Main.client.guilds.cache
     .get(serverId)
     ?.channels.cache.filter((channel) => !channel.isThread()) as Collection<
     string,
@@ -325,7 +319,7 @@ const updateAccessedChannelsOfRole = (
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
       channelToAllowAccessTo.permissionOverwrites.edit(
-        Main.Client.guilds.cache.get(serverId).roles.everyone.id,
+        Main.client.guilds.cache.get(serverId).roles.everyone.id,
         {
           VIEW_CHANNEL: false,
         }

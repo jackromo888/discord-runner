@@ -39,7 +39,6 @@ import {
   getUserResult,
 } from "../utils/utils";
 import config from "../config";
-import { getGuildsOfServer } from "../service";
 import redisClient from "../database";
 import { createPollText } from "./polls";
 
@@ -78,9 +77,9 @@ const notifyAccessedChannels = async (
     color: `#${config.embedColor}`,
   });
 
-  const categoryEmoji = Main.Client.emojis.cache.get("893836008712441858");
+  const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");
   const privateChannelEmoji =
-    Main.Client.emojis.cache.get("893836025699377192");
+    Main.client.emojis.cache.get("893836025699377192");
 
   sortedChannels.forEach((channel, key) => {
     const fieldValue = channel
@@ -107,7 +106,7 @@ const manageRoles = async (
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}, ${isUpgrade}`);
   const { platformUserId: userId, guildId, roleId, message } = params;
 
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
@@ -122,7 +121,7 @@ const manageRoles = async (
 
     try {
       await axios.patch(
-        `https://discord.com/api/v8/webhooks/${Main.Client.application.id}/${redisValue}/messages/@original`,
+        `https://discord.com/api/v8/webhooks/${Main.client.application.id}/${redisValue}/messages/@original`,
         { content: messageText }
       );
       redisClient.client.del(redisKey);
@@ -184,7 +183,7 @@ const generateInvite = async (
     };
   }
 
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const invite = guild.invites.cache.first();
 
   if (invite?.code) {
@@ -237,7 +236,7 @@ const isMember = async (
   guildId: string,
   userId: string
 ): Promise<UserResult> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
@@ -245,7 +244,7 @@ const isMember = async (
 };
 
 const removeUser = async (guildId: string, userId: string): Promise<void> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
   const member = await guild.members.fetch(userId);
 
@@ -255,7 +254,7 @@ const removeUser = async (guildId: string, userId: string): Promise<void> => {
 const createChannel = async (params: CreateChannelParams) => {
   logger.verbose(`createChannel params: ${JSON.stringify(params)}`);
   const { guildId, channelName } = params;
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
   const createdChannel = await guild.channels.create(channelName, {
     type: "GUILD_TEXT",
@@ -268,7 +267,7 @@ const createChannel = async (params: CreateChannelParams) => {
 };
 
 const deleteRole = async (guildId: string, roleId: string): Promise<Role> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const deletedRole = guild.roles.cache.find((r) => r.id === roleId).delete();
   return deletedRole;
 };
@@ -277,7 +276,7 @@ const deleteChannel = async (
   guildId: string,
   channelId: string
 ): Promise<Channel> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const deletedChannel = guild.channels.cache
     .find((r) => r.id === channelId)
     .delete();
@@ -307,12 +306,12 @@ const createRole = async (
   entryChannelId?: string
 ) => {
   logger.verbose(`createRole params: ${serverId}, ${roleName}`);
-  const guild = await Main.Client.guilds.fetch(serverId);
+  const guild = await Main.client.guilds.fetch(serverId);
 
   const role = await guild.roles.create({
     name: roleName,
     hoist: true,
-    reason: `Created by ${Main.Client.user.username} for a Guild role.`,
+    reason: `Created by ${Main.client.user.username} for a Guild role.`,
     permissions: Permissions.FLAGS.VIEW_CHANNEL,
   });
   logger.verbose(`role created: ${role.id}`);
@@ -334,7 +333,7 @@ const updateRoleName = async (
   logger.verbose(
     `updateRoleName params: ${serverId}, ${roleId}, ${newRoleName}`
   );
-  const guild = await Main.Client.guilds.fetch(serverId);
+  const guild = await Main.client.guilds.fetch(serverId);
 
   const role = await guild.roles.fetch(roleId);
 
@@ -343,7 +342,7 @@ const updateRoleName = async (
       name: newRoleName,
       permissions: isGuarded ? role.permissions.add("VIEW_CHANNEL") : undefined,
     },
-    `Updated by ${Main.Client.user.username} because the role name has changed in Guild.`
+    `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
   );
 
   if (isGuarded) {
@@ -357,7 +356,7 @@ const isIn = async (guildId: string): Promise<boolean> => {
   logger.verbose(`isIn params: ${guildId}`);
 
   try {
-    await Main.Client.guilds.fetch(guildId);
+    await Main.client.guilds.fetch(guildId);
     logger.verbose("isIn: true");
     return true;
   } catch (error) {
@@ -373,7 +372,7 @@ const isIn = async (guildId: string): Promise<boolean> => {
 const getServerInfo = async (guildId: string, includeDetails: boolean) => {
   logger.verbose(`listChannels params: ${guildId}`);
   try {
-    const guild = await Main.Client.guilds.fetch(guildId);
+    const guild = await Main.client.guilds.fetch(guildId);
     const { icon: iconId, name: serverName } = guild;
     const serverIcon =
       iconId === null
@@ -448,7 +447,7 @@ const getServerInfo = async (guildId: string, includeDetails: boolean) => {
 const listAdministeredServers = async (userId: string) => {
   logger.verbose(`listAdministeredServers params: ${userId}`);
 
-  const administeredServers = Main.Client.guilds.cache
+  const administeredServers = Main.client.guilds.cache
     .filter((g) =>
       g.members.cache.get(userId)?.permissions.has("ADMINISTRATOR")
     )
@@ -462,13 +461,13 @@ const getGuild = async (guildId: string) => {
   if (DiscordServerNames[guildId]) {
     return DiscordServerNames[guildId];
   }
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   DiscordServerNames[guildId] = guild.name as any;
   return guild.name;
 };
 
 const getRole = async (guildId: string, roleId: string) => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const role = guild.roles.cache.find((r) => r.id === roleId);
   return { serverName: guild.name, roleName: role.name };
 };
@@ -478,16 +477,16 @@ const sendJoinButton = async (
   channelId: string,
   meta?: SendJoinMeta
 ) => {
-  const guild = await Main.Client.guilds.fetch(guildId);
-  const channel = guild.channels.cache.find((c) => c.id === channelId);
+  const server = await Main.client.guilds.fetch(guildId);
+  const channel = server.channels.cache.find((c) => c.id === channelId);
 
   if (!channel?.isText()) {
     return false;
   }
 
-  const guilds = await getGuildsOfServer(guildId);
+  const guildOfServer = await Main.platform.guild.get(guildId);
   const payload = createJoinInteractionPayload(
-    guilds[0],
+    guildOfServer,
     meta?.title,
     meta?.description,
     meta?.button
@@ -500,7 +499,7 @@ const sendJoinButton = async (
   return true;
 };
 
-const getUser = async (userId: string) => Main.Client.users.fetch(userId);
+const getUser = async (userId: string) => Main.client.users.fetch(userId);
 
 const manageMigratedActions = async (
   guildId: string,
@@ -509,7 +508,7 @@ const manageMigratedActions = async (
   roleId: string,
   message: string
 ) => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const role = guild.roles.cache.find((r) => r.id === roleId);
   await Promise.all(
     upgradeableUserIds.map(async (id) => {
@@ -558,9 +557,9 @@ const setupGuildGuard = async (
     `Setting up guild guard, server: ${guildId}, entryChannelId: ${entryChannelId}`
   );
 
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
-  const editReason = `Updated by ${Main.Client.user.username} because Guild Guard has been enabled.`;
+  const editReason = `Updated by ${Main.client.user.username} because Guild Guard has been enabled.`;
   let createdEntryChannelId: string;
 
   const editableRolesExceptEveryone = guild.roles.cache.filter(
@@ -642,7 +641,7 @@ const setupGuildGuard = async (
           deny: "VIEW_CHANNEL",
         })),
       ],
-      reason: `Created by ${Main.Client.user.username} because Guild Guard has been enabled.`,
+      reason: `Created by ${Main.client.user.username} because Guild Guard has been enabled.`,
     });
     createdEntryChannelId = createdEntryChannel.id;
 
@@ -679,7 +678,7 @@ const setupGuildGuard = async (
 const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
   logger.verbose(`Resetting guild guard, server: ${guildId}`);
 
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const entryChannel = guild.channels.cache.get(entryChannelId);
   if (!entryChannel) {
     throw new Error(
@@ -695,7 +694,7 @@ const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
     throw Error("Entry channel cannot be a voice channel.");
   }
 
-  const editReason = `Updated by ${Main.Client.user.username} because Guild Guard has been disabled.`;
+  const editReason = `Updated by ${Main.client.user.username} because Guild Guard has been disabled.`;
 
   await entryChannel.permissionOverwrites.delete(
     guild.roles.everyone.id,
@@ -719,7 +718,7 @@ const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
 };
 
 const getMembersByRoleId = async (serverId: string, roleId: string) => {
-  const server = await Main.Client.guilds.fetch(serverId);
+  const server = await Main.client.guilds.fetch(serverId);
 
   const role = await server.roles.fetch(roleId);
 
@@ -732,7 +731,7 @@ const sendPollMessage = async (
 ): Promise<number> => {
   const { id, question } = poll;
 
-  const channel = (await Main.Client.channels.fetch(channelId)) as TextChannel;
+  const channel = (await Main.client.channels.fetch(channelId)) as TextChannel;
 
   const embed = new MessageEmbed({
     title: `Poll #${id}: ${question}`,
@@ -748,7 +747,7 @@ const sendPollMessage = async (
 };
 
 const getEmoteList = async (guildId: string): Promise<Emote[]> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const emotes = await guild.emojis.fetch();
 
   return emotes.map((emote) => ({
@@ -760,7 +759,7 @@ const getEmoteList = async (guildId: string): Promise<Emote[]> => {
 };
 
 const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
-  const guild = await Main.Client.guilds.fetch(guildId);
+  const guild = await Main.client.guilds.fetch(guildId);
   const channels = await guild.channels.fetch();
 
   return channels

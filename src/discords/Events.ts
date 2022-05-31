@@ -21,7 +21,7 @@ import axios from "axios";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
 import Main from "../Main";
-import { getGuildsOfServer, userJoined, userRemoved } from "../service";
+import { userJoined } from "../service";
 import logger from "../utils/logger";
 import pollStorage from "../api/pollStorage";
 import config from "../config";
@@ -198,7 +198,7 @@ abstract class Events {
 
             if (msgText.match(emojiRegex) || msgText.match(emoteRegex)) {
               if (msgText.match(emoteRegex)) {
-                const emotes = Main.Client.emojis.cache.map((emoji) => ({
+                const emotes = Main.client.emojis.cache.map((emoji) => ({
                   name: emoji.name,
                   id: emoji.id,
                 }));
@@ -313,14 +313,9 @@ abstract class Events {
     userJoined(member.user.id, member.guild.id);
   }
 
-  @On("guildMemberRemove")
-  onGuildMemberRemove([member]: [GuildMember | PartialGuildMember]): void {
-    userRemoved(member.user.id, member.guild.id);
-  }
-
   @On("inviteDelete")
   onInviteDelete([invite]: [Invite]): void {
-    Main.Client.guilds.fetch(invite.guild.id).then((guild) => {
+    Main.client.guilds.fetch(invite.guild.id).then((guild) => {
       logger.verbose(`onInviteDelete guild: ${guild.name}`);
 
       const inviteChannelId = Main.inviteDataCache.get(
@@ -361,13 +356,14 @@ abstract class Events {
 
   @On("roleCreate")
   async onRoleCreate([role]: [Role]): Promise<void> {
-    const guildOfServer = await getGuildsOfServer(role.guild.id);
-
-    if (!guildOfServer?.[0]?.isGuarded) {
-      return;
+    const guildOfServer = await Main.platform.guild.get(role.guild.id);
+    if (
+      guildOfServer?.guildPlatforms.find(
+        (gp) => gp.patformGuildId === role.guild.id
+      )?.data?.isGuarded
+    ) {
+      await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
     }
-
-    await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
   }
 }
 
