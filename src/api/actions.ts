@@ -723,7 +723,7 @@ const getMembersByRoleId = async (serverId: string, roleId: string) => {
 
   const role = await server.roles.fetch(roleId);
 
-  return [...role.members.keys()];
+  return [...role.members.keys()] || [];
 };
 
 const sendPollMessage = async (
