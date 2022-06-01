@@ -1,26 +1,34 @@
 import { Router } from "express";
+import { body } from "express-validator";
 import controller from "./controller";
 import validators from "./validators";
 
 const createRouter = () => {
   const router: Router = Router();
-
   router.post(
-    "/upgrade",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("platformUserId"),
-    validators.bodyDiscordId("roleId"),
-    validators.messageValidator,
-    controller.upgrade
+    "/access",
+    body("*.action").isIn(["ADD", "REMOVE"]),
+    validators.bodyDiscordId("*.platformUserId"),
+    validators.bodyDiscordId("*.platformGuildId"),
+    validators.bodyStringValidator("*.guildName"),
+    body("*.platformGuilddata"),
+    validators.bodyArrayValidator("*.roles"),
+    validators.bodyStringValidator("*.roles.*.roleName"),
+    validators.bodyDiscordId("*.roles.*.platformRoleId"),
+    validators.bodyDiscordId("*.roles.*.platformRoleData").optional(),
+    controller.access
   );
 
-  router.post(
-    "/downgrade",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("platformUserId"),
-    validators.bodyDiscordId("roleId"),
-    validators.messageValidator,
-    controller.downgrade
+  router.get(
+    "/invite/:platformGuildId",
+    validators.paramDiscordId("platformGuildId"),
+    controller.invite
+  );
+
+  router.get(
+    "/info/:platformGuildId",
+    validators.paramDiscordId("platformGuildId"),
+    controller.info
   );
 
   router.post(
@@ -31,30 +39,11 @@ const createRouter = () => {
     controller.manageMigratedActions
   );
 
-  router.get(
-    "/invite/:guildId/:inviteChannelId",
-    validators.paramDiscordId("guildId"),
-    controller.getInvite
-  );
-
   router.post(
     "/isMember",
     validators.bodyDiscordId("serverId"),
     validators.bodyDiscordId("platformUserId"),
     controller.isMember
-  );
-
-  router.delete(
-    "/kick/:guildId/:platformUserId",
-    validators.paramDiscordId("guildId"),
-    validators.paramDiscordId("platformUserId"),
-    controller.removeUser
-  );
-
-  router.get(
-    "/:guildId",
-    validators.paramDiscordId("guildId"),
-    controller.getGuildNameByGuildId
   );
 
   router.get(

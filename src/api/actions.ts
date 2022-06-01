@@ -1,11 +1,8 @@
 /* eslint no-return-await: "off" */
 
 import {
-  GuildMember,
-  PartialGuildMember,
   Role,
   Permissions,
-  GuildChannel,
   MessageEmbed,
   Channel,
   ThreadChannel,
@@ -13,9 +10,7 @@ import {
   Collection,
   TextChannel,
   Message,
-  PermissionOverwrites,
 } from "discord.js";
-import axios from "axios";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
@@ -23,8 +18,6 @@ import {
   CreateChannelParams,
   DeleteChannelAndRoleParams,
   Emote,
-  InviteResult,
-  ManageRolesParams,
   Poll,
   SendJoinMeta,
   UserResult,
@@ -32,205 +25,13 @@ import {
 import {
   createJoinInteractionPayload,
   denyViewEntryChannelForRole,
-  getAccessedChannelsByRoles,
   getChannelsByCategoryWithRoles,
   getErrorResult,
-  getJoinReplyMessage,
   getUserResult,
+  notifyAccessedChannels,
 } from "../utils/utils";
 import config from "../config";
-import redisClient from "../database";
 import { createPollText } from "./polls";
-
-const DiscordServerNames: { [guildId: string]: [name: string] } = {};
-
-const notifyAccessedChannels = async (
-  member: GuildMember | PartialGuildMember,
-  roleId: string,
-  guildName: string
-) => {
-  const accessedChannels = getAccessedChannelsByRoles(member.guild, [roleId]);
-
-  const sortedChannels = accessedChannels.reduce<
-    Map<string | null, GuildChannel[]>
-  >((acc, value) => {
-    let channels = acc.get(value?.parent?.name);
-    if (!channels) {
-      channels = [];
-    }
-    channels.push(value);
-    acc.set(value?.parent?.name, channels);
-    return acc;
-  }, new Map());
-
-  let message: string;
-  if (accessedChannels.size === 0) {
-    message = `You got access to the \`${guildName}\` role  in \`${member.guild.name}\`.`;
-  } else {
-    message = `You got access to ${
-      accessedChannels.size > 1 ? "these channels" : "this channel"
-    } with the \`${guildName}\` role in \`${member.guild.name}\`:`;
-  }
-
-  const embed = new MessageEmbed({
-    title: message,
-    color: `#${config.embedColor}`,
-  });
-
-  const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");
-  const privateChannelEmoji =
-    Main.client.emojis.cache.get("893836025699377192");
-
-  sortedChannels.forEach((channel, key) => {
-    const fieldValue = channel
-      .map(
-        (c) =>
-          `[${privateChannelEmoji || ""}${
-            c.name
-          }](https://discord.com/channels/${member.guild.id}/${c.id})`
-      )
-      .join("\n");
-    embed.addField(
-      `${categoryEmoji || ""}${key || "Without Category"}`,
-      fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
-    );
-  });
-
-  member.send({ embeds: [embed] }).catch(logger.error);
-};
-
-const manageRoles = async (
-  params: ManageRolesParams,
-  isUpgrade: boolean
-): Promise<UserResult> => {
-  logger.verbose(`manageRoles params: ${JSON.stringify(params)}, ${isUpgrade}`);
-  const { platformUserId: userId, guildId, roleId, message } = params;
-
-  const guild = await Main.client.guilds.fetch(guildId);
-
-  const member = await guild.members.fetch(userId);
-
-  const redisKey = `joining:${member.guild.id}:${member.id}`;
-  const redisValue: string = await redisClient.getAsync(redisKey);
-  if (redisValue) {
-    const messageText = await getJoinReplyMessage(
-      [roleId],
-      member.guild,
-      member.id
-    );
-
-    try {
-      await axios.patch(
-        `https://discord.com/api/v8/webhooks/${Main.client.application.id}/${redisValue}/messages/@original`,
-        { content: messageText }
-      );
-      redisClient.client.del(redisKey);
-    } catch (err) {
-      logger.error(err);
-    }
-  }
-
-  const hasRole = member.roles.cache.has(roleId);
-
-  if ((isUpgrade && !hasRole) || (!isUpgrade && hasRole)) {
-    let updatedMember: GuildMember;
-    if (isUpgrade) {
-      updatedMember = await member.roles.add(roleId);
-    } else {
-      updatedMember = await member.roles.remove(roleId);
-      const embed = new MessageEmbed({
-        title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-        color: `#${config.embedColor}`,
-      });
-      try {
-        await updatedMember.send({ embeds: [embed] });
-      } catch (error) {
-        if (error?.code === 50007) {
-          logger.verbose(
-            `Cannot send messages to ${updatedMember.user.username}#${updatedMember.user.discriminator}`
-          );
-        } else {
-          logger.error(JSON.stringify(error));
-        }
-      }
-    }
-
-    if (isUpgrade) {
-      try {
-        await notifyAccessedChannels(updatedMember, roleId, message);
-      } catch (error) {
-        logger.error(error);
-      }
-    }
-
-    return getUserResult(updatedMember);
-  }
-
-  return getUserResult(member);
-};
-
-const generateInvite = async (
-  guildId: string,
-  inviteChannelId: string
-): Promise<InviteResult> => {
-  logger.verbose(`generateInvite params: ${guildId} ${inviteChannelId}`);
-  const cachedInvite = Main.inviteDataCache.get(guildId);
-  logger.verbose(`cached invite code: ${cachedInvite?.code}`);
-
-  if (cachedInvite) {
-    return {
-      code: cachedInvite.code,
-    };
-  }
-
-  const guild = await Main.client.guilds.fetch(guildId);
-  const invite = guild.invites.cache.first();
-
-  if (invite?.code) {
-    Main.inviteDataCache.set(guildId, {
-      code: invite.code,
-      inviteChannelId: invite.channel.id,
-    });
-    logger.verbose(`generated invite code: ${invite?.code}`);
-    return {
-      code: invite.code,
-    };
-  }
-
-  let channelId: string;
-  if (guild.channels.cache.find((c) => c.id === inviteChannelId)) {
-    channelId = inviteChannelId;
-  } else {
-    logger.warn(
-      `Invite channel ${inviteChannelId} does not exist in server ${guildId}`
-    );
-
-    const publicChannel = guild.channels.cache.find(
-      (c) =>
-        c.isText() &&
-        !(c as any).permissionOverwrites?.cache.some(
-          (po: PermissionOverwrites) =>
-            po.id === guild.roles.everyone.id && po.deny.any("VIEW_CHANNEL")
-        )
-    );
-    if (publicChannel) {
-      channelId = publicChannel.id;
-    } else {
-      logger.warn(`Cannot find public channel in ${guildId}`);
-      channelId = guild.channels.cache.find((c) => c.isText())?.id;
-    }
-  }
-
-  const newInvite = await guild.invites.create(channelId, { maxAge: 0 });
-  logger.verbose(`generated invite code: ${newInvite?.code}`);
-  Main.inviteDataCache.set(guildId, {
-    code: newInvite.code,
-    inviteChannelId: channelId,
-  });
-  return {
-    code: newInvite.code,
-  };
-};
 
 const isMember = async (
   guildId: string,
@@ -241,14 +42,6 @@ const isMember = async (
   const member = await guild.members.fetch(userId);
 
   return getUserResult(member);
-};
-
-const removeUser = async (guildId: string, userId: string): Promise<void> => {
-  const guild = await Main.client.guilds.fetch(guildId);
-
-  const member = await guild.members.fetch(userId);
-
-  await member.kick();
 };
 
 const createChannel = async (params: CreateChannelParams) => {
@@ -455,15 +248,6 @@ const listAdministeredServers = async (userId: string) => {
 
   logger.verbose(`listAdministeredServers result: ${administeredServers}`);
   return administeredServers;
-};
-
-const getGuild = async (guildId: string) => {
-  if (DiscordServerNames[guildId]) {
-    return DiscordServerNames[guildId];
-  }
-  const guild = await Main.client.guilds.fetch(guildId);
-  DiscordServerNames[guildId] = guild.name as any;
-  return guild.name;
 };
 
 const getRole = async (guildId: string, roleId: string) => {
@@ -772,18 +556,14 @@ const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
 
 export {
   getMembersByRoleId,
-  manageRoles,
   manageMigratedActions,
-  generateInvite,
   isMember,
-  removeUser,
   createRole,
   updateRoleName,
   isIn,
   getServerInfo,
   listAdministeredServers,
   createChannel,
-  getGuild,
   getRole,
   deleteChannelAndRole,
   deleteRole,

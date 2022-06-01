@@ -1,7 +1,7 @@
 import axios from "axios";
-import config from "./config";
-import logger from "./utils/logger";
-import { logBackendError } from "./utils/utils";
+import config from "../config";
+import logger from "../utils/logger";
+import { logBackendError } from "../utils/utils";
 
 const API_BASE_URL = config.backendUrl;
 

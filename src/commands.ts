@@ -2,7 +2,7 @@ import { Guild, MessageEmbed, MessageOptions, User } from "discord.js";
 import config from "./config";
 import redisClient from "./database";
 import Main from "./Main";
-import { userJoined } from "./service";
+import { userJoined } from "./discordSpecific/communicationService";
 import logger from "./utils/logger";
 import { getJoinReplyMessage } from "./utils/utils";
 

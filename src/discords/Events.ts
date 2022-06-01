@@ -21,7 +21,7 @@ import axios from "axios";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
 import Main from "../Main";
-import { userJoined } from "../service";
+import { userJoined } from "../discordSpecific/communicationService";
 import logger from "../utils/logger";
 import pollStorage from "../api/pollStorage";
 import config from "../config";
@@ -359,7 +359,7 @@ abstract class Events {
     const guildOfServer = await Main.platform.guild.get(role.guild.id);
     if (
       guildOfServer?.guildPlatforms.find(
-        (gp) => gp.patformGuildId === role.guild.id
+        (gp) => gp.platformGuildId === role.guild.id
       )?.data?.isGuarded
     ) {
       await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });

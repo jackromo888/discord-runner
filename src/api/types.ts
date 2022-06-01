@@ -1,8 +1,16 @@
-type ManageRolesParams = {
-  guildId: string;
+type AccessEventParams = {
+  action: "ADD" | "REMOVE";
   platformUserId: string;
-  roleId: string;
-  message: string;
+  platformGuildId: string;
+  guildName: string;
+  platformGuildData: { inviteChannel: string };
+  roles: {
+    roleName: string;
+    platformRoleId: string;
+    data?: {
+      isGuarded?: boolean;
+    };
+  }[];
 };
 
 type CreateChannelParams = {
@@ -111,7 +119,6 @@ type ChannelObj = {
 
 export {
   SendJoinMeta,
-  ManageRolesParams,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
   UserResult,
@@ -128,4 +135,5 @@ export {
   Vote,
   Emote,
   ChannelObj,
+  AccessEventParams,
 };

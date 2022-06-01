@@ -12,6 +12,7 @@ import {
   Permissions,
   MessageOptions,
   Role,
+  PartialGuildMember,
 } from "discord.js";
 import { GetGuildResponse } from "@guildxyz/sdk";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
@@ -328,6 +329,61 @@ const updateAccessedChannelsOfRole = (
   ]);
 };
 
+const notifyAccessedChannels = async (
+  member: GuildMember | PartialGuildMember,
+  roleId: string,
+  guildName: string
+) => {
+  const accessedChannels = getAccessedChannelsByRoles(member.guild, [roleId]);
+
+  const sortedChannels = accessedChannels.reduce<
+    Map<string | null, GuildChannel[]>
+  >((acc, value) => {
+    let channels = acc.get(value?.parent?.name);
+    if (!channels) {
+      channels = [];
+    }
+    channels.push(value);
+    acc.set(value?.parent?.name, channels);
+    return acc;
+  }, new Map());
+
+  let message: string;
+  if (accessedChannels.size === 0) {
+    message = `You got access to the \`${guildName}\` role  in \`${member.guild.name}\`.`;
+  } else {
+    message = `You got access to ${
+      accessedChannels.size > 1 ? "these channels" : "this channel"
+    } with the \`${guildName}\` role in \`${member.guild.name}\`:`;
+  }
+
+  const embed = new MessageEmbed({
+    title: message,
+    color: `#${config.embedColor}`,
+  });
+
+  const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");
+  const privateChannelEmoji =
+    Main.client.emojis.cache.get("893836025699377192");
+
+  sortedChannels.forEach((channel, key) => {
+    const fieldValue = channel
+      .map(
+        (c) =>
+          `[${privateChannelEmoji || ""}${
+            c.name
+          }](https://discord.com/channels/${member.guild.id}/${c.id})`
+      )
+      .join("\n");
+    embed.addField(
+      `${categoryEmoji || ""}${key || "Without Category"}`,
+      fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
+    );
+  });
+
+  member.send({ embeds: [embed] }).catch(logger.error);
+};
+
 export {
   getUserResult,
   getErrorResult,
@@ -340,4 +396,5 @@ export {
   denyViewEntryChannelForRole,
   getChannelsByCategoryWithRoles,
   updateAccessedChannelsOfRole,
+  notifyAccessedChannels,
 };

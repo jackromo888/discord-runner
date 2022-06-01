@@ -2,7 +2,7 @@ import axios from "axios";
 import { importx } from "@discordx/importer";
 import { Intents, MessageComponentInteraction } from "discord.js";
 import { Client } from "discordx";
-import { Platform } from "@guildxyz/sdk";
+import { Platform, setApiBaseUrl } from "@guildxyz/sdk";
 import api from "./api/api";
 import { InviteData } from "./api/types";
 import config from "./config";
@@ -22,6 +22,9 @@ class Main {
     // log all axios responses
     axios.interceptors.response.use(logAxiosResponse);
 
+    // setup sdk
+    setApiBaseUrl(config.backendUrl);
+    logger.verbose(`Backend url sat to ${config.backendUrl}`);
     this.platform = new Platform("DISCORD");
 
     this.client = new Client({
