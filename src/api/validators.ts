@@ -44,10 +44,11 @@ export default {
   entryChannelIdValidator: body("entryChannelId")
     .optional()
     .isLength({ min: 1 }),
-  sendJoinMeta: [
+  buttonMetaData: [
     body("title").trim().optional().isLength({ min: 1 }),
     body("description").trim().optional().isLength({ min: 1 }),
     body("button").trim().optional().isLength({ min: 1 }),
+    body("isJoinButton").optional().isBoolean(),
   ],
   gatedChannelsValidator: body("gatedChannels.*")
     .optional()
