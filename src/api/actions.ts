@@ -14,6 +14,9 @@ import {
   TextChannel,
   Message,
   PermissionOverwrites,
+  MessageButton,
+  MessageOptions,
+  MessageActionRow,
 } from "discord.js";
 import axios from "axios";
 import Main from "../Main";
@@ -26,11 +29,11 @@ import {
   InviteResult,
   ManageRolesParams,
   Poll,
-  SendJoinMeta,
+  ButtonMetaData,
   UserResult,
 } from "./types";
 import {
-  createJoinInteractionPayload,
+  createInteractionPayload,
   denyViewEntryChannelForRole,
   getAccessedChannelsByRoles,
   getChannelsByCategoryWithRoles,
@@ -473,10 +476,44 @@ const getRole = async (guildId: string, roleId: string) => {
   return { serverName: guild.name, roleName: role.name };
 };
 
-const sendJoinButton = async (
+const getUserPoap = async (
+  userId: string,
+  guildId: string
+): Promise<MessageOptions> => {
+  try {
+    const guilds = await getGuildsOfServer(guildId);
+
+    const poapLink = await axios.post(
+      `${config.backendUrl}/assets/poap/claim`,
+      {
+        userId,
+        // eslint-disable-next-line no-unsafe-optional-chaining
+        poapId: guilds[0]?.poaps[guilds[0]?.poaps?.length - 1].poapIdentifier,
+      }
+    );
+
+    const button = new MessageButton({
+      label: "Claim",
+      style: "LINK",
+      url: poapLink.data,
+    });
+
+    return {
+      components: [new MessageActionRow({ components: [button] })],
+      content: `This is **your** link to claim your POAP. Do **NOT** share it with anyone!`,
+    };
+  } catch (err: any) {
+    logger.verbose(`getUserPoap error: ${err.message}`);
+    return {
+      content: `Unfortunately, you couldn't claim this POAP right now. Check back later!`,
+    };
+  }
+};
+
+const sendDiscordButton = async (
   guildId: string,
   channelId: string,
-  meta?: SendJoinMeta
+  meta?: ButtonMetaData
 ) => {
   const guild = await Main.Client.guilds.fetch(guildId);
   const channel = guild.channels.cache.find((c) => c.id === channelId);
@@ -486,11 +523,12 @@ const sendJoinButton = async (
   }
 
   const guilds = await getGuildsOfServer(guildId);
-  const payload = createJoinInteractionPayload(
+  const payload = createInteractionPayload(
     guilds[0],
     meta?.title,
     meta?.description,
-    meta?.button
+    meta?.button,
+    meta?.isJoinButton
   );
 
   const message = await channel.send(payload);
@@ -788,11 +826,12 @@ export {
   getRole,
   deleteChannelAndRole,
   deleteRole,
-  sendJoinButton,
+  sendDiscordButton,
   getUser,
   setupGuildGuard,
   sendPollMessage,
   getEmoteList,
   getChannelList,
   resetGuildGuard,
+  getUserPoap,
 };
