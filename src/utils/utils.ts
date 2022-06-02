@@ -122,7 +122,7 @@ const createInteractionPayload = (
           messageText || "Claim this magnificent POAP to your collection!",
         guideUrl: "https://docs.guild.xyz/guild/guides/poap-distribution",
         thumbnailUrl:
-          "https://c.gitcoin.co/grants/46a5a54f3333a6a60a6ebc3f8688a94d/grande.png",
+          "https://cdn.discordapp.com/attachments/981112277317087293/981897601995657226/poap.png",
       };
 
   logger.verbose(`${JSON.stringify(buttonData)}`);
