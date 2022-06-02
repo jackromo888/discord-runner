@@ -87,39 +87,67 @@ const logAxiosResponse = (res: AxiosResponse<any>) => {
 const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
-const createJoinInteractionPayload = (
+const createInteractionPayload = (
   guild: {
     name: string;
     urlName: string;
     description: string;
     themeColor: string;
     imageUrl: string;
+    poaps: any[];
   },
-  title: string = "Verify your wallet",
+  title?: string,
   messageText: string = null,
-  buttonText?: string
+  buttonText?: string,
+  isJoinButton: boolean = true
 ) => {
-  const joinButton = new MessageButton({
-    customId: "join-button",
-    label: buttonText || `Join ${guild?.name || "Guild"}`,
+  const buttonData = isJoinButton
+    ? {
+        customId: "join-button",
+        label: buttonText || `Join ${guild?.name || "Guild"}`,
+        title: title || "Verify your wallet",
+        description:
+          messageText ||
+          guild?.description ||
+          "Join this guild and get your role(s)!",
+        guideUrl: "https://docs.guild.xyz/",
+        thumbnailUrl:
+          "https://cdn.discordapp.com/attachments/950682012866465833/951448318976884826/dc-message.png",
+      }
+    : {
+        customId: "poap-claim-button",
+        label: buttonText || `Claim POAP`,
+        title: title || "Claim your POAP",
+        description:
+          messageText || "Claim this magnificent POAP to your collection!",
+        guideUrl: "https://docs.guild.xyz/guild/guides/poap-distribution",
+        thumbnailUrl:
+          "https://c.gitcoin.co/grants/46a5a54f3333a6a60a6ebc3f8688a94d/grande.png",
+      };
+
+  logger.verbose(`${JSON.stringify(buttonData)}`);
+
+  const buttonBase = new MessageButton({
+    customId: buttonData.customId,
+    label: buttonData.label,
     emoji: "🔗",
     style: "PRIMARY",
   });
   const guideButton = new MessageButton({
     label: "Guide",
-    url: "https://docs.guild.xyz/",
+    url: buttonData.guideUrl,
     style: "LINK",
   });
-  const row = new MessageActionRow({ components: [joinButton, guideButton] });
+  const row = new MessageActionRow({
+    components: [buttonBase, guideButton],
+  });
+
   return {
     embeds: [
       new MessageEmbed({
-        title,
+        title: buttonData.title,
         url: guild ? `${config.guildUrl}/${guild?.urlName}` : null,
-        description:
-          messageText ||
-          guild?.description ||
-          "Join this guild and get your role(s)!",
+        description: buttonData.description,
         color: `#${config.embedColor}`,
         author: {
           name: guild?.name || "Guild",
@@ -130,7 +158,7 @@ const createJoinInteractionPayload = (
           ),
         },
         thumbnail: {
-          url: "https://cdn.discordapp.com/attachments/950682012866465833/951448318976884826/dc-message.png",
+          url: buttonData.thumbnailUrl,
         },
         footer: {
           text: "Do not share your private keys. We will never ask for your seed phrase.",
@@ -340,7 +368,7 @@ export {
   logBackendError,
   logAxiosResponse,
   isNumber,
-  createJoinInteractionPayload,
+  createInteractionPayload,
   getJoinReplyMessage,
   getAccessedChannelsByRoles,
   denyViewEntryChannelForRole,
