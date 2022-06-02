@@ -15,7 +15,7 @@ import {
   manageRoles,
   removeUser,
   updateRoleName,
-  sendJoinButton,
+  sendDiscordButton,
   deleteRole,
   getUser,
   manageMigratedActions,
@@ -390,10 +390,7 @@ const controller = {
     }
   },
 
-  sendJoinButtonToChannel: async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
+  sendDiscordButton: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -401,9 +398,12 @@ const controller = {
       return;
     }
     try {
-      const { guildId, channelId, ...sendJoinMeta } = req.body;
-      const result = await sendJoinButton(guildId, channelId, sendJoinMeta);
-
+      const { guildId, channelId, ...buttonMetaData } = req.body;
+      const result = await sendDiscordButton(
+        guildId,
+        channelId,
+        buttonMetaData
+      );
       res.status(200).json(result);
     } catch (error) {
       const errorMsg = getErrorResult(error);

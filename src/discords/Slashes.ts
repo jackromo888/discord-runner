@@ -12,7 +12,7 @@ import { join, ping, status } from "../commands";
 import logger from "../utils/logger";
 import { createPoll, pollBuildResponse } from "../api/polls";
 import pollStorage from "../api/pollStorage";
-import { createJoinInteractionPayload } from "../utils/utils";
+import { createInteractionPayload } from "../utils/utils";
 import { getGuildsOfServer } from "../service";
 import config from "../config";
 
@@ -125,7 +125,7 @@ abstract class Slashes {
       return;
     }
 
-    const payload = createJoinInteractionPayload(
+    const payload = createInteractionPayload(
       guild[0],
       title,
       messageText,

@@ -119,11 +119,11 @@ const createRouter = () => {
   );
 
   router.post(
-    "/channels/sendJoin",
+    "/channels/sendDiscordButton",
     validators.bodyDiscordId("guildId"),
     validators.bodyDiscordId("channelId"),
-    ...validators.sendJoinMeta,
-    controller.sendJoinButtonToChannel
+    ...validators.buttonMetaData,
+    controller.sendDiscordButton
   );
 
   router.post(
