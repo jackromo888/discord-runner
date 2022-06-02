@@ -488,7 +488,7 @@ const getUserPoap = async (
       {
         userId,
         // eslint-disable-next-line no-unsafe-optional-chaining
-        poapId: guilds[0]?.poaps[guilds[0]?.poaps?.length - 1].poapIdentifier,
+        poapId: guilds[0]?.poaps?.slice(-1)?.poapIdentifier,
       }
     );
 
