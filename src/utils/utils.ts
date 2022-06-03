@@ -101,6 +101,7 @@ const createInteractionPayload = (
   buttonText?: string,
   isJoinButton: boolean = true
 ) => {
+  const lastPoap = guild?.poaps?.pop();
   const buttonData = isJoinButton
     ? {
         customId: "join-button",
@@ -117,7 +118,7 @@ const createInteractionPayload = (
     : {
         customId: "poap-claim-button",
         label: buttonText || `Claim POAP`,
-        title: title || "Claim your POAP",
+        title: title || lastPoap?.fancyId || "Claim your POAP",
         description:
           messageText || "Claim this magnificent POAP to your collection!",
         guideUrl: "https://docs.guild.xyz/guild/guides/poap-distribution",

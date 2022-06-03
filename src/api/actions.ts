@@ -482,13 +482,13 @@ const getUserPoap = async (
 ): Promise<MessageOptions> => {
   try {
     const guilds = await getGuildsOfServer(guildId);
-
+    const poap = guilds[0]?.poaps?.pop();
     const poapLink = await axios.post(
       `${config.backendUrl}/assets/poap/claim`,
       {
         userId,
         // eslint-disable-next-line no-unsafe-optional-chaining
-        poapId: guilds[0]?.poaps[guilds[0]?.poaps?.length - 1].poapIdentifier,
+        poapId: poap.poapIdentifier,
       }
     );
 
