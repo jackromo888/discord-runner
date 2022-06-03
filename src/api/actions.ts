@@ -503,7 +503,17 @@ const getUserPoap = async (
       content: `This is **your** link to claim your POAP. Do **NOT** share it with anyone!`,
     };
   } catch (err: any) {
+    const errorData = err.response?.data;
+    const errors = errorData?.errors;
+
+    if (errors?.length > 0 && errors[0]?.msg) {
+      logger.verbose(`getUserPoap error: ${errors[0]?.msg}`);
+      return {
+        content: errors[0]?.msg,
+      };
+    }
     logger.verbose(`getUserPoap error: ${err.message}`);
+
     return {
       content: `Unfortunately, you couldn't claim this POAP right now. Check back later!`,
     };
