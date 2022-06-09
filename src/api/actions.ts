@@ -373,8 +373,10 @@ const isIn = async (guildId: string): Promise<boolean> => {
   }
 };
 
+// eslint-disable-next-line no-unused-vars
 const getServerInfo = async (guildId: string, includeDetails: boolean) => {
   logger.verbose(`listChannels params: ${guildId}`);
+  // TODO rethink includeDetails & isAdmin property
   try {
     const guild = await Main.Client.guilds.fetch(guildId);
     const { icon: iconId, name: serverName } = guild;
@@ -414,10 +416,7 @@ const getServerInfo = async (guildId: string, includeDetails: boolean) => {
         name: c?.name,
       }));
 
-    let categories: any[];
-    if (includeDetails) {
-      categories = getChannelsByCategoryWithRoles(guild);
-    }
+    const categories: any[] = getChannelsByCategoryWithRoles(guild);
 
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
