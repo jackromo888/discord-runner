@@ -7,11 +7,41 @@ type AccessEventParams = {
   roles: {
     roleName: string;
     platformRoleId: string;
-    data?: {
+    platformRoleData?: {
       isGuarded?: boolean;
     };
   }[];
 };
+
+type GuildEventParams = {
+  action: "CREATE" | "UPDATE" | "DELETE";
+  guildName: string;
+  platformGuildId: string;
+  platformGuildData?: { inviteChannel?: string };
+};
+
+type GuildEventResponse =
+  | {
+      platformGuildId: string;
+      platformGuildData: { inviteChannel: string };
+    }
+  | { success: boolean };
+
+type RoleEventParams = {
+  action: "CREATE" | "UPDATE" | "DELETE";
+  roleName: string;
+  platformGuildId: string;
+  platformGuildData: { inviteChannel: string };
+  platformRoleId?: string;
+  platformRoleData?: { isGuarded?: "true" | "false"; gatedChannels: string[] };
+};
+
+type RoleEventResponse =
+  | {
+      platformGuildData: { inviteChannel: string };
+      platformRoleId: string;
+    }
+  | { success: boolean };
 
 type CreateChannelParams = {
   guildId: string;
@@ -117,6 +147,13 @@ type ChannelObj = {
   id: string;
 };
 
+type ResolveUserResopnse = {
+  platformUserId: string;
+  platformUserData: {
+    access_token: string;
+  };
+};
+
 export {
   SendJoinMeta,
   CreateChannelParams,
@@ -136,4 +173,9 @@ export {
   Emote,
   ChannelObj,
   AccessEventParams,
+  GuildEventParams,
+  GuildEventResponse,
+  RoleEventParams,
+  RoleEventResponse,
+  ResolveUserResopnse,
 };

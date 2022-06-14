@@ -11,12 +11,32 @@ const createRouter = () => {
     validators.bodyDiscordId("*.platformUserId"),
     validators.bodyDiscordId("*.platformGuildId"),
     validators.bodyStringValidator("*.guildName"),
-    body("*.platformGuilddata"),
+    body("*.platformGuildData"),
     validators.bodyArrayValidator("*.roles"),
     validators.bodyStringValidator("*.roles.*.roleName"),
     validators.bodyDiscordId("*.roles.*.platformRoleId"),
-    validators.bodyDiscordId("*.roles.*.platformRoleData").optional(),
+    validators
+      .bodyDiscordId("*.roles.*.platformRoleData.inviteChannel")
+      .optional(),
     controller.access
+  );
+
+  router.post(
+    "/guild",
+    body("action").isIn(["CREATE", "UPDATE", "DELETE"]),
+    validators.bodyDiscordId("platformGuildId"),
+    body("platformGuildData").optional(),
+    controller.guild
+  );
+
+  router.post(
+    "/role",
+    body("action").isIn(["CREATE", "UPDATE", "DELETE"]),
+    validators.bodyDiscordId("platformGuildId"),
+    body("platformGuildData").optional(),
+    validators.bodyDiscordId("platformRoleId").optional(),
+    body("platformRoleData").optional(),
+    controller.role
   );
 
   router.get(
@@ -29,6 +49,18 @@ const createRouter = () => {
     "/info/:platformGuildId",
     validators.paramDiscordId("platformGuildId"),
     controller.info
+  );
+
+  router.post(
+    "/resolveUser",
+    validators.bodyStringValidator("access_token"),
+    controller.resolveUser
+  );
+
+  router.get(
+    "/listGateables/:platformUserId",
+    validators.paramDiscordId("platformUserId"),
+    controller.listGateables
   );
 
   router.post(

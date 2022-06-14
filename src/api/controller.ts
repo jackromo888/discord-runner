@@ -23,11 +23,21 @@ import {
   getMembersByRoleId,
   sendPollMessage,
 } from "./actions";
-import { getInvite, getServerName, handleAccessEvent } from "./service";
+import {
+  fetchUserByAccessToken,
+  getInvite,
+  getServerName,
+  handleAccessEvent,
+  handleGuildEvent,
+  handleRoleEvent,
+  listServers,
+} from "./service";
 import {
   AccessEventParams,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
+  GuildEventParams,
+  RoleEventParams,
 } from "./types";
 
 const controller = {
@@ -64,6 +74,44 @@ const controller = {
     }
   },
 
+  guild: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    const params: GuildEventParams = req.body;
+
+    try {
+      const result = await handleGuildEvent(params);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  role: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    const params: RoleEventParams = req.body;
+
+    try {
+      const result = await handleRoleEvent(params);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
   invite: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
@@ -94,7 +142,44 @@ const controller = {
       const { platformGuildId } = req.params;
       const guildName = await getServerName(platformGuildId);
 
-      res.status(200).json(guildName);
+      res.status(200).json({ name: guildName });
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  resolveUser: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      // eslint-disable-next-line camelcase
+      const { access_token } = req.body;
+      const result = await fetchUserByAccessToken(access_token);
+
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  listGateables: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { platformUserId } = req.params;
+      const serverList = await listServers(platformUserId);
+
+      res.status(200).json(serverList);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

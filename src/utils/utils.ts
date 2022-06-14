@@ -13,6 +13,7 @@ import {
   MessageOptions,
   Role,
   PartialGuildMember,
+  PermissionOverwrites,
 } from "discord.js";
 import { GetGuildResponse } from "@guildxyz/sdk";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
@@ -278,7 +279,7 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
 };
 
 const updateAccessedChannelsOfRole = (
-  serverId: string,
+  server: Guild,
   roleId: string,
   channelIds: string[],
   isGuarded: boolean,
@@ -286,12 +287,9 @@ const updateAccessedChannelsOfRole = (
 ) => {
   const shouldHaveAccess = new Set(channelIds);
 
-  const channels = Main.client.guilds.cache
-    .get(serverId)
-    ?.channels.cache.filter((channel) => !channel.isThread()) as Collection<
-    string,
-    GuildChannel
-  >;
+  const channels = server.channels.cache.filter(
+    (channel) => !channel.isThread()
+  ) as Collection<string, GuildChannel>;
 
   if (isGuarded) {
     shouldHaveAccess.delete(entryChannelId);
@@ -320,7 +318,7 @@ const updateAccessedChannelsOfRole = (
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
       channelToAllowAccessTo.permissionOverwrites.edit(
-        Main.client.guilds.cache.get(serverId).roles.everyone.id,
+        server.roles.everyone.id,
         {
           VIEW_CHANNEL: false,
         }
@@ -332,7 +330,8 @@ const updateAccessedChannelsOfRole = (
 const notifyAccessedChannels = async (
   member: GuildMember | PartialGuildMember,
   roleId: string,
-  guildName: string
+  guildName: string,
+  roleName: string
 ) => {
   const accessedChannels = getAccessedChannelsByRoles(member.guild, [roleId]);
 
@@ -350,7 +349,7 @@ const notifyAccessedChannels = async (
 
   let message: string;
   if (accessedChannels.size === 0) {
-    message = `You got access to the \`${guildName}\` role  in \`${member.guild.name}\`.`;
+    message = `You got access to the \`${roleName}\` role  in \`${member.guild.name}\`.`;
   } else {
     message = `You got access to ${
       accessedChannels.size > 1 ? "these channels" : "this channel"
@@ -384,6 +383,42 @@ const notifyAccessedChannels = async (
   member.send({ embeds: [embed] }).catch(logger.error);
 };
 
+const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
+  // check if invite channel exists
+  let channelId: string;
+
+  if (
+    inviteChannelId &&
+    server.channels.cache.find((c) => c.id === inviteChannelId)
+  ) {
+    channelId = inviteChannelId;
+  } else {
+    logger.warn(
+      `Invite channel in db: ${inviteChannelId} does not exist in server ${server.id}`
+    );
+
+    // find the first channel which is visible to everyone
+    const publicChannel = server.channels.cache.find(
+      (c) =>
+        c.isText() &&
+        !(c as any).permissionOverwrites?.cache.some(
+          (po: PermissionOverwrites) =>
+            po.id === server.roles.everyone.id && po.deny.any("VIEW_CHANNEL")
+        )
+    );
+
+    if (publicChannel) {
+      channelId = publicChannel.id;
+    } else {
+      // if there are no visible channels, find the first text channel
+      logger.verbose(`Cannot find public channel in ${server.id}`);
+      channelId = server.channels.cache.find((c) => c.isText())?.id;
+    }
+  }
+
+  return channelId;
+};
+
 export {
   getUserResult,
   getErrorResult,
@@ -397,4 +432,5 @@ export {
   getChannelsByCategoryWithRoles,
   updateAccessedChannelsOfRole,
   notifyAccessedChannels,
+  checkInviteChannel,
 };

@@ -1,16 +1,27 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
-import { GuildMember, MessageEmbed, PermissionOverwrites } from "discord.js";
+import { GuildMember, MessageEmbed, Permissions, Role } from "discord.js";
 import config from "../config";
 import redisClient from "../database";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
+  checkInviteChannel,
   getJoinReplyMessage,
   getUserResult,
   notifyAccessedChannels,
+  updateAccessedChannelsOfRole,
 } from "../utils/utils";
-import { AccessEventParams, UserResult, InviteResult } from "./types";
+import {
+  AccessEventParams,
+  UserResult,
+  InviteResult,
+  GuildEventParams,
+  GuildEventResponse,
+  RoleEventParams,
+  RoleEventResponse,
+  ResolveUserResopnse,
+} from "./types";
 
 const handleAccessEvent = async (
   params: AccessEventParams
@@ -50,13 +61,20 @@ const handleAccessEvent = async (
   let updatedMember: GuildMember;
   if (action === "ADD") {
     // check if user would get a new role
-    if (!member.roles.cache.hasAll(...roleIds)) {
-      updatedMember = await member.roles.add(roleIds);
+    const rolesToAdd = roleIds.filter((r) => !member.roles.cache.has(r));
+    if (rolesToAdd.length > 0) {
+      updatedMember = await member.roles.add(rolesToAdd);
+
       // notify user about new roles
       try {
         await Promise.all(
-          roleIds.map((roleId) =>
-            notifyAccessedChannels(updatedMember, roleId, guildName)
+          rolesToAdd.map((roleId) =>
+            notifyAccessedChannels(
+              updatedMember,
+              roleId,
+              guildName,
+              guild.roles.cache.find((r) => r.id === roleId)?.name
+            )
           )
         );
       } catch (error) {
@@ -67,12 +85,19 @@ const handleAccessEvent = async (
 
   if (action === "REMOVE") {
     // check if user would lose any role
-    if (member.roles.cache.hasAny(...roleIds)) {
-      updatedMember = await member.roles.remove(roleIds);
+    const rolesToRemove = member.roles.cache.filter((r) =>
+      roleIds.includes(r.id)
+    );
+    if (rolesToRemove.size > 0) {
+      updatedMember = await member.fetch();
 
       // notify user about removed roles
       const embed = new MessageEmbed({
-        title: `You no longer have access to the \`${guildName}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
+        title: `You no longer have access to the \`${rolesToRemove
+          .map((r) => r.name)
+          .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
+          guild.name
+        }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
         color: `#${config.embedColor}`,
       });
       try {
@@ -96,8 +121,206 @@ const handleAccessEvent = async (
   return getUserResult(member);
 };
 
+const handleGuildEvent = async (
+  params: GuildEventParams
+): Promise<GuildEventResponse> => {
+  const { action, platformGuildId, platformGuildData } = params;
+
+  switch (action) {
+    case "CREATE":
+    case "UPDATE": {
+      const server = await Main.client.guilds.fetch(platformGuildId);
+
+      // check if inviteChannel is provided
+      let inviteChannelId: string;
+      if (platformGuildData.inviteChannel) {
+        // check if provided inviteChannel is valid
+        const inviteChannel = server.channels.cache
+          .filter((c) => c.type === "GUILD_TEXT" || c.type === "GUILD_NEWS")
+          .find((c) => c.id === platformGuildData.inviteChannel);
+        if (inviteChannel) {
+          inviteChannelId = inviteChannel.id;
+        }
+      }
+
+      // if no valid inviteChannel is provided, create one
+      if (!inviteChannelId) {
+        const createdInviteChannel = await server.channels.create(
+          "entry-channel",
+          {
+            type: "GUILD_TEXT",
+            permissionOverwrites: [
+              {
+                type: "role",
+                id: server.roles.everyone.id,
+                deny: "SEND_MESSAGES",
+              },
+            ],
+          }
+        );
+        inviteChannelId = createdInviteChannel.id;
+      }
+
+      return {
+        platformGuildId,
+        platformGuildData: { inviteChannel: inviteChannelId },
+      };
+    }
+    case "DELETE": {
+      return {
+        platformGuildId,
+        platformGuildData: platformGuildData as any,
+      };
+    }
+
+    default:
+      throw Error(`Invalid guild event: ${JSON.stringify(params)}`);
+  }
+};
+
+const handleRoleEvent = async (
+  params: RoleEventParams
+): Promise<RoleEventResponse> => {
+  const {
+    action,
+    roleName,
+    platformGuildId,
+    platformGuildData,
+    platformRoleId,
+    platformRoleData,
+  } = params;
+
+  switch (action) {
+    case "CREATE": {
+      // create the discord role
+      const server = await Main.client.guilds.fetch(platformGuildId);
+      const createdRole = await server.roles.create({
+        name: roleName,
+        hoist: true,
+        reason: `Created by ${Main.client.user.username} for a Guild role.`,
+        permissions:
+          platformRoleData?.isGuarded === "true"
+            ? Permissions.FLAGS.VIEW_CHANNEL
+            : undefined,
+      });
+
+      // check if invite channel exists, if not select another one
+      const inviteChannelId = checkInviteChannel(
+        server,
+        platformGuildData.inviteChannel
+      );
+
+      // if guarded hide invite channel for role
+      if (platformRoleData?.isGuarded === "true") {
+        const inviteChannel = await server.channels.fetch(inviteChannelId);
+        inviteChannel.permissionOverwrites.create(createdRole, {
+          VIEW_CHANNEL: false,
+        });
+      }
+
+      await updateAccessedChannelsOfRole(
+        server,
+        createdRole.id,
+        platformRoleData?.gatedChannels,
+        platformRoleData?.isGuarded === "true",
+        inviteChannelId
+      );
+
+      return {
+        platformRoleId: createdRole.id,
+        platformGuildData: { inviteChannel: inviteChannelId },
+      };
+    }
+
+    case "UPDATE": {
+      // update role name
+      const server = await Main.client.guilds.fetch(platformGuildId);
+      const roleInServer = server.roles.cache.find(
+        (r) => r.id === platformRoleId
+      );
+
+      // check if role exists
+      let role: Role;
+      if (roleInServer) {
+        roleInServer.edit(
+          {
+            name: roleName,
+            permissions:
+              platformRoleData?.isGuarded === "true"
+                ? Permissions.FLAGS.VIEW_CHANNEL
+                : undefined,
+          },
+          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
+        );
+      } else {
+        // if not exists create a new
+        role = await server.roles.create({
+          name: roleName,
+          hoist: true,
+          reason: `Created by ${Main.client.user.username} for a Guild role.`,
+          permissions:
+            platformRoleData?.isGuarded === "true"
+              ? Permissions.FLAGS.VIEW_CHANNEL
+              : undefined,
+        });
+      }
+
+      // check if invite channel exists, if not select another one
+      const inviteChannelId = checkInviteChannel(
+        server,
+        platformGuildData.inviteChannel
+      );
+
+      // if guarded hide invite channel for role
+      if (platformRoleData?.isGuarded === "true") {
+        const inviteChannel = await server.channels.fetch(inviteChannelId);
+        inviteChannel.permissionOverwrites.create(role, {
+          VIEW_CHANNEL: false,
+        });
+      }
+
+      if (platformRoleData?.gatedChannels) {
+        await updateAccessedChannelsOfRole(
+          server,
+          role.id,
+          platformRoleData.gatedChannels,
+          platformRoleData?.isGuarded === "true",
+          inviteChannelId
+        );
+      }
+
+      return {
+        platformGuildData: { inviteChannel: inviteChannelId },
+        platformRoleId: role.id,
+      };
+    }
+    case "DELETE": {
+      // find the role
+      const server = await Main.client.guilds.fetch(platformGuildId);
+      const role = server.roles.cache.find((r) => r.id === platformRoleId);
+
+      // delete the role
+      try {
+        await role.delete(
+          `Deleted by ${Main.client.user.username} because the role deleted in Guild`
+        );
+      } catch (error) {
+        logger.verbose(`Role delete error: ${error.message}`);
+        return { success: false };
+      }
+
+      return {
+        success: true,
+      };
+    }
+
+    default:
+      throw Error(`Invalid role event: ${JSON.stringify(params)}`);
+  }
+};
+
 const getInvite = async (serverId: string): Promise<InviteResult> => {
-  logger.verbose(`generateInvite params: ${serverId}`);
+  logger.verbose(`getInvite params: ${serverId}`);
 
   // check if invite is in cache
   const cachedInvite = Main.inviteDataCache.get(serverId);
@@ -126,32 +349,8 @@ const getInvite = async (serverId: string): Promise<InviteResult> => {
     (gp) => gp.platformGuildId === serverId
   )?.data?.inviteChannel;
 
-  // check if invite channel exists
-  let channelId: string;
-  if (server.channels.cache.find((c) => c.id === inviteChannelInDb)) {
-    channelId = inviteChannelInDb;
-  } else {
-    logger.warn(
-      `Invite channel in db: ${inviteChannelInDb} does not exist in server ${serverId}`
-    );
-
-    // find the first channel which is visible to everyone
-    const publicChannel = server.channels.cache.find(
-      (c) =>
-        c.isText() &&
-        !(c as any).permissionOverwrites?.cache.some(
-          (po: PermissionOverwrites) =>
-            po.id === server.roles.everyone.id && po.deny.any("VIEW_CHANNEL")
-        )
-    );
-    if (publicChannel) {
-      channelId = publicChannel.id;
-    } else {
-      // if there are no visible channels, find the first text channel
-      logger.verbose(`Cannot find public channel in ${serverId}`);
-      channelId = server.channels.cache.find((c) => c.isText())?.id;
-    }
-  }
+  const channelId = checkInviteChannel(server, inviteChannelInDb);
+  // TODO: update in db
 
   // generate the new invite
   const newInvite = await server.invites.create(channelId, { maxAge: 0 });
@@ -178,4 +377,48 @@ const getServerName = async (guildId: string) => {
   return guild.name;
 };
 
-export { handleAccessEvent, getInvite, getServerName };
+const fetchUserByAccessToken = async (
+  accessToken: string
+): Promise<ResolveUserResopnse> => {
+  try {
+    const apiResponse = await axios.get("https://discord.com/api/users/@me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return {
+      platformUserId: apiResponse.data.id,
+      platformUserData: { access_token: accessToken },
+    };
+  } catch (error) {
+    throw Error(
+      `reolveUser: cannot fetch user from access_token. ${JSON.stringify(
+        JSON.stringify(error.response.data)
+      )}`
+    );
+  }
+};
+
+const listServers = async (userId: string) => {
+  const mutualServers = Main.client.guilds.cache.filter((g) =>
+    g.members.cache.has(userId)
+  );
+  const serverDatas = mutualServers.reduce((acc: any, guild) => {
+    acc[guild.id] = {
+      name: guild.name,
+      iconURL: guild.iconURL(),
+      bannerURL: guild.bannerURL(),
+    };
+    return acc;
+  }, {});
+
+  return serverDatas;
+};
+
+export {
+  handleAccessEvent,
+  getInvite,
+  getServerName,
+  listServers,
+  handleGuildEvent,
+  handleRoleEvent,
+  fetchUserByAccessToken,
+};

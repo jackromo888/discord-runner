@@ -298,7 +298,7 @@ const manageMigratedActions = async (
     upgradeableUserIds.map(async (id) => {
       const member = await guild.members.fetch(id);
       await member.roles.add(roleId);
-      await notifyAccessedChannels(member, roleId, message);
+      await notifyAccessedChannels(member, roleId, message, role.name);
     })
   );
 

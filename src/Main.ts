@@ -24,7 +24,7 @@ class Main {
 
     // setup sdk
     setApiBaseUrl(config.backendUrl);
-    logger.verbose(`Backend url sat to ${config.backendUrl}`);
+    logger.info(`Backend url set to ${config.backendUrl}`);
     this.platform = new Platform("DISCORD");
 
     this.client = new Client({
