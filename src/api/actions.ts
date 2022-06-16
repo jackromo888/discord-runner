@@ -502,7 +502,11 @@ const getUserPoap = async (
           const errorMessage = getBackendErrorMessage(err);
           logger.warn(`poapClaim - ${userId} ${errorMessage}`);
 
-          if (errorMessage.includes("expired" || "claimable" || "join")) {
+          if (
+            errorMessage.includes(
+              "expired" || "claimable" || "join" || "transaction"
+            )
+          ) {
             return null;
           }
 
