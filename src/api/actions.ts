@@ -36,6 +36,7 @@ import {
   createInteractionPayload,
   denyViewEntryChannelForRole,
   getAccessedChannelsByRoles,
+  getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
   getErrorResult,
   getJoinReplyMessage,
@@ -481,34 +482,57 @@ const getUserPoap = async (
 ): Promise<MessageOptions> => {
   try {
     const guilds = await getGuildsOfServer(guildId);
-    const poap = guilds[0]?.poaps?.pop();
-    const poapLink = await axios.post(
-      `${config.backendUrl}/assets/poap/claim`,
-      {
-        userId,
-        // eslint-disable-next-line no-unsafe-optional-chaining
-        poapId: poap.poapIdentifier,
-      }
+    const poapLinks = await Promise.all(
+      guilds[0]?.poaps?.map(async (poap) => {
+        try {
+          const response = await axios.post(
+            `${config.backendUrl}/assets/poap/claim`,
+            {
+              userId,
+              // eslint-disable-next-line no-unsafe-optional-chaining
+              poapId: poap.poapIdentifier,
+            }
+          );
+          return new MessageButton({
+            label: `Claim ${poap.fancyId}`,
+            style: "LINK",
+            url: response.data,
+          });
+        } catch (err: any) {
+          const errorMessage = getBackendErrorMessage(err);
+          logger.warn(`poapClaim - ${userId} ${errorMessage}`);
+
+          if (errorMessage.includes("expired" || "claimable" || "join")) {
+            return null;
+          }
+
+          return new MessageButton({
+            label: `Buy ${poap.fancyId}`,
+            style: "LINK",
+            url: `https://guild.xyz/${guilds[0].urlName}/claim-poap/${poap.fancyId}`,
+          });
+        }
+      })
     );
 
-    const button = new MessageButton({
-      label: "Claim",
-      style: "LINK",
-      url: poapLink.data,
-    });
+    const contentMessage =
+      guilds[0]?.poaps?.length > 1
+        ? "These are **your** links"
+        : "This is **your** link";
 
     return {
-      components: [new MessageActionRow({ components: [button] })],
-      content: `This is **your** link to claim your POAP. Do **NOT** share it with anyone!`,
+      components: [
+        new MessageActionRow({ components: poapLinks.filter((p) => p?.url) }),
+      ],
+      content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
     };
   } catch (err: any) {
-    const errorData = err.response?.data;
-    const errors = errorData?.errors;
+    const errorMessage = getBackendErrorMessage(err);
 
-    if (errors?.length > 0 && errors[0]?.msg) {
-      logger.verbose(`getUserPoap error: ${errors[0]?.msg}`);
+    if (errorMessage) {
+      logger.verbose(`getUserPoap error: ${errorMessage}`);
       return {
-        content: errors[0]?.msg,
+        content: errorMessage,
       };
     }
     logger.verbose(`getUserPoap error: ${err.message}`);
