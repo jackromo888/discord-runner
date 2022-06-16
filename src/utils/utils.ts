@@ -74,6 +74,15 @@ const logBackendError = (error) => {
   }
 };
 
+const getBackendErrorMessage = (error) => {
+  const errorData = error.response?.data?.errors;
+
+  if (errorData?.length > 0 && errorData[0]?.msg) {
+    return errorData[0].msg;
+  }
+  return null;
+};
+
 const logAxiosResponse = (res: AxiosResponse<any>) => {
   const data = JSON.stringify(res.data);
   logger.verbose(
@@ -367,6 +376,7 @@ export {
   getUserResult,
   getErrorResult,
   logBackendError,
+  getBackendErrorMessage,
   logAxiosResponse,
   isNumber,
   createInteractionPayload,
