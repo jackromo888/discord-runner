@@ -70,12 +70,4 @@ const getGuildOfServer = async (serverId: string): Promise<GuildOfServer> => {
   }
 };
 
-
-
-export {
-  userJoined,
-  userRemoved,
-  statusUpdate,
-  getGuildOfServer,
-  guildStatusUpdate
-};
+export { userJoined, userRemoved, statusUpdate, getGuildOfServer };
