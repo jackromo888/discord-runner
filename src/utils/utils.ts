@@ -13,10 +13,15 @@ import {
   MessageOptions,
   Role,
 } from "discord.js";
-import { ActionError, ErrorResult, UserResult } from "../api/types";
+import {
+  ActionError,
+  ErrorResult,
+  GuildOfServer,
+  UserResult,
+} from "../api/types";
 import config from "../config";
 import Main from "../Main";
-import { getGuildsOfServer } from "../service";
+import { getGuildOfServer } from "../service";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -85,13 +90,7 @@ const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
 const createJoinInteractionPayload = (
-  guild: {
-    name: string;
-    urlName: string;
-    description: string;
-    themeColor: string;
-    imageUrl: string;
-  },
+  guild: GuildOfServer,
   title: string = "Verify your wallet",
   messageText: string = null,
   buttonText?: string
@@ -199,49 +198,44 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
   return channelsByCategory;
 };
 
-const getCategoriesWithChannels = (guild, roleIds) => {
-  const categories = {};
+const getCategoriesWithChannels = (guild: Guild, roleIds: string[]) => {
+  const categories: { [key: string]: GuildChannel[] } = {};
   const accessedChannelsByRoles = getAccessedChannelsByRoles(guild, roleIds);
 
   accessedChannelsByRoles.forEach((channel) => {
     if (categories[channel.parentId]) {
       categories[channel.parentId].push(channel);
     } else {
-      categories[channel.parentId] = [];
-      categories[channel.parentId].push(channel);
+      categories[channel.parentId] = [channel];
     }
   });
 
   return categories;
 };
 
-const getCategoryNameById = (guild, categoryId) => {
+const getCategoryNameById = (guild: Guild, categoryId: string) => {
   const channelsByCategoryWithRoles = getChannelsByCategoryWithRoles(guild);
   const category = channelsByCategoryWithRoles.find((c) => c.id === categoryId);
   return category.name;
 };
 
-const getCategoryFieldValues = (guild, roleIds) => {
+const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
   const fields = [];
 
-  const categoryEmoji = Main.Client.emojis.cache.get("893836008712441858");
+  const categoryEmoji =
+    Main.Client.emojis.cache.get("893836008712441858") || "▶️";
   const privateChannelEmoji =
-    Main.Client.emojis.cache.get("893836025699377192");
+    Main.Client.emojis.cache.get("893836025699377192") || "#";
 
   const categories = getCategoriesWithChannels(guild, roleIds);
 
   Object.keys(categories).forEach((categoryId) => {
     fields.push({
-      name: `${categoryEmoji || "▶️"} ${getCategoryNameById(
-        guild,
-        categoryId
-      )}`,
+      name: `${categoryEmoji} ${getCategoryNameById(guild, categoryId)}`,
       value: `\n${categories[categoryId]
         .map(
           (c) =>
-            `[${privateChannelEmoji || "#"}${
-              c.name
-            }](https://discord.com/channels/${guild.id}/${c.id})`
+            `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${guild.id}/${c.id})`
         )
         .join("\n")}`,
     });
@@ -250,18 +244,16 @@ const getCategoryFieldValues = (guild, roleIds) => {
   return fields;
 };
 
-const getRoleNames = (guild, roleIds) =>
+const getRoleNames = (guild: Guild, roleIds: string[]) =>
   guild.roles.cache
     .filter((role) => roleIds.some((roleId) => roleId === role.id))
     .map((role) => role.name);
 
-const getNotAccessedRoleIds = (guildRoleIds, roleIds) =>
-  guildRoleIds.filter((roleId) => !roleIds.includes(roleId));
+const getNotAccessedRoleIds = (discordRoleIds: string[], roleIds: string[]) =>
+  discordRoleIds.filter((roleId) => !roleIds.includes(roleId));
 
-const getGuildRoleIds = (guildsOfServer) =>
-  guildsOfServer[0].roles
-    .map((r) => r.platforms)
-    .map((p) => p[0].discordRoleId);
+const getDiscordRoleIds = (guildOfServer: GuildOfServer): string[] =>
+  guildOfServer.roles.map((r) => r.platforms).map((p) => p[0].discordRoleId);
 
 const printRoleNames = (
   roleNames: string[],
@@ -304,20 +296,20 @@ const getJoinReplyMessage = async (
   let message: MessageOptions;
   logger.verbose(`getJoinReply - ${roleIds} ${guild.id} ${userId}`);
 
-  const guildsOfServer = await getGuildsOfServer(guild.id);
-  const guildRoleIds = getGuildRoleIds(guildsOfServer);
+  const guildOfServer = await getGuildOfServer(guild.id);
+  const discordRoleIds = getDiscordRoleIds(guildOfServer);
 
   if (roleIds && roleIds.length !== 0) {
     const accessedRoleNames = getRoleNames(guild, roleIds);
-    const notAccessedRoleIds = getNotAccessedRoleIds(guildRoleIds, roleIds);
+    const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
     const notAccessedRoleNames = getRoleNames(guild, notAccessedRoleIds);
 
     const fields = getCategoryFieldValues(guild, roleIds);
 
     const description = `You got ${roleIds.length} out of ${
-      guildRoleIds.length
+      discordRoleIds.length
     } role${
-      guildRoleIds.length > 1 ? "s" : ""
+      discordRoleIds.length > 1 ? "s" : ""
     } with your connected address(es):\n\n${printRoleNames(
       accessedRoleNames,
       true
@@ -333,8 +325,8 @@ const getJoinReplyMessage = async (
     });
 
     const button = getLinkButton(
-      "View details / connect new address",
-      `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`
+      "View details",
+      `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${userId}`
     );
 
     message = {
@@ -343,11 +335,11 @@ const getJoinReplyMessage = async (
       embeds: [embed],
     };
   } else if (roleIds && roleIds[0] !== "") {
-    const notAccessedRoleIds = getNotAccessedRoleIds(guildRoleIds, roleIds);
+    const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
     const notAccessedRoleNames = getRoleNames(guild, notAccessedRoleIds);
     const button = getLinkButton(
-      "View details / connect new address",
-      `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`
+      "View details",
+      `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${userId}`
     );
 
     const embed = new MessageEmbed({
@@ -367,7 +359,7 @@ const getJoinReplyMessage = async (
   } else {
     const button = getLinkButton(
       "Join",
-      `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`
+      `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${userId}`
     );
 
     return {
@@ -466,7 +458,7 @@ export {
   getCategoryFieldValues,
   getRoleNames,
   getNotAccessedRoleIds,
-  getGuildRoleIds,
+  getDiscordRoleIds,
   printRoleNames,
   getLinkButton,
 };

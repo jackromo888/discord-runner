@@ -23,11 +23,11 @@ import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
 import NotACommand from "../guards/NotACommand";
 import Main from "../Main";
-import { getGuildsOfServer, userJoined, userRemoved } from "../service";
+import { getGuildOfServer, userJoined, userRemoved } from "../service";
 import logger from "../utils/logger";
 import pollStorage from "../api/pollStorage";
 import config from "../config";
-import { Vote } from "../api/types";
+import { GuildOfServer, Vote } from "../api/types";
 import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
 
@@ -322,9 +322,12 @@ abstract class Events {
 
   @On("roleCreate")
   async onRoleCreate([role]: [Role]): Promise<void> {
-    const guildOfServer = await getGuildsOfServer(role.guild.id);
+    const guildOfServer: GuildOfServer = await getGuildOfServer(role.guild.id);
+    const platform = guildOfServer?.platforms?.find(
+      (p) => p.type === "DISCORD"
+    );
 
-    if (!guildOfServer?.[0]?.isGuarded) {
+    if (!platform?.isGuarded) {
       return;
     }
 

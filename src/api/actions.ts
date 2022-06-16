@@ -37,12 +37,12 @@ import {
   getCategoryFieldValues,
   getRoleNames,
   getNotAccessedRoleIds,
-  getGuildRoleIds,
+  getDiscordRoleIds,
   printRoleNames,
   getLinkButton,
 } from "../utils/utils";
 import config from "../config";
-import { getGuildsOfServer } from "../service";
+import { getGuildOfServer } from "../service";
 import redisClient from "../database";
 import { createPollText } from "./polls";
 
@@ -53,20 +53,20 @@ const notifyAccessedChannels = async (
   roleId: string,
   roleName: string
 ) => {
-  const guildsOfServer = await getGuildsOfServer(member.guild.id);
-  const guildRoleIds = getGuildRoleIds(guildsOfServer);
+  const guildOfServer = await getGuildOfServer(member.guild.id);
+  const discordRoleIds = getDiscordRoleIds(guildOfServer);
 
   const memberRoles = member.roles.cache
     .filter((role) => role.id !== member.guild.roles.everyone.id)
     .map((role) => role.id);
 
-  const accessedRoleIds = guildRoleIds.filter((guildRoleId) =>
+  const accessedRoleIds = discordRoleIds.filter((guildRoleId) =>
     memberRoles.some((memberRoleId) => memberRoleId === guildRoleId)
   );
   const accessedRoleNames = getRoleNames(member.guild, accessedRoleIds);
 
   const notAccessedRoleIds = getNotAccessedRoleIds(
-    guildRoleIds,
+    discordRoleIds,
     accessedRoleIds
   );
   const notAccessedRoleNames = getRoleNames(member.guild, notAccessedRoleIds);
@@ -89,16 +89,24 @@ const notifyAccessedChannels = async (
   });
 
   const button = getLinkButton(
-    "View details / connect new address",
-    `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${member.id}`
+    "View details",
+    `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${member.id}`
   );
 
-  const message = {
+  const messages = {
     components: [new MessageActionRow({ components: [button] })],
     embeds: [embed],
   };
 
-  member.send(message).catch(logger.error);
+  try {
+    await member.send(messages);
+  } catch (error) {
+    if (error?.code === 50007) {
+      logger.verbose(`Cannot send messages to ${member.user.username}`);
+    } else {
+      logger.error(error.message);
+    }
+  }
 };
 
 const manageRoles = async (
@@ -141,20 +149,20 @@ const manageRoles = async (
     } else {
       updatedMember = await member.roles.remove(roleId);
 
-      const guildsOfServer = await getGuildsOfServer(guild.id);
-      const guildRoleIds = getGuildRoleIds(guildsOfServer);
+      const guildOfServer = await getGuildOfServer(guild.id);
+      const discordRoleIds = getDiscordRoleIds(guildOfServer);
 
       const memberRoles = member.roles.cache
         .filter((role) => role.id !== guild.roles.everyone.id)
         .map((role) => role.id);
 
-      const accessedRoleIds = guildRoleIds.filter((guildRoleId) =>
+      const accessedRoleIds = discordRoleIds.filter((guildRoleId) =>
         memberRoles.some((memberRoleId) => memberRoleId === guildRoleId)
       );
       const accessedRoleNames = getRoleNames(guild, accessedRoleIds);
 
       const notAccessedRoleIds = getNotAccessedRoleIds(
-        guildRoleIds,
+        discordRoleIds,
         accessedRoleIds
       );
       const notAccessedRoleNames = getRoleNames(guild, notAccessedRoleIds);
@@ -178,14 +186,15 @@ const manageRoles = async (
       });
 
       const button = getLinkButton(
-        "View details / connect new address",
-        `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${member.id}`
+        "View details",
+        `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${member.id}`
       );
 
       const messages = {
         components: [new MessageActionRow({ components: [button] })],
         embeds: [embed],
       };
+
       try {
         await updatedMember.send(messages);
       } catch (error) {
@@ -528,9 +537,9 @@ const sendJoinButton = async (
     return false;
   }
 
-  const guilds = await getGuildsOfServer(guildId);
+  const guildOfServer = await getGuildOfServer(guildId);
   const payload = createJoinInteractionPayload(
-    guilds[0],
+    guildOfServer,
     meta?.title,
     meta?.description,
     meta?.button

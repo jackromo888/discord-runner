@@ -1,5 +1,5 @@
 import axios from "axios";
-import { LevelInfo } from "./api/types";
+import { LevelInfo, GuildOfServer } from "./api/types";
 import config from "./config";
 import logger from "./utils/logger";
 import { logBackendError } from "./utils/utils";
@@ -56,16 +56,17 @@ const statusUpdate = async (
   }
 };
 
-const getGuildsOfServer = async (serverId: string) => {
-  logger.verbose(`getGuildsOfServer params: ${serverId}`);
+const getGuildOfServer = async (serverId: string): Promise<GuildOfServer> => {
+  logger.verbose(`getGuildOfServer params: ${serverId}`);
   try {
     const response = await axios.get(
       `${API_BASE_URL}/guild/platformId/${serverId}`
     );
-    return [response.data];
+
+    return response.data;
   } catch (error) {
-    logger.verbose("getGuildsOfServer error");
-    return [];
+    logger.verbose("getGuildOfServer error");
+    return null;
   }
 };
 
@@ -87,6 +88,6 @@ export {
   userJoined,
   userRemoved,
   statusUpdate,
-  getGuildsOfServer,
+  getGuildOfServer,
   guildStatusUpdate,
 };

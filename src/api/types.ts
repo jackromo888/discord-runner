@@ -100,11 +100,41 @@ type Vote = {
   platformUserId: string;
   optionIndex: number;
 };
+
 type SendJoinMeta = Partial<{
   title: string;
   description: string;
   button: string;
 }>;
+
+type Platform = {
+  id: number;
+  isGuarded: boolean;
+  platformId: string;
+  type: string;
+  platformName: string;
+};
+
+type Role = {
+  id: number;
+  name: string;
+  platforms: {
+    roleId: number;
+    platformId: number;
+    inviteChannel: string;
+    discordRoleId: string;
+  }[];
+};
+
+type GuildOfServer = {
+  id: number;
+  name: string;
+  urlName: string;
+  description: string;
+  imageUrl: string;
+  platforms: Platform[];
+  roles: Role[];
+};
 
 export {
   SendJoinMeta,
@@ -125,4 +155,5 @@ export {
   Poll,
   Reaction,
   Vote,
+  GuildOfServer,
 };

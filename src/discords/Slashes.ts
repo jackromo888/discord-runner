@@ -13,7 +13,7 @@ import logger from "../utils/logger";
 import { createPoll /* endPoll */ } from "../api/polls";
 import pollStorage from "../api/pollStorage";
 import { createJoinInteractionPayload } from "../utils/utils";
-import { getGuildsOfServer } from "../service";
+import { getGuildOfServer } from "../service";
 import config from "../config";
 import { RequirementDict } from "../api/types";
 
@@ -116,7 +116,7 @@ abstract class Slashes {
       return;
     }
 
-    const guild = await getGuildsOfServer(interaction.guild.id);
+    const guild = await getGuildOfServer(interaction.guild.id);
     if (!guild) {
       await interaction.reply({
         content: "❌ There are no guilds in this server.",
@@ -126,7 +126,7 @@ abstract class Slashes {
     }
 
     const payload = createJoinInteractionPayload(
-      guild[0],
+      guild,
       title,
       messageText,
       buttonText
