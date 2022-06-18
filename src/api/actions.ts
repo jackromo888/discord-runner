@@ -13,23 +13,28 @@ import {
   TextChannel,
   Message,
   PermissionOverwrites,
+  MessageButton,
+  MessageOptions,
   MessageActionRow,
 } from "discord.js";
 import axios from "axios";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
+  ChannelObj,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
+  Emote,
   InviteResult,
   ManageRolesParams,
   Poll,
-  SendJoinMeta,
+  ButtonMetaData,
   UserResult,
 } from "./types";
 import {
-  createJoinInteractionPayload,
+  createInteractionPayload,
   denyViewEntryChannelForRole,
+  getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
   getErrorResult,
   getJoinReplyMessage,
@@ -169,14 +174,12 @@ const manageRoles = async (
 
       const fields = getCategoryFieldValues(guild, [roleId]);
 
-      const description = `You don't satisfy the requirements anymore with your connected addresses.\n\n${printRoleNames(
+      const description = `\n\n${printRoleNames(
         accessedRoleNames,
         true
-      )}\n${printRoleNames(
-        notAccessedRoleNames,
-        false,
-        message
-      )}\n...revoking your access from the following channels:\n`;
+      )}\n${printRoleNames(notAccessedRoleNames, false, message)}\n${
+        notAccessedRoleNames.length > 0 ? "\n" : ""
+      }...revoking your access from the following channels:\n`;
 
       const embed = new MessageEmbed({
         title: `You lost a role in ${member.guild.name}!`,
@@ -422,8 +425,10 @@ const isIn = async (guildId: string): Promise<boolean> => {
   }
 };
 
+// eslint-disable-next-line no-unused-vars
 const getServerInfo = async (guildId: string, includeDetails: boolean) => {
   logger.verbose(`listChannels params: ${guildId}`);
+  // TODO rethink includeDetails & isAdmin property
   try {
     const guild = await Main.Client.guilds.fetch(guildId);
     const { icon: iconId, name: serverName } = guild;
@@ -463,10 +468,7 @@ const getServerInfo = async (guildId: string, includeDetails: boolean) => {
         name: c?.name,
       }));
 
-    let categories: any[];
-    if (includeDetails) {
-      categories = getChannelsByCategoryWithRoles(guild);
-    }
+    const categories: any[] = getChannelsByCategoryWithRoles(guild);
 
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
@@ -525,10 +527,81 @@ const getRole = async (guildId: string, roleId: string) => {
   return { serverName: guild.name, roleName: role.name };
 };
 
-const sendJoinButton = async (
+const getUserPoap = async (
+  userId: string,
+  guildId: string
+): Promise<MessageOptions> => {
+  try {
+    const guild = await getGuildOfServer(guildId);
+    const poapLinks = await Promise.all(
+      guild?.poaps?.map(async (poap) => {
+        try {
+          const response = await axios.post(
+            `${config.backendUrl}/assets/poap/claim`,
+            {
+              userId,
+              // eslint-disable-next-line no-unsafe-optional-chaining
+              poapId: poap.poapIdentifier,
+            }
+          );
+          return new MessageButton({
+            label: `Claim ${poap.fancyId}`,
+            style: "LINK",
+            url: response.data,
+          });
+        } catch (err: any) {
+          const errorMessage = getBackendErrorMessage(err);
+          logger.warn(`poapClaim - ${userId} ${errorMessage}`);
+
+          if (
+            errorMessage.includes(
+              "expired" || "claimable" || "join" || "transaction"
+            )
+          ) {
+            return null;
+          }
+
+          return new MessageButton({
+            label: `Buy ${poap.fancyId}`,
+            style: "LINK",
+            url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
+          });
+        }
+      })
+    );
+
+    const contentMessage =
+      guild?.poaps?.length > 1
+        ? "These are **your** links"
+        : "This is **your** link";
+
+    return {
+      components: [
+        new MessageActionRow({ components: poapLinks.filter((p) => p?.url) }),
+      ],
+      content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
+    };
+  } catch (err: any) {
+    const errorMessage = getBackendErrorMessage(err);
+
+    if (errorMessage) {
+      logger.verbose(`getUserPoap error: ${errorMessage}`);
+      return {
+        content: errorMessage,
+      };
+    }
+    logger.verbose(`getUserPoap error: ${err.message}`);
+
+    return {
+      content: `Unfortunately, you couldn't claim this POAP right now. Check back later!`,
+    };
+  }
+};
+
+const sendDiscordButton = async (
   guildId: string,
   channelId: string,
-  meta?: SendJoinMeta
+  meta?: ButtonMetaData
 ) => {
   const guild = await Main.Client.guilds.fetch(guildId);
   const channel = guild.channels.cache.find((c) => c.id === channelId);
@@ -538,11 +611,12 @@ const sendJoinButton = async (
   }
 
   const guildOfServer = await getGuildOfServer(guildId);
-  const payload = createJoinInteractionPayload(
+  const payload = createInteractionPayload(
     guildOfServer,
     meta?.title,
     meta?.description,
-    meta?.button
+    meta?.button,
+    meta?.isJoinButton
   );
 
   const message = await channel.send(payload);
@@ -728,12 +802,54 @@ const setupGuildGuard = async (
   return createdEntryChannelId;
 };
 
+const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
+  logger.verbose(`Resetting guild guard, server: ${guildId}`);
+
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const entryChannel = guild.channels.cache.get(entryChannelId);
+  if (!entryChannel) {
+    throw new Error(
+      `Channel with id ${entryChannelId} does not exists in server ${guildId}.`
+    );
+  }
+
+  if (entryChannel instanceof ThreadChannel) {
+    throw Error("Entry channel cannot be a thread.");
+  }
+
+  if (entryChannel.type === "GUILD_VOICE") {
+    throw Error("Entry channel cannot be a voice channel.");
+  }
+
+  const editReason = `Updated by ${Main.Client.user.username} because Guild Guard has been disabled.`;
+
+  await entryChannel.permissionOverwrites.delete(
+    guild.roles.everyone.id,
+    editReason
+  );
+
+  await Promise.all(
+    guild.roles.cache
+      .filter((role) => !role.permissions.has("VIEW_CHANNEL"))
+      .map((role) =>
+        role.edit({ permissions: role.permissions.add("VIEW_CHANNEL") })
+      )
+  );
+
+  await guild.roles.everyone.edit(
+    {
+      permissions: guild.roles.everyone.permissions.add("VIEW_CHANNEL"),
+    },
+    editReason
+  );
+};
+
 const getMembersByRoleId = async (serverId: string, roleId: string) => {
   const server = await Main.Client.guilds.fetch(serverId);
 
   const role = await server.roles.fetch(roleId);
 
-  return [...role.members.keys()];
+  return [...role.members.keys()] || [];
 };
 
 const sendPollMessage = async (
@@ -757,6 +873,30 @@ const sendPollMessage = async (
   return +msg.id;
 };
 
+const getEmoteList = async (guildId: string): Promise<Emote[]> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const emotes = await guild.emojis.fetch();
+
+  return emotes.map((emote) => ({
+    name: emote.name,
+    id: emote.id,
+    image: emote.url,
+    animated: emote.animated,
+  }));
+};
+
+const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
+  const guild = await Main.Client.guilds.fetch(guildId);
+  const channels = await guild.channels.fetch();
+
+  return channels
+    .filter((channel) => !channel.type.match(/^GUILD_(CATEGORY|VOICE)$/))
+    .map((channel) => ({
+      name: channel.name,
+      id: channel.id,
+    }));
+};
+
 export {
   getMembersByRoleId,
   manageRoles,
@@ -774,8 +914,12 @@ export {
   getRole,
   deleteChannelAndRole,
   deleteRole,
-  sendJoinButton,
+  sendDiscordButton,
   getUser,
   setupGuildGuard,
   sendPollMessage,
+  getEmoteList,
+  getChannelList,
+  resetGuildGuard,
+  getUserPoap,
 };

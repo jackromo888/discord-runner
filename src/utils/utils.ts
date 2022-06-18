@@ -79,9 +79,21 @@ const logBackendError = (error) => {
   }
 };
 
+const getBackendErrorMessage = (error) => {
+  const errorData = error.response?.data?.errors;
+
+  if (errorData?.length > 0 && errorData[0]?.msg) {
+    return errorData[0].msg;
+  }
+  return null;
+};
+
 const logAxiosResponse = (res: AxiosResponse<any>) => {
+  const data = JSON.stringify(res.data);
   logger.verbose(
-    `${res.status} ${res.statusText} data:${JSON.stringify(res.data)}`
+    `${res.status} ${res.statusText} data:${
+      data.length > 2000 ? " hidden" : data
+    }`
   );
   return res;
 };
@@ -89,33 +101,61 @@ const logAxiosResponse = (res: AxiosResponse<any>) => {
 const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
-const createJoinInteractionPayload = (
+const createInteractionPayload = (
   guild: GuildOfServer,
-  title: string = "Verify your wallet",
+  title?: string,
   messageText: string = null,
-  buttonText?: string
+  buttonText?: string,
+  isJoinButton: boolean = true
 ) => {
-  const joinButton = new MessageButton({
-    customId: "join-button",
-    label: buttonText || `Join ${guild?.name || "Guild"}`,
+  const lastPoap = guild?.poaps?.pop();
+  const buttonData = isJoinButton
+    ? {
+        customId: "join-button",
+        label: buttonText || `Join ${guild?.name || "Guild"}`,
+        title: title || "Verify your wallet",
+        description:
+          messageText ||
+          guild?.description ||
+          "Join this guild and get your role(s)!",
+        guideUrl: "https://docs.guild.xyz/",
+        thumbnailUrl:
+          "https://cdn.discordapp.com/attachments/950682012866465833/951448318976884826/dc-message.png",
+      }
+    : {
+        customId: "poap-claim-button",
+        label: buttonText || `Claim POAP`,
+        title: title || lastPoap?.fancyId || "Claim your POAP",
+        description:
+          messageText || "Claim this magnificent POAP to your collection!",
+        guideUrl: "https://docs.guild.xyz/guild/guides/poap-distribution",
+        thumbnailUrl:
+          "https://cdn.discordapp.com/attachments/981112277317087293/981897601995657226/poap.png",
+      };
+
+  logger.verbose(`${JSON.stringify(buttonData)}`);
+
+  const buttonBase = new MessageButton({
+    customId: buttonData.customId,
+    label: buttonData.label,
     emoji: "🔗",
     style: "PRIMARY",
   });
   const guideButton = new MessageButton({
     label: "Guide",
-    url: "https://docs.guild.xyz/",
+    url: buttonData.guideUrl,
     style: "LINK",
   });
-  const row = new MessageActionRow({ components: [joinButton, guideButton] });
+  const row = new MessageActionRow({
+    components: [buttonBase, guideButton],
+  });
+
   return {
     embeds: [
       new MessageEmbed({
-        title,
+        title: buttonData.title,
         url: guild ? `${config.guildUrl}/${guild?.urlName}` : null,
-        description:
-          messageText ||
-          guild?.description ||
-          "Join this guild and get your role(s)!",
+        description: buttonData.description,
         color: `#${config.embedColor}`,
         author: {
           name: guild?.name || "Guild",
@@ -126,7 +166,7 @@ const createJoinInteractionPayload = (
           ),
         },
         thumbnail: {
-          url: "https://cdn.discordapp.com/attachments/950682012866465833/951448318976884826/dc-message.png",
+          url: buttonData.thumbnailUrl,
         },
         footer: {
           text: "Do not share your private keys. We will never ask for your seed phrase.",
@@ -148,6 +188,32 @@ const getAccessedChannelsByRoles = (guild: Guild, accessedRoles: string[]) =>
           po.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
       )
   ) as Collection<string, GuildChannel>;
+
+const denyViewEntryChannelForRole = async (
+  role: Role,
+  entryChannelId: string
+) => {
+  try {
+    const entryChannel = role.guild.channels.cache.get(
+      entryChannelId
+    ) as GuildChannel;
+    if (
+      !!entryChannel &&
+      !entryChannel.permissionOverwrites.cache
+        .get(role.id)
+        ?.deny.has(Permissions.FLAGS.VIEW_CHANNEL)
+    ) {
+      await entryChannel.permissionOverwrites.create(role.id, {
+        VIEW_CHANNEL: false,
+      });
+    }
+  } catch (error) {
+    logger.warn(error);
+    throw new Error(
+      `Entry channel does not exists. (server: ${role.guild.id}, channel: ${entryChannelId})`
+    );
+  }
+};
 
 const getChannelsByCategoryWithRoles = (guild: Guild) => {
   // sort channels by categoryId
@@ -371,35 +437,12 @@ const getJoinReplyMessage = async (
   return message;
 };
 
-const denyViewEntryChannelForRole = async (
-  role: Role,
-  entryChannelId: string
-) => {
-  try {
-    const entryChannel = role.guild.channels.cache.get(
-      entryChannelId
-    ) as GuildChannel;
-    if (
-      !entryChannel.permissionOverwrites.cache
-        .get(role.id)
-        ?.deny.has(Permissions.FLAGS.VIEW_CHANNEL)
-    ) {
-      await entryChannel.permissionOverwrites.create(role.id, {
-        VIEW_CHANNEL: false,
-      });
-    }
-  } catch (error) {
-    logger.warn(error);
-    throw new Error(
-      `Entry channel does not exists. (server: ${role.guild.id}, channel: ${entryChannelId})`
-    );
-  }
-};
-
 const updateAccessedChannelsOfRole = (
   serverId: string,
   roleId: string,
-  channelIds: string[]
+  channelIds: string[],
+  isGuarded: boolean,
+  entryChannelId: string
 ) => {
   const shouldHaveAccess = new Set(channelIds);
 
@@ -409,6 +452,11 @@ const updateAccessedChannelsOfRole = (
     string,
     GuildChannel
   >;
+
+  if (isGuarded) {
+    shouldHaveAccess.delete(entryChannelId);
+    channels.delete(entryChannelId);
+  }
 
   const [channelsToAllow, channelsToDeny] = channels.partition(
     (channel) =>
@@ -421,17 +469,17 @@ const updateAccessedChannelsOfRole = (
 
   return Promise.all([
     ...channelsToDeny.map((channelToDenyAccessTo) =>
-      channelToDenyAccessTo.permissionOverwrites.create(roleId, {
+      channelToDenyAccessTo.permissionOverwrites.edit(roleId, {
         VIEW_CHANNEL: null,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.create(roleId, {
+      channelToAllowAccessTo.permissionOverwrites.edit(roleId, {
         VIEW_CHANNEL: true,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.create(
+      channelToAllowAccessTo.permissionOverwrites.edit(
         Main.Client.guilds.cache.get(serverId).roles.everyone.id,
         {
           VIEW_CHANNEL: false,
@@ -445,9 +493,10 @@ export {
   getUserResult,
   getErrorResult,
   logBackendError,
+  getBackendErrorMessage,
   logAxiosResponse,
   isNumber,
-  createJoinInteractionPayload,
+  createInteractionPayload,
   getJoinReplyMessage,
   getAccessedChannelsByRoles,
   denyViewEntryChannelForRole,

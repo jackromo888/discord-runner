@@ -99,6 +99,13 @@ const createRouter = () => {
     controller.createGuildGuard
   );
 
+  router.post(
+    "/resetguard",
+    validators.bodyDiscordId("serverId"),
+    validators.entryChannelIdValidator,
+    controller.resetGuildGuard
+  );
+
   router.get(
     "/isIn/:guildId",
     validators.paramDiscordId("guildId"),
@@ -112,11 +119,11 @@ const createRouter = () => {
   );
 
   router.post(
-    "/channels/sendJoin",
+    "/channels/sendDiscordButton",
     validators.bodyDiscordId("guildId"),
     validators.bodyDiscordId("channelId"),
-    ...validators.sendJoinMeta,
-    controller.sendJoinButtonToChannel
+    ...validators.buttonMetaData,
+    controller.sendDiscordButton
   );
 
   router.post(
@@ -163,6 +170,18 @@ const createRouter = () => {
       validators.bodyArrayValidator("options"),
     ],
     controller.createPoll
+  );
+
+  router.get(
+    "/emotes/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getEmotes
+  );
+
+  router.get(
+    "/channels/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getChannels
   );
 
   return router;
