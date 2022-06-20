@@ -15,7 +15,6 @@ import {
 import {
   AccessEventParams,
   UserResult,
-  InviteResult,
   GuildEventParams,
   GuildEventResponse,
   RoleEventParams,
@@ -319,16 +318,14 @@ const handleRoleEvent = async (
   }
 };
 
-const getInvite = async (serverId: string): Promise<InviteResult> => {
+const getInvite = async (serverId: string) => {
   logger.verbose(`getInvite params: ${serverId}`);
 
   // check if invite is in cache
   const cachedInvite = Main.inviteDataCache.get(serverId);
   if (cachedInvite) {
-    logger.verbose(`returning cached invite code: ${cachedInvite?.code}`);
-    return {
-      code: cachedInvite.code,
-    };
+    logger.verbose(`returning cached invite code: ${cachedInvite.code}`);
+    return `https://discord.gg/${cachedInvite.code}`;
   }
 
   // find the server
@@ -361,9 +358,8 @@ const getInvite = async (serverId: string): Promise<InviteResult> => {
     code: newInvite.code,
     inviteChannelId: channelId,
   });
-  return {
-    code: newInvite.code,
-  };
+
+  return newInvite.url;
 };
 
 const DiscordServerNames: { [guildId: string]: [name: string] } = {};

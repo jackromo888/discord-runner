@@ -40,12 +40,6 @@ const createRouter = () => {
   );
 
   router.get(
-    "/invite/:platformGuildId",
-    validators.paramDiscordId("platformGuildId"),
-    controller.invite
-  );
-
-  router.get(
     "/info/:platformGuildId",
     validators.paramDiscordId("platformGuildId"),
     controller.info

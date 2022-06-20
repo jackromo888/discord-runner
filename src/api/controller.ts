@@ -56,14 +56,14 @@ const controller = {
         params.map(async (aep) => {
           try {
             await handleAccessEvent(aep);
-            return true;
+            return { success: true };
           } catch (error) {
             logger.error(
               `accss action error: params: ${JSON.stringify(
                 aep
               )} error: ${error}`
             );
-            return false;
+            return { success: false, errorMsg: error.message };
           }
         })
       );
@@ -112,25 +112,6 @@ const controller = {
     }
   },
 
-  invite: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-
-    const { platformGuildId } = req.params;
-
-    try {
-      const result = await getInvite(platformGuildId);
-      res.status(200).json(result);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
   info: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
@@ -140,9 +121,10 @@ const controller = {
     }
     try {
       const { platformGuildId } = req.params;
-      const guildName = await getServerName(platformGuildId);
+      const name = await getServerName(platformGuildId);
+      const invite = await getInvite(platformGuildId);
 
-      res.status(200).json({ name: guildName });
+      res.status(200).json({ name, invite });
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

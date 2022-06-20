@@ -61,10 +61,6 @@ type UserResult = {
   roles: string[];
 };
 
-type InviteResult = {
-  code: string;
-};
-
 type ErrorResult = {
   errors: { msg: string; value: string[] }[];
 };
@@ -159,7 +155,6 @@ export {
   CreateChannelParams,
   DeleteChannelAndRoleParams,
   UserResult,
-  InviteResult,
   ErrorResult,
   ActionError,
   CreateRoleResult,
