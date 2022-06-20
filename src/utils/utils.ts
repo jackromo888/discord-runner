@@ -327,6 +327,9 @@ const updateAccessedChannelsOfRole = (
   isGuarded: boolean,
   entryChannelId: string
 ) => {
+  logger.verbose(
+    `updateAccessedChannelsOfRole - ${serverId} ${roleId} ${channelIds} ${entryChannelId}`
+  );
   const shouldHaveAccess = new Set(channelIds);
 
   const channels = Main.Client.guilds.cache
