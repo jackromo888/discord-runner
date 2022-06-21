@@ -72,75 +72,14 @@ const createRouter = () => {
     controller.isMember
   );
 
-  router.get(
-    "/role/:guildId/:roleId",
-    validators.paramDiscordId("guildId"),
-    validators.paramDiscordId("roleId"),
-    controller.getRoleNameByRoleId
-  );
-
-  router.post(
-    "/role",
-    validators.bodyDiscordId("serverId"),
-    validators.roleNameValidator,
-    validators.isGuardedValidator,
-    validators.entryChannelIdValidator,
-    controller.createRole
-  );
-
-  router.patch(
-    "/role",
-    validators.bodyDiscordId("serverId"),
-    validators.bodyDiscordId("roleId"),
-    validators.roleNameValidator,
-    validators.isGuardedValidator,
-    validators.entryChannelIdValidator,
-    validators.gatedChannelsValidator,
-    controller.updateRole
-  );
-
-  router.post(
-    "/role/delete",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("roleId"),
-    controller.deleteRole
-  );
-
-  router.post(
-    "/guard",
-    validators.bodyDiscordId("serverId"),
-    validators.entryChannelIdValidator,
-    validators.roleIdsArrayValidator,
-    controller.createGuildGuard
-  );
-
-  router.post(
-    "/resetguard",
-    validators.bodyDiscordId("serverId"),
-    validators.entryChannelIdValidator,
-    controller.resetGuildGuard
-  );
-
-  router.get(
-    "/isIn/:guildId",
-    validators.paramDiscordId("guildId"),
-    controller.isIn
-  );
-
+  // called before guild creation in fronend, to get info of the server
   router.post(
     "/server/:guildId",
     validators.paramDiscordId("guildId"),
     controller.server
   );
 
-  router.post(
-    "/channels/sendJoin",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("channelId"),
-    ...validators.sendJoinMeta,
-    controller.sendJoinButtonToChannel
-  );
-
+  // called when BE's /sendJoin endpoint needs to create az inviteChannel
   router.post(
     "/channels/create",
     validators.bodyDiscordId("guildId"),
@@ -148,18 +87,13 @@ const createRouter = () => {
     controller.createChannel
   );
 
+  // called when BE's /sendJoin endpoint needs to send the join button to the inviteChannel
   router.post(
-    "/channels/delete",
+    "/channels/sendJoin",
     validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("roleId"),
     validators.bodyDiscordId("channelId"),
-    controller.deleteChannelAndRole
-  );
-
-  router.get(
-    "/administeredServers/:platformUserId",
-    validators.paramDiscordId("platformUserId"),
-    controller.administeredServers
+    ...validators.sendJoinMeta,
+    controller.sendJoinButtonToChannel
   );
 
   router.get(

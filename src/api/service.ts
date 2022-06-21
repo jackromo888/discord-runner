@@ -130,35 +130,11 @@ const handleGuildEvent = async (
     case "UPDATE": {
       const server = await Main.client.guilds.fetch(platformGuildId);
 
-      // check if inviteChannel is provided
-      let inviteChannelId: string;
-      if (platformGuildData.inviteChannel) {
-        // check if provided inviteChannel is valid
-        const inviteChannel = server.channels.cache
-          .filter((c) => c.type === "GUILD_TEXT" || c.type === "GUILD_NEWS")
-          .find((c) => c.id === platformGuildData.inviteChannel);
-        if (inviteChannel) {
-          inviteChannelId = inviteChannel.id;
-        }
-      }
-
-      // if no valid inviteChannel is provided, create one
-      if (!inviteChannelId) {
-        const createdInviteChannel = await server.channels.create(
-          "entry-channel",
-          {
-            type: "GUILD_TEXT",
-            permissionOverwrites: [
-              {
-                type: "role",
-                id: server.roles.everyone.id,
-                deny: "SEND_MESSAGES",
-              },
-            ],
-          }
-        );
-        inviteChannelId = createdInviteChannel.id;
-      }
+      // check if invite channel exists, if not select another one
+      const inviteChannelId = checkInviteChannel(
+        server,
+        platformGuildData?.inviteChannel
+      );
 
       return {
         platformGuildId,
@@ -198,7 +174,7 @@ const handleRoleEvent = async (
         hoist: true,
         reason: `Created by ${Main.client.user.username} for a Guild role.`,
         permissions:
-          platformRoleData?.isGuarded === "true"
+          platformRoleData?.isGuarded === true
             ? Permissions.FLAGS.VIEW_CHANNEL
             : undefined,
       });
@@ -210,7 +186,7 @@ const handleRoleEvent = async (
       );
 
       // if guarded hide invite channel for role
-      if (platformRoleData?.isGuarded === "true") {
+      if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
         inviteChannel.permissionOverwrites.create(createdRole, {
           VIEW_CHANNEL: false,
@@ -221,7 +197,7 @@ const handleRoleEvent = async (
         server,
         createdRole.id,
         platformRoleData?.gatedChannels,
-        platformRoleData?.isGuarded === "true",
+        platformRoleData?.isGuarded === true,
         inviteChannelId
       );
 
@@ -245,7 +221,7 @@ const handleRoleEvent = async (
           {
             name: roleName,
             permissions:
-              platformRoleData?.isGuarded === "true"
+              platformRoleData?.isGuarded === true
                 ? Permissions.FLAGS.VIEW_CHANNEL
                 : undefined,
           },
@@ -258,7 +234,7 @@ const handleRoleEvent = async (
           hoist: true,
           reason: `Created by ${Main.client.user.username} for a Guild role.`,
           permissions:
-            platformRoleData?.isGuarded === "true"
+            platformRoleData?.isGuarded === true
               ? Permissions.FLAGS.VIEW_CHANNEL
               : undefined,
         });
@@ -271,7 +247,7 @@ const handleRoleEvent = async (
       );
 
       // if guarded hide invite channel for role
-      if (platformRoleData?.isGuarded === "true") {
+      if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
         inviteChannel.permissionOverwrites.create(role, {
           VIEW_CHANNEL: false,
@@ -283,7 +259,7 @@ const handleRoleEvent = async (
           server,
           role.id,
           platformRoleData.gatedChannels,
-          platformRoleData?.isGuarded === "true",
+          platformRoleData?.isGuarded === true,
           inviteChannelId
         );
       }

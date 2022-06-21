@@ -5,21 +5,16 @@ import { getErrorResult, updateAccessedChannelsOfRole } from "../utils/utils";
 import {
   createChannel,
   createRole,
-  deleteChannelAndRole,
   getRole,
-  isIn,
   isMember,
   listAdministeredServers,
   getServerInfo,
   updateRoleName,
   sendJoinButton,
-  deleteRole,
   getUser,
   manageMigratedActions,
-  setupGuildGuard,
   getEmoteList,
   getChannelList,
-  resetGuildGuard,
   getMembersByRoleId,
   sendPollMessage,
 } from "./actions";
@@ -35,7 +30,6 @@ import {
 import {
   AccessEventParams,
   CreateChannelParams,
-  DeleteChannelAndRoleParams,
   GuildEventParams,
   RoleEventParams,
 } from "./types";
@@ -263,81 +257,6 @@ const controller = {
     }
   },
 
-  deleteRole: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { guildId, roleId } = req.body;
-      const deleted = await deleteRole(guildId, roleId);
-      res.status(200).json(deleted);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  createGuildGuard: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { serverId, entryChannelId, roleIds } = req.body;
-      const createdEntryChannelId = await setupGuildGuard(
-        serverId,
-        entryChannelId,
-        roleIds
-      );
-      res.status(200).json(createdEntryChannelId);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  resetGuildGuard: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { serverId, entryChannelId } = req.body;
-      const createdEntryChannelId = await resetGuildGuard(
-        serverId,
-        entryChannelId
-      );
-      res.status(200).json(createdEntryChannelId);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  isIn: (req: Request, res: Response): void => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-
-    const { guildId } = req.params;
-    isIn(guildId)
-      .then((result) => res.status(200).json(result))
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
-  },
-
   server: (req: Request, res: Response): void => {
     const errors = validationResult(req);
 
@@ -387,24 +306,6 @@ const controller = {
       const createdChannel = await createChannel(params);
 
       res.status(200).json(createdChannel.id);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  deleteChannelAndRole: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const params: DeleteChannelAndRoleParams = req.body;
-      const deleted = await deleteChannelAndRole(params);
-
-      res.status(200).json(deleted);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

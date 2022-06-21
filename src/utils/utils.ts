@@ -389,14 +389,12 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
 
   if (
     inviteChannelId &&
-    server.channels.cache.find((c) => c.id === inviteChannelId)
+    server.channels.cache
+      .filter((c) => c.type === "GUILD_TEXT" || c.type === "GUILD_NEWS")
+      .find((c) => c.id === inviteChannelId)
   ) {
     channelId = inviteChannelId;
   } else {
-    logger.warn(
-      `Invite channel in db: ${inviteChannelId} does not exist in server ${server.id}`
-    );
-
     // find the first channel which is visible to everyone
     const publicChannel = server.channels.cache.find(
       (c) =>
@@ -414,6 +412,10 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
       logger.verbose(`Cannot find public channel in ${server.id}`);
       channelId = server.channels.cache.find((c) => c.isText())?.id;
     }
+
+    logger.warn(
+      `Invite channel ${inviteChannelId} in server ${server.id} was replaced by ${channelId}`
+    );
   }
 
   return channelId;

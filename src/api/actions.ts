@@ -4,9 +4,7 @@ import {
   Role,
   Permissions,
   MessageEmbed,
-  Channel,
   ThreadChannel,
-  OverwriteResolvable,
   Collection,
   TextChannel,
   Message,
@@ -16,7 +14,6 @@ import logger from "../utils/logger";
 import {
   ChannelObj,
   CreateChannelParams,
-  DeleteChannelAndRoleParams,
   Emote,
   Poll,
   SendJoinMeta,
@@ -26,7 +23,6 @@ import {
   createJoinInteractionPayload,
   denyViewEntryChannelForRole,
   getChannelsByCategoryWithRoles,
-  getErrorResult,
   getUserResult,
   notifyAccessedChannels,
 } from "../utils/utils";
@@ -57,39 +53,6 @@ const createChannel = async (params: CreateChannelParams) => {
   });
 
   return createdChannel;
-};
-
-const deleteRole = async (guildId: string, roleId: string): Promise<Role> => {
-  const guild = await Main.client.guilds.fetch(guildId);
-  const deletedRole = guild.roles.cache.find((r) => r.id === roleId).delete();
-  return deletedRole;
-};
-
-const deleteChannel = async (
-  guildId: string,
-  channelId: string
-): Promise<Channel> => {
-  const guild = await Main.client.guilds.fetch(guildId);
-  const deletedChannel = guild.channels.cache
-    .find((r) => r.id === channelId)
-    .delete();
-  return deletedChannel;
-};
-
-const deleteChannelAndRole = async (
-  params: DeleteChannelAndRoleParams
-): Promise<boolean> => {
-  logger.verbose(`deleteChannelAndRole params: ${JSON.stringify(params)}`);
-  const { guildId, roleId, channelId } = params;
-
-  try {
-    await deleteRole(guildId, roleId);
-    await deleteChannel(guildId, channelId);
-    return true;
-  } catch (error) {
-    logger.error(getErrorResult(error));
-    return false;
-  }
 };
 
 const createRole = async (
@@ -143,23 +106,6 @@ const updateRoleName = async (
   }
 
   return updatedRole;
-};
-
-const isIn = async (guildId: string): Promise<boolean> => {
-  logger.verbose(`isIn params: ${guildId}`);
-
-  try {
-    await Main.client.guilds.fetch(guildId);
-    logger.verbose("isIn: true");
-    return true;
-  } catch (error) {
-    if (error.code === 50001) {
-      logger.verbose("isIn: false");
-      return false;
-    }
-    logger.verbose("isIn: error");
-    throw error;
-  }
 };
 
 const getServerInfo = async (guildId: string, includeDetails: boolean) => {
@@ -332,133 +278,6 @@ const manageMigratedActions = async (
   );
 };
 
-const setupGuildGuard = async (
-  guildId: string,
-  entryChannelId?: string,
-  roleIds?: string[]
-) => {
-  logger.verbose(
-    `Setting up guild guard, server: ${guildId}, entryChannelId: ${entryChannelId}`
-  );
-
-  const guild = await Main.client.guilds.fetch(guildId);
-
-  const editReason = `Updated by ${Main.client.user.username} because Guild Guard has been enabled.`;
-  let createdEntryChannelId: string;
-
-  const editableRolesExceptEveryone = guild.roles.cache.filter(
-    (r) => r.id !== guild.roles.everyone.id && r.editable
-  );
-
-  let verifiedRoles: Collection<string, Role>;
-  if (roleIds) {
-    verifiedRoles = guild.roles.cache.filter((r) => roleIds.includes(r.id));
-  } else {
-    verifiedRoles = editableRolesExceptEveryone;
-  }
-
-  // check if enrty channel id was provided
-  if (entryChannelId && entryChannelId !== "0") {
-    // check if the provided entry channel is valid
-    const existingChannel = guild.channels.cache.find(
-      (c) => c.id === entryChannelId
-    );
-
-    if (!existingChannel) {
-      throw new Error(
-        `Channel with id ${entryChannelId} does not exists in server ${guildId}.`
-      );
-    }
-
-    if (existingChannel instanceof ThreadChannel) {
-      throw Error("Entry channel cannot be a thread.");
-    }
-
-    if (existingChannel.type === "GUILD_VOICE") {
-      throw Error("Entry channel cannot be a voice channel.");
-    }
-
-    // check if read permission is allowed for everyone in the enrty channel
-    if (
-      !existingChannel.permissionOverwrites.cache
-        .get(guild.roles.everyone.id)
-        ?.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
-    ) {
-      await existingChannel.permissionOverwrites.create(guild.roles.everyone, {
-        VIEW_CHANNEL: true,
-        READ_MESSAGE_HISTORY: true,
-        SEND_MESSAGES: false,
-      });
-    }
-
-    Promise.all(
-      verifiedRoles.map(async (r) => {
-        if (
-          !existingChannel.permissionOverwrites.cache
-            .get(r.id)
-            ?.deny.has(Permissions.FLAGS.VIEW_CHANNEL)
-        )
-          await existingChannel.permissionOverwrites.create(
-            r,
-            { VIEW_CHANNEL: false },
-            { reason: editReason }
-          );
-      })
-    );
-
-    logger.verbose(
-      `Entry channel created from existing channel in ${guild.id}`
-    );
-  } else {
-    // create entry channel with the proper permission overwrited
-    const createdEntryChannel = await guild.channels.create("entry-channel", {
-      permissionOverwrites: [
-        {
-          type: "role",
-          id: guild.roles.everyone.id,
-          allow: "VIEW_CHANNEL",
-          deny: "SEND_MESSAGES",
-        },
-        ...verifiedRoles.map<OverwriteResolvable>((r) => ({
-          type: "role",
-          id: r.id,
-          deny: "VIEW_CHANNEL",
-        })),
-      ],
-      reason: `Created by ${Main.client.user.username} because Guild Guard has been enabled.`,
-    });
-    createdEntryChannelId = createdEntryChannel.id;
-
-    logger.verbose(`Entry channel created for ${guild.id}`);
-  }
-
-  await Promise.all(
-    verifiedRoles.map(async (r) => {
-      await r.edit({ permissions: r.permissions.add("VIEW_CHANNEL") });
-    })
-  );
-
-  if (roleIds) {
-    await Promise.all(
-      editableRolesExceptEveryone.difference(verifiedRoles).map(async (r) => {
-        await r.edit({ permissions: r.permissions.remove("VIEW_CHANNEL") });
-      })
-    );
-  }
-
-  // make sure the @everyone role has no view channel permission
-  await guild.roles.everyone.edit(
-    {
-      permissions: guild.roles.everyone.permissions.remove(
-        Permissions.FLAGS.VIEW_CHANNEL
-      ),
-    },
-    editReason
-  );
-
-  return createdEntryChannelId;
-};
-
 const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
   logger.verbose(`Resetting guild guard, server: ${guildId}`);
 
@@ -560,16 +379,12 @@ export {
   isMember,
   createRole,
   updateRoleName,
-  isIn,
   getServerInfo,
   listAdministeredServers,
   createChannel,
   getRole,
-  deleteChannelAndRole,
-  deleteRole,
   sendJoinButton,
   getUser,
-  setupGuildGuard,
   sendPollMessage,
   getEmoteList,
   getChannelList,
