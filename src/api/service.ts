@@ -185,12 +185,18 @@ const handleRoleEvent = async (
         platformGuildData.inviteChannel
       );
 
-      // if guarded hide invite channel for role
+      // if guarded, hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        inviteChannel.permissionOverwrites.create(createdRole, {
+        await inviteChannel.permissionOverwrites.create(createdRole, {
           VIEW_CHANNEL: false,
         });
+        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
+          VIEW_CHANNEL: true,
+        });
+        await server.roles.everyone.setPermissions(
+          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+        );
       }
 
       await updateAccessedChannelsOfRole(
@@ -217,7 +223,7 @@ const handleRoleEvent = async (
       // check if role exists
       let role: Role;
       if (roleInServer) {
-        roleInServer.edit(
+        role = await roleInServer.edit(
           {
             name: roleName,
             permissions:
@@ -252,6 +258,15 @@ const handleRoleEvent = async (
         inviteChannel.permissionOverwrites.create(role, {
           VIEW_CHANNEL: false,
         });
+        await inviteChannel.permissionOverwrites.create(role, {
+          VIEW_CHANNEL: false,
+        });
+        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
+          VIEW_CHANNEL: true,
+        });
+        await server.roles.everyone.setPermissions(
+          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+        );
       }
 
       if (platformRoleData?.gatedChannels) {
