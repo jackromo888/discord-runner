@@ -40,9 +40,10 @@ const handleAccessEvent = async (
   const redisValue: string = await redisClient.getAsync(redisKey);
   if (redisValue) {
     const messageText = await getJoinReplyMessage(
-      roleIds,
       member.guild,
-      member.id
+      member.id,
+      roleIds,
+      null
     );
 
     try {

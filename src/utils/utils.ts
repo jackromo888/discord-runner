@@ -150,19 +150,20 @@ const getAccessedChannelsByRoles = (guild: Guild, accessedRoles: string[]) =>
   ) as Collection<string, GuildChannel>;
 
 const getJoinReplyMessage = async (
+  server: Guild,
+  userId: string,
   roleIds: string[],
-  guild: Guild,
-  userId: string
+  inviteLink: string
 ): Promise<MessageOptions> => {
   let message: MessageOptions;
-  logger.verbose(`getJoinReply - ${roleIds} ${guild.id} ${userId}`);
+  logger.verbose(`getJoinReply - ${roleIds} ${server.id} ${userId}`);
   if (roleIds && roleIds.length !== 0) {
-    const channelIds = getAccessedChannelsByRoles(guild, roleIds).map(
+    const channelIds = getAccessedChannelsByRoles(server, roleIds).map(
       (c) => c.id
     );
 
     if (channelIds.length === 0) {
-      const roleNames = guild.roles.cache
+      const roleNames = server.roles.cache
         .filter((role) => roleIds.some((roleId) => roleId === role.id))
         .map((role) => role.name);
       message = {
@@ -186,12 +187,10 @@ const getJoinReplyMessage = async (
       content: "❌ You don't have access to any guilds in this server.",
     };
   } else {
-    const guildOfServer = await Main.platform.guild.get(guild.id);
-
     const button = new MessageButton({
       label: "Join",
       style: "LINK",
-      url: `${config.guildUrl}/${guildOfServer.urlName}/?discordId=${userId}`,
+      url: inviteLink,
     });
 
     return {

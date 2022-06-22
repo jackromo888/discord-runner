@@ -2,7 +2,6 @@ import { Guild, MessageEmbed, MessageOptions, User } from "discord.js";
 import config from "./config";
 import redisClient from "./database";
 import Main from "./Main";
-import { userJoined } from "./discordSpecific/communicationService";
 import logger from "./utils/logger";
 import { getJoinReplyMessage } from "./utils/utils";
 
@@ -71,16 +70,23 @@ const status = async (serverId: string, user: User) => {
 
 const join = async (
   userId: string,
-  guild: Guild,
+  server: Guild,
   interactionToken: string
 ): Promise<MessageOptions> => {
-  const roleIds = await userJoined(userId, guild.id);
+  const joinResult = await Main.platform.user.join(server.id, userId);
+  const roleIds = joinResult?.roles?.map((r) => r.platformRoleId);
 
-  const message = await getJoinReplyMessage(roleIds, guild, userId);
+  // @ts-ignore
+  const message = await getJoinReplyMessage(
+    server,
+    userId,
+    roleIds,
+    joinResult.inviteLink
+  );
 
   if (!roleIds) {
     redisClient.client.set(
-      `joining:${guild.id}:${userId}`,
+      `joining:${server.id}:${userId}`,
       interactionToken,
       "EX",
       15 * 60
