@@ -76,11 +76,11 @@ const join = async (
   const joinResult = await Main.platform.user.join(server.id, userId);
   const roleIds = joinResult?.roles?.map((r) => r.platformRoleId);
 
-  // @ts-ignore
   const message = await getJoinReplyMessage(
     server,
     userId,
     roleIds,
+    // @ts-ignore
     joinResult.inviteLink
   );
 
