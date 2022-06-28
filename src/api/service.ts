@@ -285,6 +285,23 @@ const handleRoleEvent = async (
         await server.roles.everyone.setPermissions(
           server.roles.everyone.permissions.remove("VIEW_CHANNEL")
         );
+
+        // if grantAccessToExistingUsers, give everyone this role
+        if (params.platformRoleData.grantAccessToExistingUsers) {
+          await Promise.all(
+            server.members.cache.map(async (m) => {
+              if (!m.roles.cache.has(role.id)) {
+                try {
+                  await m.roles.add(role);
+                } catch (error) {
+                  logger.verbose(
+                    `Couldn't give role to ${m.id} in ${server.id} (${error.message})`
+                  );
+                }
+              }
+            })
+          );
+        }
       }
 
       if (platformRoleData?.gatedChannels) {
