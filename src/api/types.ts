@@ -33,7 +33,11 @@ type RoleEventParams = {
   platformGuildId: string;
   platformGuildData: { inviteChannel: string };
   platformRoleId?: string;
-  platformRoleData?: { isGuarded?: boolean; gatedChannels?: string[] };
+  platformRoleData?: {
+    isGuarded?: boolean;
+    gatedChannels?: string[];
+    grantAccessToExistingUsers: boolean;
+  };
 };
 
 type RoleEventResponse =
