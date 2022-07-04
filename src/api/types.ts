@@ -23,7 +23,7 @@ type GuildEventParams = {
 type GuildEventResponse =
   | {
       platformGuildId: string;
-      platformGuildData: { inviteChannel: string };
+      platformGuildData: { inviteChannel: string; joinButton?: boolean };
     }
   | { success: boolean };
 

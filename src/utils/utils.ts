@@ -116,7 +116,7 @@ const createJoinInteractionPayload = (
           messageText ||
           guild?.description ||
           "Join this guild and get your role(s)!",
-        color: `#${config.embedColor}`,
+        color: `#${config.embedColor.default}`,
         author: {
           name: guild?.name || "Guild",
           iconURL: encodeURI(
@@ -357,7 +357,7 @@ const notifyAccessedChannels = async (
 
   const embed = new MessageEmbed({
     title: message,
-    color: `#${config.embedColor}`,
+    color: `#${config.embedColor.default}`,
   });
 
   const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");

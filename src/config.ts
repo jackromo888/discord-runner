@@ -17,7 +17,10 @@ const api = {
   prefix: "/api",
   port: process.env.PORT || 8990,
 };
-const embedColor = process.env.EMBED_COLOR || "6366f1";
+const embedColor = {
+  default: process.env.EMBED_COLOR || "6366f1",
+  error: "ff0000",
+};
 const guildUrl = process.env.GUILD_URL;
 
 const joinButtonEmojis = {

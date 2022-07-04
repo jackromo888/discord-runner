@@ -260,7 +260,7 @@ const manageMigratedActions = async (
         await m.roles.remove(roleId);
         const embed = new MessageEmbed({
           title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-          color: `#${config.embedColor}`,
+          color: `#${config.embedColor.default}`,
         });
         try {
           await m.send({ embeds: [embed] });
@@ -338,7 +338,7 @@ const sendPollMessage = async (
 
   const embed = new MessageEmbed({
     title: `Poll #${id}: ${question}`,
-    color: `#${config.embedColor}`,
+    color: `#${config.embedColor.default}`,
     description: await createPollText(poll),
   });
 

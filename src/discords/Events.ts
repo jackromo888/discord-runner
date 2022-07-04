@@ -268,7 +268,7 @@ abstract class Events {
 
             const embed = new MessageEmbed({
               title: `Poll #69: ${question}`,
-              color: `#${config.embedColor}`,
+              color: `#${config.embedColor.default}`,
               description: await createPollText(poll),
             });
 
@@ -295,7 +295,7 @@ abstract class Events {
     } else {
       const embed = new MessageEmbed({
         title: "I'm sorry, but I couldn't interpret your request.",
-        color: `#ff0000`,
+        color: `#${config.embedColor.error}`,
         description:
           "You can find more information on [docs.guild.xyz](https://docs.guild.xyz/).",
       });

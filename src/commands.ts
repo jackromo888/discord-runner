@@ -1,3 +1,4 @@
+import { PlatformStatusResponse } from "@guildxyz/sdk";
 import { Guild, MessageEmbed, MessageOptions, User } from "discord.js";
 import config from "./config";
 import redisClient from "./database";
@@ -11,7 +12,15 @@ const ping = (createdTimestamp: number) =>
   )}ms`;
 
 const status = async (serverId: string, user: User) => {
-  const statusResult = await Main.platform.user.status(serverId, user.id);
+  let statusResult: PlatformStatusResponse;
+  try {
+    statusResult = await Main.platform.user.status(serverId, user.id);
+  } catch (error) {
+    return new MessageEmbed({
+      description: "An error occured while updating your status.",
+      color: `#${config.embedColor.error}`,
+    });
+  }
 
   if (statusResult?.length > 0) {
     // for logging purposes
@@ -51,10 +60,13 @@ const status = async (serverId: string, user: User) => {
         name: `${user.username}'s Guilds`,
         iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
       },
-      color: `#${config.embedColor}`,
+      color: `#${config.embedColor.default}`,
     });
     statusResult.forEach((sr) => {
-      embed.addField(sr.guildName, sr.roles.map((r) => r.name).join(", "));
+      embed.addField(
+        sr.guildName,
+        sr.roles.map((r) => r.roleName).join(", ") || "-"
+      );
     });
 
     return embed;
@@ -62,7 +74,7 @@ const status = async (serverId: string, user: User) => {
 
   return new MessageEmbed({
     title: "It seems you haven't joined any guilds yet.",
-    color: `#${config.embedColor}`,
+    color: `#${config.embedColor.default}`,
     description:
       "You can find more information on [agora.xyz](https://agora.xyz) or on [guild.xyz](https://guild.xyz).",
   });

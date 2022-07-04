@@ -7,6 +7,7 @@ const createRouter = () => {
   const router: Router = Router();
   router.post(
     "/access",
+    body().isArray(),
     body("*.action").isIn(["ADD", "REMOVE"]),
     validators.bodyDiscordId("*.platformUserId"),
     validators.bodyDiscordId("*.platformGuildId"),

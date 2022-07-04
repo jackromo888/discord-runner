@@ -49,7 +49,8 @@ const handleAccessEvent = async (
     try {
       await axios.patch(
         `https://discord.com/api/v8/webhooks/${Main.client.application.id}/${redisValue}/messages/@original`,
-        { content: messageText }
+        { content: messageText.content },
+        { headers: { "Content-Type": "application/json" } }
       );
       redisClient.client.del(redisKey);
     } catch (err) {
@@ -98,7 +99,7 @@ const handleAccessEvent = async (
           .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
           guild.name
         }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-        color: `#${config.embedColor}`,
+        color: `#${config.embedColor.default}`,
       });
       try {
         await updatedMember.send({ embeds: [embed] });
