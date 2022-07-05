@@ -132,15 +132,19 @@ abstract class Slashes {
       buttonText
     );
 
-    const message = await interaction.channel.send(payload);
+    try {
+      const message = await interaction.channel.send(payload);
 
-    await message.react(config.joinButtonEmojis.emoji1);
-    await message.react(config.joinButtonEmojis.emoji2);
+      await message.react(config.joinButtonEmojis.emoji1);
+      await message.react(config.joinButtonEmojis.emoji2);
 
-    await interaction.reply({
-      content: "✅ Join button created successfully.",
-      ephemeral: true,
-    });
+      await interaction.reply({
+        content: "✅ Join button created successfully.",
+        ephemeral: true,
+      });
+    } catch (err: any) {
+      logger.error(`join-button error -  ${err.message}`);
+    }
   }
 
   @Slash("poll", { description: "Creates a poll." })
