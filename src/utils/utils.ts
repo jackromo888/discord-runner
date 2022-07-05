@@ -111,10 +111,11 @@ const createInteractionPayload = (
   isJoinButton: boolean = true
 ) => {
   const lastPoap = guild?.poaps?.pop();
+  const slicedButtonText = buttonText?.slice(0, 80);
   const buttonData = isJoinButton
     ? {
         customId: "join-button",
-        label: buttonText.slice(0, 80) || `Join ${guild?.name || "Guild"}`,
+        label: slicedButtonText || `Join ${guild?.name || "Guild"}`,
         title: title || "Verify your wallet",
         description:
           messageText ||
@@ -126,7 +127,7 @@ const createInteractionPayload = (
       }
     : {
         customId: "poap-claim-button",
-        label: buttonText.slice(0, 80) || `Claim POAP`,
+        label: slicedButtonText || `Claim POAP`,
         title: title || lastPoap?.fancyId || "Claim your POAP",
         description:
           messageText || "Claim this magnificent POAP to your collection!",
