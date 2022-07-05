@@ -109,10 +109,11 @@ const createInteractionPayload = (
   isJoinButton: boolean = true
 ) => {
   const lastPoap = guild?.poaps?.pop();
+  const slicedButtonText = buttonText?.slice(0, 80);
   const buttonData = isJoinButton
     ? {
         customId: "join-button",
-        label: buttonText || `Join ${guild?.name || "Guild"}`,
+        label: slicedButtonText || `Join ${guild?.name || "Guild"}`,
         title: title || "Verify your wallet",
         description:
           messageText ||
@@ -124,7 +125,7 @@ const createInteractionPayload = (
       }
     : {
         customId: "poap-claim-button",
-        label: buttonText || `Claim POAP`,
+        label: slicedButtonText || `Claim POAP`,
         title: title || lastPoap?.fancyId || "Claim your POAP",
         description:
           messageText || "Claim this magnificent POAP to your collection!",
@@ -444,6 +445,9 @@ const updateAccessedChannelsOfRole = (
   isGuarded: boolean,
   entryChannelId: string
 ) => {
+  logger.verbose(
+    `updateAccessedChannelsOfRole - ${serverId} ${roleId} ${channelIds} ${entryChannelId}`
+  );
   const shouldHaveAccess = new Set(channelIds);
 
   const channels = Main.Client.guilds.cache
