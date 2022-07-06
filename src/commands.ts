@@ -14,7 +14,7 @@ const ping = (createdTimestamp: number) =>
 const status = async (serverId: string, user: User) => {
   let statusResult: PlatformStatusResponse;
   try {
-    statusResult = await Main.platform.user.status(serverId, user.id);
+    statusResult = await Main.platform.user.status(user.id);
   } catch (error) {
     return new MessageEmbed({
       description: "An error occured while updating your status.",
@@ -89,9 +89,9 @@ const join = async (
   const roleIds = joinResult?.roles?.map((r) => r.platformRoleId);
 
   const message = await getJoinReplyMessage(
+    roleIds,
     server,
     userId,
-    roleIds,
     // @ts-ignore
     joinResult.inviteLink
   );

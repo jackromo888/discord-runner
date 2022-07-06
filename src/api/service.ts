@@ -40,9 +40,9 @@ const handleAccessEvent = async (
   const redisValue: string = await redisClient.getAsync(redisKey);
   if (redisValue) {
     const messageText = await getJoinReplyMessage(
+      roleIds,
       member.guild,
       member.id,
-      roleIds,
       null
     );
 
@@ -371,7 +371,7 @@ const getInvite = async (serverId: string) => {
 
   const inviteChannelInDb = guildOfServer?.guildPlatforms?.find(
     (gp) => gp.platformGuildId === serverId
-  )?.data?.inviteChannel;
+  )?.platformGuildData?.inviteChannel;
 
   const channelId = checkInviteChannel(server, inviteChannelInDb);
   // TODO: update in db

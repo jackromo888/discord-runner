@@ -8,7 +8,11 @@ import {
   Collection,
   TextChannel,
   Message,
+  MessageButton,
+  MessageOptions,
+  MessageActionRow,
 } from "discord.js";
+import axios from "axios";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
@@ -16,12 +20,13 @@ import {
   CreateChannelParams,
   Emote,
   Poll,
-  SendJoinMeta,
+  ButtonMetaData,
   UserResult,
 } from "./types";
 import {
-  createJoinInteractionPayload,
+  createInteractionPayload,
   denyViewEntryChannelForRole,
+  getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
   getUserResult,
   notifyAccessedChannels,
@@ -108,8 +113,9 @@ const updateRoleName = async (
   return updatedRole;
 };
 
-const getServerInfo = async (guildId: string, includeDetails: boolean) => {
+const getServerInfo = async (guildId: string) => {
   logger.verbose(`listChannels params: ${guildId}`);
+  // TODO rethink includeDetails & isAdmin property
   try {
     const guild = await Main.client.guilds.fetch(guildId);
     const { icon: iconId, name: serverName } = guild;
@@ -149,10 +155,7 @@ const getServerInfo = async (guildId: string, includeDetails: boolean) => {
         name: c?.name,
       }));
 
-    let categories: any[];
-    if (includeDetails) {
-      categories = getChannelsByCategoryWithRoles(guild);
-    }
+    const categories: any[] = getChannelsByCategoryWithRoles(guild);
 
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
@@ -202,10 +205,81 @@ const getRole = async (guildId: string, roleId: string) => {
   return { serverName: guild.name, roleName: role.name };
 };
 
-const sendJoinButton = async (
+const getUserPoap = async (
+  userId: string,
+  serverId: string
+): Promise<MessageOptions> => {
+  try {
+    const guild = await Main.platform.guild.get(serverId);
+    const poapLinks = await Promise.all(
+      guild?.poaps?.map(async (poap) => {
+        try {
+          const response = await axios.post(
+            `${config.backendUrl}/assets/poap/claim`,
+            {
+              userId,
+              // eslint-disable-next-line no-unsafe-optional-chaining
+              poapId: poap.poapIdentifier,
+            }
+          );
+          return new MessageButton({
+            label: `Claim ${poap.fancyId}`.slice(0, 80),
+            style: "LINK",
+            url: response.data,
+          });
+        } catch (err: any) {
+          const errorMessage = getBackendErrorMessage(err);
+          logger.warn(`poapClaim - ${userId} ${errorMessage}`);
+
+          if (
+            errorMessage.includes(
+              "expired" || "claimable" || "join" || "transaction"
+            )
+          ) {
+            return null;
+          }
+
+          return new MessageButton({
+            label: `Buy ${poap.fancyId}`.slice(0, 80),
+            style: "LINK",
+            url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
+          });
+        }
+      })
+    );
+
+    const contentMessage =
+      guild?.poaps?.length > 1
+        ? "These are **your** links"
+        : "This is **your** link";
+
+    return {
+      components: [
+        new MessageActionRow({ components: poapLinks.filter((p) => p?.url) }),
+      ],
+      content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
+    };
+  } catch (err: any) {
+    const errorMessage = getBackendErrorMessage(err);
+
+    if (errorMessage) {
+      logger.verbose(`getUserPoap error: ${errorMessage}`);
+      return {
+        content: errorMessage,
+      };
+    }
+    logger.verbose(`getUserPoap error: ${err.message}`);
+
+    return {
+      content: `Unfortunately, you couldn't claim this POAP right now. Check back later!`,
+    };
+  }
+};
+
+const sendDiscordButton = async (
   guildId: string,
   channelId: string,
-  meta?: SendJoinMeta
+  meta?: ButtonMetaData
 ) => {
   const server = await Main.client.guilds.fetch(guildId);
   const channel = server.channels.cache.find((c) => c.id === channelId);
@@ -215,11 +289,12 @@ const sendJoinButton = async (
   }
 
   const guildOfServer = await Main.platform.guild.get(guildId);
-  const payload = createJoinInteractionPayload(
+  const payload = createInteractionPayload(
     guildOfServer,
     meta?.title,
     meta?.description,
-    meta?.button
+    meta?.button,
+    meta?.isJoinButton
   );
 
   const message = await channel.send(payload);
@@ -383,10 +458,11 @@ export {
   listAdministeredServers,
   createChannel,
   getRole,
-  sendJoinButton,
+  sendDiscordButton,
   getUser,
   sendPollMessage,
   getEmoteList,
   getChannelList,
   resetGuildGuard,
+  getUserPoap,
 };

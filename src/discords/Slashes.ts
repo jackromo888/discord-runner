@@ -12,7 +12,7 @@ import { join, ping, status } from "../commands";
 import logger from "../utils/logger";
 import { createPoll, pollBuildResponse } from "../api/polls";
 import pollStorage from "../api/pollStorage";
-import { createJoinInteractionPayload } from "../utils/utils";
+import { createInteractionPayload } from "../utils/utils";
 import config from "../config";
 import Main from "../Main";
 
@@ -125,22 +125,26 @@ abstract class Slashes {
       return;
     }
 
-    const payload = createJoinInteractionPayload(
+    const payload = createInteractionPayload(
       guild,
       title,
       messageText,
       buttonText
     );
 
-    const message = await interaction.channel.send(payload);
+    try {
+      const message = await interaction.channel.send(payload);
 
-    await message.react(config.joinButtonEmojis.emoji1);
-    await message.react(config.joinButtonEmojis.emoji2);
+      await message.react(config.joinButtonEmojis.emoji1);
+      await message.react(config.joinButtonEmojis.emoji2);
 
-    await interaction.reply({
-      content: "✅ Join button created successfully.",
-      ephemeral: true,
-    });
+      await interaction.reply({
+        content: "✅ Join button created successfully.",
+        ephemeral: true,
+      });
+    } catch (err: any) {
+      logger.error(`join-button error -  ${err.message}`);
+    }
   }
 
   @Slash("poll", { description: "Creates a poll." })

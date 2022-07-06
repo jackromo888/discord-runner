@@ -80,21 +80,20 @@ const createRouter = () => {
     controller.server
   );
 
-  // called when BE's /sendJoin endpoint needs to create az inviteChannel
+  // called from BE, to send the join/claim button to the inviteChannel
+  router.post(
+    "/channels/sendDiscordButton",
+    validators.bodyDiscordId("guildId"),
+    validators.bodyDiscordId("channelId"),
+    ...validators.buttonMetaData,
+    controller.sendDiscordButton
+  );
+
   router.post(
     "/channels/create",
     validators.bodyDiscordId("guildId"),
     validators.channelNameValidator,
     controller.createChannel
-  );
-
-  // called when BE's /sendJoin endpoint needs to send the join button to the inviteChannel
-  router.post(
-    "/channels/sendJoin",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("channelId"),
-    ...validators.sendJoinMeta,
-    controller.sendJoinButtonToChannel
   );
 
   router.get(

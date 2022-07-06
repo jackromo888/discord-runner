@@ -360,7 +360,7 @@ abstract class Events {
     if (
       guildOfServer?.guildPlatforms.find(
         (gp) => gp.platformGuildId === role.guild.id
-      )?.data?.isGuarded
+      )?.platformGuildData?.isGuarded
     ) {
       await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
     }

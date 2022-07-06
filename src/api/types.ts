@@ -129,11 +129,42 @@ type Vote = {
   platformUserId: string;
   optionIndex: number;
 };
-type SendJoinMeta = Partial<{
+type ButtonMetaData = Partial<{
   title: string;
   description: string;
   button: string;
+  isJoinButton: boolean;
 }>;
+
+type Platform = {
+  id: number;
+  isGuarded: boolean;
+  platformId: string;
+  type: string;
+  platformName: string;
+};
+
+type Role = {
+  id: number;
+  name: string;
+  platforms: {
+    roleId: number;
+    platformId: number;
+    inviteChannel: string;
+    discordRoleId: string;
+  }[];
+};
+
+type GuildOfServer = {
+  id: number;
+  name: string;
+  urlName: string;
+  description: string;
+  imageUrl: string;
+  platforms: Platform[];
+  roles: Role[];
+  poaps: any[];
+};
 
 type Emote = {
   name: string;
@@ -155,7 +186,7 @@ type ResolveUserResopnse = {
 };
 
 export {
-  SendJoinMeta,
+  ButtonMetaData,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
   UserResult,
@@ -169,6 +200,7 @@ export {
   Poll,
   Reaction,
   Vote,
+  GuildOfServer,
   Emote,
   ChannelObj,
   AccessEventParams,
