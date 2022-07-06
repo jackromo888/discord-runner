@@ -266,9 +266,9 @@ const controller = {
     }
 
     const { guildId } = req.params;
-    const { includeDetails } = req.body;
+    // const { includeDetails } = req.body;
 
-    getServerInfo(guildId, includeDetails)
+    getServerInfo(guildId)
       .then((result) => res.status(200).json(result))
       .catch((error) => {
         const errorMsg = getErrorResult(error);
