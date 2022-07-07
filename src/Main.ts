@@ -2,7 +2,7 @@ import axios from "axios";
 import { importx } from "@discordx/importer";
 import { Intents, MessageComponentInteraction } from "discord.js";
 import { Client } from "discordx";
-import { Platform, setApiBaseUrl } from "@guildxyz/sdk";
+import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
 import api from "./api/api";
 import { InviteData } from "./api/types";
 import config from "./config";
@@ -24,6 +24,7 @@ class Main {
 
     // setup sdk
     setApiBaseUrl(config.backendUrl);
+    setProjectName("DISCORD connector");
     logger.info(`Backend url set to ${config.backendUrl}`);
     this.platform = new Platform("DISCORD");
 
