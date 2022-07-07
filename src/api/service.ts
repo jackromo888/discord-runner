@@ -200,7 +200,7 @@ const handleRoleEvent = async (
       // check if invite channel exists, if not select another one
       const inviteChannelId = checkInviteChannel(
         server,
-        platformGuildData.inviteChannel
+        platformGuildData?.inviteChannel
       );
 
       // if guarded, hide invite channel for role
