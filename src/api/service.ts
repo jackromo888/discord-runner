@@ -128,7 +128,23 @@ const handleGuildEvent = async (
   const { action, platformGuildId, platformGuildData } = params;
 
   switch (action) {
-    case "CREATE":
+    case "CREATE": {
+      const server = await Main.client.guilds.fetch(platformGuildId);
+
+      // check if invite channel exists, if not select another one
+      const inviteChannelId = checkInviteChannel(
+        server,
+        platformGuildData?.inviteChannel
+      );
+
+      return {
+        platformGuildId,
+        platformGuildData: {
+          inviteChannel: inviteChannelId,
+          joinButton: false,
+        },
+      };
+    }
     case "UPDATE": {
       const server = await Main.client.guilds.fetch(platformGuildId);
 
