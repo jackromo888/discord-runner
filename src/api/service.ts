@@ -90,7 +90,7 @@ const handleAccessEvent = async (
       roleIds.includes(r.id)
     );
     if (rolesToRemove.size > 0) {
-      updatedMember = await member.fetch();
+      updatedMember = await member.roles.remove(rolesToRemove);
 
       // notify user about removed roles
       const embed = new MessageEmbed({

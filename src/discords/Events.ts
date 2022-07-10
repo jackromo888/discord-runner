@@ -21,7 +21,6 @@ import axios from "axios";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
 import Main from "../Main";
-import { userJoined } from "../discordSpecific/communicationService";
 import logger from "../utils/logger";
 import pollStorage from "../api/pollStorage";
 import config from "../config";
@@ -310,7 +309,7 @@ abstract class Events {
 
   @On("guildMemberAdd")
   onGuildMemberAdd([member]: [GuildMember | PartialGuildMember]): void {
-    userJoined(member.user.id, member.guild.id);
+    Main.platform.user.join(member.guild.id, member.user.id).catch();
   }
 
   @On("inviteDelete")

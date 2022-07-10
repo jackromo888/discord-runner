@@ -34,11 +34,11 @@ abstract class Slashes {
       ephemeral: true,
     });
 
-    const embed = await status(interaction.guild.id, interaction.user);
+    const editOptions = await status(interaction.guild.id, interaction.user);
 
     await interaction.editReply({
       content: null,
-      embeds: [embed],
+      ...editOptions,
     });
   }
 

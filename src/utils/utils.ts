@@ -331,7 +331,7 @@ const getDiscordRoleIds = (
     .flatMap((r) =>
       r.rolePlatforms.filter((rp) => rp.guildPlatformId === guildPlatformId)
     )
-    .map((rp) => rp.patformRoleId);
+    .map((rp) => rp.platformRoleId);
 };
 
 const printRoleNames = (
@@ -358,7 +358,7 @@ const printRoleNames = (
   return result;
 };
 
-const getLinkButton = (label, url) =>
+const getLinkButton = (label: string, url: string) =>
   new MessageButton({
     label,
     style: "LINK",
@@ -379,6 +379,17 @@ const getJoinReplyMessage = async (
   const guildOfServer = await Main.platform.guild.get(server.id);
   const discordRoleIds = getDiscordRoleIds(guildOfServer, server.id);
 
+  // if not connected to guild
+  if (!roleIds && inviteLink) {
+    const button = getLinkButton("Join", inviteLink);
+
+    return {
+      components: [new MessageActionRow({ components: [button] })],
+      content: `This is **your** join link. Do **NOT** share it with anyone!`,
+    };
+  }
+
+  // show accessed / no accessed roles if joined
   if (roleIds && roleIds.length !== 0) {
     const accessedRoleNames = getRoleNames(server, roleIds);
     const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
@@ -395,7 +406,11 @@ const getJoinReplyMessage = async (
       true
     )}\n${printRoleNames(notAccessedRoleNames, false)}\n${
       notAccessedRoleNames.length > 0 ? "\n" : ""
-    }...giving you access to the following channels:\n`;
+    }${
+      fields.length > 0
+        ? "...giving you access to the following channels:\n"
+        : ""
+    }`;
 
     const embed = new MessageEmbed({
       title: `Successfully joined guild`,
@@ -404,17 +419,27 @@ const getJoinReplyMessage = async (
       fields,
     });
 
-    const button = getLinkButton("View details", inviteLink);
+    const guild = await Main.platform.guild.get(server.id);
+    const button = getLinkButton(
+      "View details",
+      `${config.guildUrl}/${guild.urlName}`
+    );
 
     message = {
-      content: "We have updated your accesses successfully.",
+      content: "We have updated your accesses.",
       components: [new MessageActionRow({ components: [button] })],
       embeds: [embed],
     };
-  } else if (roleIds && roleIds[0] !== "") {
+  } else if (roleIds && roleIds.length === 0) {
+    // no access
     const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
     const notAccessedRoleNames = getRoleNames(server, notAccessedRoleIds);
-    const button = getLinkButton("View details", inviteLink);
+
+    const guild = await Main.platform.guild.get(server.id);
+    const button = getLinkButton(
+      "View details",
+      `${config.guildUrl}/${guild.urlName}`
+    );
 
     const embed = new MessageEmbed({
       title: `No access`,
@@ -429,13 +454,6 @@ const getJoinReplyMessage = async (
       content: "We have updated your accesses successfully.",
       components: [new MessageActionRow({ components: [button] })],
       embeds: [embed],
-    };
-  } else {
-    const button = getLinkButton("Join", inviteLink);
-
-    return {
-      components: [new MessageActionRow({ components: [button] })],
-      content: `This is **your** join link. Do **NOT** share it with anyone!`,
     };
   }
 

@@ -1,60 +1,74 @@
 import { PlatformStatusResponse } from "@guildxyz/sdk";
-import { Guild, MessageEmbed, MessageOptions, User } from "discord.js";
+import {
+  Guild,
+  MessageActionRow,
+  MessageEmbed,
+  MessageOptions,
+  User,
+  WebhookEditMessageOptions,
+} from "discord.js";
 import config from "./config";
 import redisClient from "./database";
 import Main from "./Main";
 import logger from "./utils/logger";
-import { getJoinReplyMessage } from "./utils/utils";
+import { getJoinReplyMessage, getLinkButton } from "./utils/utils";
 
 const ping = (createdTimestamp: number) =>
   `Latency is ${Date.now() - createdTimestamp}ms. API Latency is ${Math.round(
     Main.client.ws.ping
   )}ms`;
 
-const status = async (serverId: string, user: User) => {
+const status = async (
+  serverId: string,
+  user: User
+): Promise<WebhookEditMessageOptions> => {
+  // try to get status
   let statusResult: PlatformStatusResponse;
   try {
     statusResult = await Main.platform.user.status(user.id);
   } catch (error) {
-    return new MessageEmbed({
-      description: "An error occured while updating your status.",
-      color: `#${config.embedColor.error}`,
-    });
+    // if dc account not connected
+    if (error?.message?.startsWith("Cannot find user")) {
+      // try to get custom link
+      let inviteLink: string;
+      try {
+        const joinResult = await Main.platform.user.join(serverId, user.id);
+        inviteLink = joinResult.inviteLink;
+      } catch {
+        // ignored
+      }
+      const connectButton = getLinkButton(
+        "Connect",
+        inviteLink || config.guildUrl
+      );
+      const connectButtonRow = new MessageActionRow({
+        components: [connectButton],
+      });
+      return {
+        embeds: [
+          new MessageEmbed({
+            description:
+              "It seems you haven't connected this Discord account to Guild yet.",
+            color: `#${config.embedColor.error}`,
+          }),
+        ],
+        components: [connectButtonRow],
+      };
+    }
+
+    // log other errors
+    logger.error(`status error: ${error.message}`);
+    return {
+      embeds: [
+        new MessageEmbed({
+          description: "An error occured while updating your status.",
+          color: `#${config.embedColor.error}`,
+        }),
+      ],
+    };
   }
 
   if (statusResult?.length > 0) {
-    // for logging purposes
-    let currentGuildId = null;
-    await Promise.all(
-      statusResult.map(async (sr) => {
-        try {
-          const guild = await Main.client.guilds.fetch(sr.platformGuildId);
-          currentGuildId = guild.id;
-          const member = await guild.members.fetch(user.id);
-
-          const discordRoleIds = sr.roles.map((r) => r.platformRoleId);
-
-          const roleManager = await guild.roles.fetch();
-          const roleToAdd = roleManager.filter((r) =>
-            discordRoleIds.includes(r.id)
-          );
-
-          if (roleToAdd) {
-            logger.verbose(
-              `status: add roles ${roleToAdd.map((r) => r.id)} to ${
-                user.id
-              } in ${guild.id}`
-            );
-            await member.roles.add(roleToAdd);
-          }
-        } catch (error) {
-          logger.verbose(
-            `Cannot add role to member. Missing permissions? GuildID: ${currentGuildId} ${error.message}`
-          );
-        }
-      })
-    );
-
     const embed = new MessageEmbed({
       author: {
         name: `${user.username}'s Guilds`,
@@ -69,15 +83,22 @@ const status = async (serverId: string, user: User) => {
       );
     });
 
-    return embed;
+    return { embeds: [embed] };
   }
 
-  return new MessageEmbed({
-    title: "It seems you haven't joined any guilds yet.",
-    color: `#${config.embedColor.default}`,
-    description:
-      "You can find more information on [agora.xyz](https://agora.xyz) or on [guild.xyz](https://guild.xyz).",
-  });
+  const button = getLinkButton("Guild.xyz", config.guildUrl);
+  const row = new MessageActionRow({ components: [button] });
+
+  return {
+    embeds: [
+      new MessageEmbed({
+        title: "It seems you haven't joined any guilds yet.",
+        color: `#${config.embedColor.error}`,
+        description: "Find out more:",
+      }),
+    ],
+    components: [row],
+  };
 };
 
 const join = async (
@@ -92,7 +113,6 @@ const join = async (
     roleIds,
     server,
     userId,
-    // @ts-ignore
     joinResult.inviteLink
   );
 
