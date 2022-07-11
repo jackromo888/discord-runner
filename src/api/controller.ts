@@ -1,39 +1,41 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import logger from "../utils/logger";
 import { getErrorResult, updateAccessedChannelsOfRole } from "../utils/utils";
 import {
   createChannel,
   createRole,
-  deleteChannelAndRole,
-  generateInvite,
-  getGuild,
   getRole,
-  isIn,
   isMember,
   listAdministeredServers,
   getServerInfo,
-  manageRoles,
-  removeUser,
   updateRoleName,
-  sendDiscordButton,
-  deleteRole,
   getUser,
   manageMigratedActions,
-  setupGuildGuard,
   getEmoteList,
   getChannelList,
-  resetGuildGuard,
   getMembersByRoleId,
   sendPollMessage,
+  sendDiscordButton,
 } from "./actions";
 import {
+  fetchUserByAccessToken,
+  getInvite,
+  getServerName,
+  handleAccessEvent,
+  handleGuildEvent,
+  handleRoleEvent,
+  listServers,
+} from "./service";
+import {
+  AccessEventParams,
   CreateChannelParams,
-  DeleteChannelAndRoleParams,
-  ManageRolesParams,
+  GuildEventParams,
+  RoleEventParams,
 } from "./types";
 
 const controller = {
-  upgrade: (req: Request, res: Response): void => {
+  access: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -41,19 +43,32 @@ const controller = {
       return;
     }
 
-    const params: ManageRolesParams = req.body;
+    const params: AccessEventParams[] = req.body;
 
-    manageRoles(params, true)
-      .then((result) => {
-        res.status(200).json(result);
-      })
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
+    try {
+      const results = await Promise.all(
+        params.map(async (aep) => {
+          try {
+            await handleAccessEvent(aep);
+            return { success: true };
+          } catch (error) {
+            logger.error(
+              `accss action error: params: ${JSON.stringify(
+                aep
+              )} error: ${error}`
+            );
+            return { success: false, errorMsg: error.message };
+          }
+        })
+      );
+      res.status(200).json(results);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
   },
 
-  downgrade: (req: Request, res: Response): void => {
+  guild: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -61,19 +76,18 @@ const controller = {
       return;
     }
 
-    const params: ManageRolesParams = req.body;
+    const params: GuildEventParams = req.body;
 
-    manageRoles(params, false)
-      .then((result) => {
-        res.status(200).json(result);
-      })
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
+    try {
+      const result = await handleGuildEvent(params);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
   },
 
-  getInvite: (req: Request, res: Response): void => {
+  role: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -81,16 +95,71 @@ const controller = {
       return;
     }
 
-    const { guildId, inviteChannelId } = req.params;
+    const params: RoleEventParams = req.body;
 
-    generateInvite(guildId, inviteChannelId)
-      .then((result) => {
-        res.status(200).json(result);
-      })
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
+    try {
+      const result = await handleRoleEvent(params);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  info: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { platformGuildId } = req.params;
+      const name = await getServerName(platformGuildId);
+      const invite = await getInvite(platformGuildId);
+
+      res.status(200).json({ name, invite });
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  resolveUser: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      // eslint-disable-next-line camelcase
+      const { access_token } = req.body;
+      const result = await fetchUserByAccessToken(access_token);
+
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  listGateables: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const { platformUserId } = req.params;
+      const serverList = await listServers(platformUserId);
+
+      res.status(200).json(serverList);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
   },
 
   isMember: (req: Request, res: Response): void => {
@@ -107,24 +176,6 @@ const controller = {
       .then((result) => {
         res.status(200).json(result);
       })
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
-  },
-
-  removeUser: (req: Request, res: Response): void => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-
-    const { guildId, platformUserId } = req.params;
-
-    removeUser(guildId, platformUserId)
-      .then(() => res.status(200).send())
       .catch((error) => {
         const errorMsg = getErrorResult(error);
         res.status(400).json(errorMsg);
@@ -206,81 +257,6 @@ const controller = {
     }
   },
 
-  deleteRole: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { guildId, roleId } = req.body;
-      const deleted = await deleteRole(guildId, roleId);
-      res.status(200).json(deleted);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  createGuildGuard: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { serverId, entryChannelId, roleIds } = req.body;
-      const createdEntryChannelId = await setupGuildGuard(
-        serverId,
-        entryChannelId,
-        roleIds
-      );
-      res.status(200).json(createdEntryChannelId);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  resetGuildGuard: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { serverId, entryChannelId } = req.body;
-      const createdEntryChannelId = await resetGuildGuard(
-        serverId,
-        entryChannelId
-      );
-      res.status(200).json(createdEntryChannelId);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  isIn: (req: Request, res: Response): void => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-
-    const { guildId } = req.params;
-    isIn(guildId)
-      .then((result) => res.status(200).json(result))
-      .catch((error) => {
-        const errorMsg = getErrorResult(error);
-        res.status(400).json(errorMsg);
-      });
-  },
-
   server: (req: Request, res: Response): void => {
     const errors = validationResult(req);
 
@@ -290,9 +266,9 @@ const controller = {
     }
 
     const { guildId } = req.params;
-    const { includeDetails } = req.body;
+    // const { includeDetails } = req.body;
 
-    getServerInfo(guildId, includeDetails)
+    getServerInfo(guildId)
       .then((result) => res.status(200).json(result))
       .catch((error) => {
         const errorMsg = getErrorResult(error);
@@ -330,42 +306,6 @@ const controller = {
       const createdChannel = await createChannel(params);
 
       res.status(200).json(createdChannel.id);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  deleteChannelAndRole: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const params: DeleteChannelAndRoleParams = req.body;
-      const deleted = await deleteChannelAndRole(params);
-
-      res.status(200).json(deleted);
-    } catch (error) {
-      const errorMsg = getErrorResult(error);
-      res.status(400).json(errorMsg);
-    }
-  },
-
-  getGuildNameByGuildId: async (req: Request, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-    try {
-      const { guildId } = req.params;
-      const guildName = await getGuild(guildId);
-
-      res.status(200).json(guildName);
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

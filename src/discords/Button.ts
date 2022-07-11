@@ -50,7 +50,9 @@ abstract class Buttons {
     try {
       await interaction.editReply(message);
     } catch (error) {
-      logger.verbose(`join-button interaction EDITREPLY ${error.message}`);
+      logger.verbose(
+        `poap-claim-button interaction EDITREPLY ${error.message}`
+      );
     }
   }
 }

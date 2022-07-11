@@ -1,26 +1,61 @@
 import { Router } from "express";
+import { body } from "express-validator";
 import controller from "./controller";
 import validators from "./validators";
 
 const createRouter = () => {
   const router: Router = Router();
-
   router.post(
-    "/upgrade",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("platformUserId"),
-    validators.bodyDiscordId("roleId"),
-    validators.messageValidator,
-    controller.upgrade
+    "/access",
+    body().isArray(),
+    body("*.action").isIn(["ADD", "REMOVE"]),
+    validators.bodyDiscordId("*.platformUserId"),
+    validators.bodyDiscordId("*.platformGuildId"),
+    validators.bodyStringValidator("*.guildName"),
+    body("*.platformGuildData"),
+    validators.bodyArrayValidator("*.roles"),
+    validators.bodyStringValidator("*.roles.*.roleName"),
+    validators.bodyDiscordId("*.roles.*.platformRoleId"),
+    validators
+      .bodyDiscordId("*.roles.*.platformRoleData.inviteChannel")
+      .optional(),
+    controller.access
   );
 
   router.post(
-    "/downgrade",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("platformUserId"),
-    validators.bodyDiscordId("roleId"),
-    validators.messageValidator,
-    controller.downgrade
+    "/guild",
+    body("action").isIn(["CREATE", "UPDATE", "DELETE"]),
+    validators.bodyDiscordId("platformGuildId"),
+    body("platformGuildData").optional(),
+    controller.guild
+  );
+
+  router.post(
+    "/role",
+    body("action").isIn(["CREATE", "UPDATE", "DELETE"]),
+    validators.bodyDiscordId("platformGuildId"),
+    body("platformGuildData").optional(),
+    validators.bodyDiscordId("platformRoleId").optional(),
+    body("platformRoleData").optional(),
+    controller.role
+  );
+
+  router.get(
+    "/info/:platformGuildId",
+    validators.paramDiscordId("platformGuildId"),
+    controller.info
+  );
+
+  router.post(
+    "/resolveUser",
+    validators.bodyStringValidator("access_token"),
+    controller.resolveUser
+  );
+
+  router.get(
+    "/listGateables/:platformUserId",
+    validators.paramDiscordId("platformUserId"),
+    controller.listGateables
   );
 
   router.post(
@@ -31,12 +66,6 @@ const createRouter = () => {
     controller.manageMigratedActions
   );
 
-  router.get(
-    "/invite/:guildId/:inviteChannelId",
-    validators.paramDiscordId("guildId"),
-    controller.getInvite
-  );
-
   router.post(
     "/isMember",
     validators.bodyDiscordId("serverId"),
@@ -44,80 +73,14 @@ const createRouter = () => {
     controller.isMember
   );
 
-  router.delete(
-    "/kick/:guildId/:platformUserId",
-    validators.paramDiscordId("guildId"),
-    validators.paramDiscordId("platformUserId"),
-    controller.removeUser
-  );
-
-  router.get(
-    "/:guildId",
-    validators.paramDiscordId("guildId"),
-    controller.getGuildNameByGuildId
-  );
-
-  router.get(
-    "/role/:guildId/:roleId",
-    validators.paramDiscordId("guildId"),
-    validators.paramDiscordId("roleId"),
-    controller.getRoleNameByRoleId
-  );
-
-  router.post(
-    "/role",
-    validators.bodyDiscordId("serverId"),
-    validators.roleNameValidator,
-    validators.isGuardedValidator,
-    validators.entryChannelIdValidator,
-    controller.createRole
-  );
-
-  router.patch(
-    "/role",
-    validators.bodyDiscordId("serverId"),
-    validators.bodyDiscordId("roleId"),
-    validators.roleNameValidator,
-    validators.isGuardedValidator,
-    validators.entryChannelIdValidator,
-    validators.gatedChannelsValidator,
-    controller.updateRole
-  );
-
-  router.post(
-    "/role/delete",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("roleId"),
-    controller.deleteRole
-  );
-
-  router.post(
-    "/guard",
-    validators.bodyDiscordId("serverId"),
-    validators.entryChannelIdValidator,
-    validators.roleIdsArrayValidator,
-    controller.createGuildGuard
-  );
-
-  router.post(
-    "/resetguard",
-    validators.bodyDiscordId("serverId"),
-    validators.entryChannelIdValidator,
-    controller.resetGuildGuard
-  );
-
-  router.get(
-    "/isIn/:guildId",
-    validators.paramDiscordId("guildId"),
-    controller.isIn
-  );
-
+  // called before guild creation in fronend, to get info of the server
   router.post(
     "/server/:guildId",
     validators.paramDiscordId("guildId"),
     controller.server
   );
 
+  // called from BE, to send the join/claim button to the inviteChannel
   router.post(
     "/channels/sendDiscordButton",
     validators.bodyDiscordId("guildId"),
@@ -131,20 +94,6 @@ const createRouter = () => {
     validators.bodyDiscordId("guildId"),
     validators.channelNameValidator,
     controller.createChannel
-  );
-
-  router.post(
-    "/channels/delete",
-    validators.bodyDiscordId("guildId"),
-    validators.bodyDiscordId("roleId"),
-    validators.bodyDiscordId("channelId"),
-    controller.deleteChannelAndRole
-  );
-
-  router.get(
-    "/administeredServers/:platformUserId",
-    validators.paramDiscordId("platformUserId"),
-    controller.administeredServers
   );
 
   router.get(

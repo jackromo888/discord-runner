@@ -1,4 +1,5 @@
 /* eslint-disable default-param-last */
+import { GetGuildResponse } from "@guildxyz/sdk";
 import { AxiosResponse } from "axios";
 import {
   GuildMember,
@@ -12,11 +13,12 @@ import {
   Permissions,
   MessageOptions,
   Role,
+  PartialGuildMember,
+  PermissionOverwrites,
 } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import Main from "../Main";
-import { getGuildsOfServer } from "../service";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -97,14 +99,7 @@ const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
 const createInteractionPayload = (
-  guild: {
-    name: string;
-    urlName: string;
-    description: string;
-    themeColor: string;
-    imageUrl: string;
-    poaps: any[];
-  },
+  guild: GetGuildResponse,
   title?: string,
   messageText: string = null,
   buttonText?: string,
@@ -158,8 +153,11 @@ const createInteractionPayload = (
       new MessageEmbed({
         title: buttonData.title,
         url: guild ? `${config.guildUrl}/${guild?.urlName}` : null,
-        description: buttonData.description,
-        color: `#${config.embedColor}`,
+        description:
+          messageText ||
+          guild?.description ||
+          "Join this guild and get your role(s)!",
+        color: `#${config.embedColor.default}`,
         author: {
           name: guild?.name || "Guild",
           iconURL: encodeURI(
@@ -191,60 +189,6 @@ const getAccessedChannelsByRoles = (guild: Guild, accessedRoles: string[]) =>
           po.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
       )
   ) as Collection<string, GuildChannel>;
-
-const getJoinReplyMessage = async (
-  roleIds: string[],
-  guild: Guild,
-  userId: string
-): Promise<MessageOptions> => {
-  let message: MessageOptions;
-  logger.verbose(`getJoinReply - ${roleIds} ${guild.id} ${userId}`);
-  if (roleIds && roleIds.length !== 0) {
-    const channelIds = getAccessedChannelsByRoles(guild, roleIds).map(
-      (c) => c.id
-    );
-
-    if (channelIds.length === 0) {
-      const roleNames = guild.roles.cache
-        .filter((role) => roleIds.some((roleId) => roleId === role.id))
-        .map((role) => role.name);
-      message = {
-        content: `✅ You got the \`${roleNames.join(", ")}\` role${
-          roleNames.length > 1 ? "s" : ""
-        }.`,
-      };
-    } else if (channelIds.length === 1) {
-      message = {
-        content: `✅ You got access to this channel: <#${channelIds[0]}>`,
-      };
-    } else {
-      message = {
-        content: `✅ You got access to these channels:\n${channelIds
-          .map((c: string) => `<#${c}>`)
-          .join("\n")}`,
-      };
-    }
-  } else if (roleIds && roleIds[0] !== "") {
-    message = {
-      content: "❌ You don't have access to any guilds in this server.",
-    };
-  } else {
-    const guildsOfServer = await getGuildsOfServer(guild.id);
-
-    const button = new MessageButton({
-      label: "Join",
-      style: "LINK",
-      url: `${config.guildUrl}/${guildsOfServer[0].urlName}/?discordId=${userId}`,
-    });
-
-    return {
-      components: [new MessageActionRow({ components: [button] })],
-      content: `This is **your** join link. Do **NOT** share it with anyone!`,
-    };
-  }
-
-  return message;
-};
 
 const denyViewEntryChannelForRole = async (
   role: Role,
@@ -321,24 +265,216 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
   return channelsByCategory;
 };
 
+const getCategoriesWithChannels = (guild: Guild, roleIds: string[]) => {
+  const categories: { [key: string]: GuildChannel[] } = {};
+  const accessedChannelsByRoles = getAccessedChannelsByRoles(guild, roleIds);
+
+  accessedChannelsByRoles.forEach((channel) => {
+    if (categories[channel.parentId]) {
+      categories[channel.parentId].push(channel);
+    } else {
+      categories[channel.parentId] = [channel];
+    }
+  });
+
+  return categories;
+};
+
+const getCategoryNameById = (guild: Guild, categoryId: string) => {
+  const channelsByCategoryWithRoles = getChannelsByCategoryWithRoles(guild);
+  const category = channelsByCategoryWithRoles.find((c) => c.id === categoryId);
+  return category.name;
+};
+
+const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
+  const fields = [];
+
+  const categoryEmoji =
+    Main.client.emojis.cache.get("893836008712441858") || "▶️";
+  const privateChannelEmoji =
+    Main.client.emojis.cache.get("893836025699377192") || "#";
+
+  const categories = getCategoriesWithChannels(guild, roleIds);
+
+  Object.keys(categories).forEach((categoryId) => {
+    fields.push({
+      name: `${categoryEmoji} ${getCategoryNameById(guild, categoryId)}`,
+      value: `\n${categories[categoryId]
+        .map(
+          (c) =>
+            `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${guild.id}/${c.id})`
+        )
+        .join("\n")}`,
+    });
+  });
+
+  return fields;
+};
+
+const getRoleNames = (guild: Guild, roleIds: string[]) =>
+  guild.roles.cache
+    .filter((role) => roleIds.some((roleId) => roleId === role.id))
+    .map((role) => role.name);
+
+const getNotAccessedRoleIds = (discordRoleIds: string[], roleIds: string[]) =>
+  discordRoleIds.filter((roleId) => !roleIds.includes(roleId));
+
+const getDiscordRoleIds = (
+  guildOfServer: GetGuildResponse,
+  serverId: string
+): string[] => {
+  const guildPlatformId = guildOfServer.guildPlatforms.find(
+    (gp) => gp.platformGuildId === serverId
+  )?.id;
+
+  return guildOfServer.roles
+    .flatMap((r) =>
+      r.rolePlatforms.filter((rp) => rp.guildPlatformId === guildPlatformId)
+    )
+    .map((rp) => rp.platformRoleId);
+};
+
+const printRoleNames = (
+  roleNames: string[],
+  accessed: boolean,
+  modifiedRoleName: string = ""
+) => {
+  if (roleNames.length === 0) return "";
+  const emoji = accessed ? `✅` : `❌`;
+  let result: string = "";
+  let filteredRoleNames = roleNames;
+
+  if (modifiedRoleName !== "") {
+    result = `${
+      accessed ? `✅ 🆕 ${modifiedRoleName}\n` : `❌ 🆕 ${modifiedRoleName}\n`
+    }`;
+    filteredRoleNames = roleNames.filter((rn) => rn !== modifiedRoleName);
+  }
+
+  if (filteredRoleNames.length > 0) {
+    result += `${emoji} ${filteredRoleNames.join(`\n${emoji} `)}`;
+  }
+
+  return result;
+};
+
+const getLinkButton = (label: string, url: string) =>
+  new MessageButton({
+    label,
+    style: "LINK",
+    url,
+    disabled: false,
+    type: 2,
+  });
+
+const getJoinReplyMessage = async (
+  roleIds: string[],
+  server: Guild,
+  userId: string,
+  inviteLink: string
+): Promise<MessageOptions> => {
+  let message: MessageOptions;
+  logger.verbose(`getJoinReply - ${roleIds} ${server.id} ${userId}`);
+
+  const guildOfServer = await Main.platform.guild.get(server.id);
+  const discordRoleIds = getDiscordRoleIds(guildOfServer, server.id);
+
+  // if not connected to guild
+  if (!roleIds && inviteLink) {
+    const button = getLinkButton("Join", inviteLink);
+
+    return {
+      components: [new MessageActionRow({ components: [button] })],
+      content: `This is **your** join link. Do **NOT** share it with anyone!`,
+    };
+  }
+
+  // show accessed / no accessed roles if joined
+  if (roleIds && roleIds.length !== 0) {
+    const accessedRoleNames = getRoleNames(server, roleIds);
+    const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
+    const notAccessedRoleNames = getRoleNames(server, notAccessedRoleIds);
+
+    const fields = getCategoryFieldValues(server, roleIds);
+
+    const description = `You got ${roleIds.length} out of ${
+      discordRoleIds.length
+    } role${
+      discordRoleIds.length > 1 ? "s" : ""
+    } with your connected address(es):\n\n${printRoleNames(
+      accessedRoleNames,
+      true
+    )}\n${printRoleNames(notAccessedRoleNames, false)}\n${
+      notAccessedRoleNames.length > 0 ? "\n" : ""
+    }${
+      fields.length > 0
+        ? "...giving you access to the following channels:\n"
+        : ""
+    }`;
+
+    const embed = new MessageEmbed({
+      title: `Successfully joined guild`,
+      description,
+      color: 0x0dff00,
+      fields,
+    });
+
+    const guild = await Main.platform.guild.get(server.id);
+    const button = getLinkButton(
+      "View details",
+      `${config.guildUrl}/${guild.urlName}`
+    );
+
+    message = {
+      content: "We have updated your accesses.",
+      components: [new MessageActionRow({ components: [button] })],
+      embeds: [embed],
+    };
+  } else if (roleIds && roleIds.length === 0) {
+    // no access
+    const notAccessedRoleIds = getNotAccessedRoleIds(discordRoleIds, roleIds);
+    const notAccessedRoleNames = getRoleNames(server, notAccessedRoleIds);
+
+    const guild = await Main.platform.guild.get(server.id);
+    const button = getLinkButton(
+      "View details",
+      `${config.guildUrl}/${guild.urlName}`
+    );
+
+    const embed = new MessageEmbed({
+      title: `No access`,
+      description: `You don't satisfy the requirements to any roles on this server with your connected address(es).\n\n${printRoleNames(
+        notAccessedRoleNames,
+        false
+      )}`,
+      color: `#${config.embedColor.error}`,
+    });
+
+    message = {
+      content: "We have updated your accesses successfully.",
+      components: [new MessageActionRow({ components: [button] })],
+      embeds: [embed],
+    };
+  }
+
+  return message;
+};
+
 const updateAccessedChannelsOfRole = (
-  serverId: string,
+  server: Guild,
   roleId: string,
   channelIds: string[],
   isGuarded: boolean,
   entryChannelId: string
 ) => {
   logger.verbose(
-    `updateAccessedChannelsOfRole - ${serverId} ${roleId} ${channelIds} ${entryChannelId}`
+    `updateAccessedChannelsOfRole - ${server.id} ${roleId} ${channelIds} ${entryChannelId}`
   );
   const shouldHaveAccess = new Set(channelIds);
 
-  const channels = Main.Client.guilds.cache
-    .get(serverId)
-    ?.channels.cache.filter((channel) => !channel.isThread()) as Collection<
-    string,
-    GuildChannel
-  >;
+  const channels = server.channels.cache.filter(
+    (channel) => !channel.isThread()
+  ) as Collection<string, GuildChannel>;
 
   if (isGuarded) {
     shouldHaveAccess.delete(entryChannelId);
@@ -367,13 +503,107 @@ const updateAccessedChannelsOfRole = (
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
       channelToAllowAccessTo.permissionOverwrites.edit(
-        Main.Client.guilds.cache.get(serverId).roles.everyone.id,
+        server.roles.everyone.id,
         {
           VIEW_CHANNEL: false,
         }
       )
     ),
   ]);
+};
+
+const notifyAccessedChannels = async (
+  member: GuildMember | PartialGuildMember,
+  roleId: string,
+  guildName: string,
+  roleName: string
+) => {
+  const accessedChannels = getAccessedChannelsByRoles(member.guild, [roleId]);
+
+  const sortedChannels = accessedChannels.reduce<
+    Map<string | null, GuildChannel[]>
+  >((acc, value) => {
+    let channels = acc.get(value?.parent?.name);
+    if (!channels) {
+      channels = [];
+    }
+    channels.push(value);
+    acc.set(value?.parent?.name, channels);
+    return acc;
+  }, new Map());
+
+  let message: string;
+  if (accessedChannels.size === 0) {
+    message = `You got access to the \`${roleName}\` role  in \`${member.guild.name}\`.`;
+  } else {
+    message = `You got access to ${
+      accessedChannels.size > 1 ? "these channels" : "this channel"
+    } with the \`${guildName}\` role in \`${member.guild.name}\`:`;
+  }
+
+  const embed = new MessageEmbed({
+    title: message,
+    color: `#${config.embedColor.default}`,
+  });
+
+  const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");
+  const privateChannelEmoji =
+    Main.client.emojis.cache.get("893836025699377192");
+
+  sortedChannels.forEach((channel, key) => {
+    const fieldValue = channel
+      .map(
+        (c) =>
+          `[${privateChannelEmoji || ""}${
+            c.name
+          }](https://discord.com/channels/${member.guild.id}/${c.id})`
+      )
+      .join("\n");
+    embed.addField(
+      `${categoryEmoji || ""}${key || "Without Category"}`,
+      fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
+    );
+  });
+
+  member.send({ embeds: [embed] }).catch(logger.error);
+};
+
+const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
+  // check if invite channel exists
+  let channelId: string;
+
+  if (
+    inviteChannelId &&
+    server.channels.cache
+      .filter((c) => c.type === "GUILD_TEXT" || c.type === "GUILD_NEWS")
+      .find((c) => c.id === inviteChannelId)
+  ) {
+    channelId = inviteChannelId;
+  } else {
+    // find the first channel which is visible to everyone
+    const publicChannel = server.channels.cache.find(
+      (c) =>
+        c.isText() &&
+        !(c as any).permissionOverwrites?.cache.some(
+          (po: PermissionOverwrites) =>
+            po.id === server.roles.everyone.id && po.deny.any("VIEW_CHANNEL")
+        )
+    );
+
+    if (publicChannel) {
+      channelId = publicChannel.id;
+    } else {
+      // if there are no visible channels, find the first text channel
+      logger.verbose(`Cannot find public channel in ${server.id}`);
+      channelId = server.channels.cache.find((c) => c.isText())?.id;
+    }
+
+    logger.warn(
+      `Invite channel ${inviteChannelId} in server ${server.id} was replaced by ${channelId}`
+    );
+  }
+
+  return channelId;
 };
 
 export {
@@ -389,4 +619,14 @@ export {
   denyViewEntryChannelForRole,
   getChannelsByCategoryWithRoles,
   updateAccessedChannelsOfRole,
+  notifyAccessedChannels,
+  checkInviteChannel,
+  getCategoriesWithChannels,
+  getCategoryNameById,
+  getCategoryFieldValues,
+  getRoleNames,
+  getNotAccessedRoleIds,
+  getDiscordRoleIds,
+  printRoleNames,
+  getLinkButton,
 };

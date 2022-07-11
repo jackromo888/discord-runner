@@ -1,9 +1,51 @@
-type ManageRolesParams = {
-  guildId: string;
+type AccessEventParams = {
+  action: "ADD" | "REMOVE";
   platformUserId: string;
-  roleId: string;
-  message: string;
+  platformGuildId: string;
+  guildName: string;
+  platformGuildData: { inviteChannel: string };
+  roles: {
+    roleName: string;
+    platformRoleId: string;
+    platformRoleData?: {
+      isGuarded?: boolean;
+    };
+  }[];
 };
+
+type GuildEventParams = {
+  action: "CREATE" | "UPDATE" | "DELETE";
+  guildName: string;
+  platformGuildId: string;
+  platformGuildData?: { inviteChannel?: string };
+};
+
+type GuildEventResponse =
+  | {
+      platformGuildId: string;
+      platformGuildData: { inviteChannel: string; joinButton?: boolean };
+    }
+  | { success: boolean };
+
+type RoleEventParams = {
+  action: "CREATE" | "UPDATE" | "DELETE";
+  roleName: string;
+  platformGuildId: string;
+  platformGuildData: { inviteChannel: string };
+  platformRoleId?: string;
+  platformRoleData?: {
+    isGuarded?: boolean;
+    gatedChannels?: string[];
+    grantAccessToExistingUsers: boolean;
+  };
+};
+
+type RoleEventResponse =
+  | {
+      platformGuildData: { inviteChannel: string };
+      platformRoleId: string;
+    }
+  | { success: boolean };
 
 type CreateChannelParams = {
   guildId: string;
@@ -21,10 +63,6 @@ type UserResult = {
   discriminator: string;
   avatar: string;
   roles: string[];
-};
-
-type InviteResult = {
-  code: string;
 };
 
 type ErrorResult = {
@@ -47,12 +85,6 @@ type CreateRoleResult = {
 type DiscordChannel = {
   id: string;
   name: string;
-};
-
-type LevelInfo = {
-  name: string;
-  discordServerId: string;
-  accessedRoles: string;
 };
 
 type InviteData = {
@@ -104,6 +136,36 @@ type ButtonMetaData = Partial<{
   isJoinButton: boolean;
 }>;
 
+type Platform = {
+  id: number;
+  isGuarded: boolean;
+  platformId: string;
+  type: string;
+  platformName: string;
+};
+
+type Role = {
+  id: number;
+  name: string;
+  platforms: {
+    roleId: number;
+    platformId: number;
+    inviteChannel: string;
+    discordRoleId: string;
+  }[];
+};
+
+type GuildOfServer = {
+  id: number;
+  name: string;
+  urlName: string;
+  description: string;
+  imageUrl: string;
+  platforms: Platform[];
+  roles: Role[];
+  poaps: any[];
+};
+
 type Emote = {
   name: string;
   id: string;
@@ -116,24 +178,35 @@ type ChannelObj = {
   id: string;
 };
 
+type ResolveUserResopnse = {
+  platformUserId: string;
+  platformUserData: {
+    access_token: string;
+  };
+};
+
 export {
   ButtonMetaData,
-  ManageRolesParams,
   CreateChannelParams,
   DeleteChannelAndRoleParams,
   UserResult,
-  InviteResult,
   ErrorResult,
   ActionError,
   CreateRoleResult,
   DiscordChannel,
-  LevelInfo,
   InviteData,
   SelectMenuOption,
   NewPoll,
   Poll,
   Reaction,
   Vote,
+  GuildOfServer,
   Emote,
   ChannelObj,
+  AccessEventParams,
+  GuildEventParams,
+  GuildEventResponse,
+  RoleEventParams,
+  RoleEventResponse,
+  ResolveUserResopnse,
 };

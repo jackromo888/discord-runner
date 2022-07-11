@@ -47,7 +47,7 @@ const createPollText = async (
 
 const createPoll = async (poll: NewPoll): Promise<boolean> => {
   try {
-    const channel = Main.Client.channels.cache.get(
+    const channel = Main.client.channels.cache.get(
       poll.channelId
     ) as TextChannel;
 

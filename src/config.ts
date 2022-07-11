@@ -6,6 +6,8 @@ const envFound = dotenv.config();
   throw new Error("Couldn't find .env file or volumes in compose.");
 } */
 
+const nodeEnv = process.env.NODE_ENV || "development";
+
 const redisHost = process.env.REDIS_HOST;
 const hmacAlgorithm = process.env.HMAC_ALGORITHM || "sha256";
 const hmacSecret = process.env.HMAC_SECRET;
@@ -15,7 +17,10 @@ const api = {
   prefix: "/api",
   port: process.env.PORT || 8990,
 };
-const embedColor = process.env.EMBED_COLOR || "6366f1";
+const embedColor = {
+  default: process.env.EMBED_COLOR || "6366f1",
+  error: "ff0000",
+};
 const guildUrl = process.env.GUILD_URL;
 
 const joinButtonEmojis = {
@@ -42,6 +47,7 @@ if (!hmacSecret) {
 }
 
 export default {
+  nodeEnv,
   redisHost,
   hmacAlgorithm,
   hmacSecret,
