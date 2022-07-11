@@ -309,7 +309,7 @@ abstract class Events {
 
   @On("guildMemberAdd")
   onGuildMemberAdd([member]: [GuildMember | PartialGuildMember]): void {
-    Main.platform.user.join(member.guild.id, member.user.id).catch();
+    Main.platform.user.join(member.guild.id, member.user.id).catch(() => {});
   }
 
   @On("inviteDelete")

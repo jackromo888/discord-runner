@@ -1,8 +1,9 @@
 /* eslint-disable class-methods-use-this */
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, MessageEmbed, MessageOptions } from "discord.js";
 import { ButtonComponent, Discord } from "discordx";
 import { getUserPoap } from "../api/actions";
 import { join } from "../commands";
+import config from "../config";
 import logger from "../utils/logger";
 
 @Discord()
@@ -16,16 +17,44 @@ abstract class Buttons {
       });
     } catch (error) {
       logger.verbose(`join-button interaction reply ${error.message}`);
+      return;
     }
 
-    const message = await join(
-      interaction?.user.id,
-      interaction?.guild,
-      interaction?.token
-    );
+    let messagePayload: MessageOptions;
+    try {
+      messagePayload = await join(
+        interaction?.user.id,
+        interaction?.guild,
+        interaction?.token
+      );
+    } catch (error) {
+      if (error.message?.startsWith("Cannot find guild")) {
+        await interaction.editReply({
+          embeds: [
+            new MessageEmbed({
+              title: "Error",
+              description: "There is no guild associated with this server.",
+              color: `#${config.embedColor.error}`,
+            }),
+          ],
+        });
+        return;
+      }
+      logger.error(error);
+      await interaction.editReply({
+        embeds: [
+          new MessageEmbed({
+            title: "Error",
+            description: "Unkown error occured, please try again later.",
+            color: `#${config.embedColor.error}`,
+          }),
+        ],
+      });
+      return;
+    }
 
     try {
-      await interaction.editReply(message);
+      await interaction.editReply(messagePayload);
     } catch (error) {
       logger.verbose(`join-button interaction EDITREPLY ${error.message}`);
     }

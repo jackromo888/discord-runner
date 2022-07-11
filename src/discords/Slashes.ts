@@ -1,6 +1,13 @@
 /* eslint-disable class-methods-use-this */
-import { CommandInteraction, GuildMember, Permissions } from "discord.js";
+import {
+  CommandInteraction,
+  GuildMember,
+  MessageEmbed,
+  MessageOptions,
+  Permissions,
+} from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
+import { GetGuildResponse } from "@guildxyz/sdk";
 import { join, ping, status } from "../commands";
 import logger from "../utils/logger";
 import { createInteractionPayload } from "../utils/utils";
@@ -60,11 +67,38 @@ abstract class Slashes {
       ephemeral: true,
     });
 
-    const messagePayload = await join(
-      interaction.user.id,
-      interaction.guild,
-      interaction.token
-    );
+    let messagePayload: MessageOptions;
+    try {
+      messagePayload = await join(
+        interaction?.user.id,
+        interaction?.guild,
+        interaction?.token
+      );
+    } catch (error) {
+      if (error.message?.startsWith("Cannot find guild")) {
+        await interaction.editReply({
+          embeds: [
+            new MessageEmbed({
+              title: "Error",
+              description: "There is no Guild associated with this server.",
+              color: `#${config.embedColor.error}`,
+            }),
+          ],
+        });
+        return;
+      }
+      logger.error(error);
+      await interaction.editReply({
+        embeds: [
+          new MessageEmbed({
+            title: "Error",
+            description: "Unkown error occured, please try again later.",
+            color: `#${config.embedColor.error}`,
+          }),
+        ],
+      });
+      return;
+    }
 
     await interaction.editReply(messagePayload);
   }
@@ -107,7 +141,12 @@ abstract class Slashes {
       return;
     }
 
-    const guild = await Main.platform.guild.get(interaction.guild.id);
+    let guild: GetGuildResponse;
+    try {
+      guild = await Main.platform.guild.get(interaction.guild.id);
+    } catch (error) {
+      // ignored
+    }
     if (!guild) {
       await interaction.reply({
         content: "❌ There are no guilds in this server.",
