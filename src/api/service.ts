@@ -185,17 +185,37 @@ const handleRoleEvent = async (
 
   switch (action) {
     case "CREATE": {
-      // create the discord role
+      // try to get the discord role
       const server = await Main.client.guilds.fetch(platformGuildId);
-      const createdRole = await server.roles.create({
-        name: roleName,
-        hoist: true,
-        reason: `Created by ${Main.client.user.username} for a Guild role.`,
-        permissions:
-          platformRoleData?.isGuarded === true
-            ? Permissions.FLAGS.VIEW_CHANNEL
-            : undefined,
-      });
+      const roleInServer = server.roles.cache.find(
+        (r) => r.id === platformRoleId
+      );
+
+      // check if role exists
+      let role: Role;
+      if (roleInServer) {
+        role = await roleInServer.edit(
+          {
+            name: roleName,
+            permissions:
+              platformRoleData?.isGuarded === true
+                ? Permissions.FLAGS.VIEW_CHANNEL
+                : undefined,
+          },
+          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
+        );
+      } else {
+        // if not exists create a new
+        role = await server.roles.create({
+          name: roleName,
+          hoist: true,
+          reason: `Created by ${Main.client.user.username} for a Guild role.`,
+          permissions:
+            platformRoleData?.isGuarded === true
+              ? Permissions.FLAGS.VIEW_CHANNEL
+              : undefined,
+        });
+      }
 
       // check if invite channel exists, if not select another one
       const inviteChannelId = checkInviteChannel(
@@ -206,7 +226,7 @@ const handleRoleEvent = async (
       // if guarded, hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        await inviteChannel.permissionOverwrites.create(createdRole, {
+        await inviteChannel.permissionOverwrites.create(role, {
           VIEW_CHANNEL: false,
         });
         await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
@@ -220,9 +240,9 @@ const handleRoleEvent = async (
         if (params.platformRoleData.grantAccessToExistingUsers) {
           await Promise.all(
             server.members.cache.map(async (m) => {
-              if (!m.roles.cache.has(createdRole.id)) {
+              if (!m.roles.cache.has(role.id)) {
                 try {
-                  await m.roles.add(createdRole);
+                  await m.roles.add(role);
                 } catch (error) {
                   logger.verbose(
                     `Couldn't give role to ${m.id} in ${server.id} (${error.message})`
@@ -236,14 +256,14 @@ const handleRoleEvent = async (
 
       await updateAccessedChannelsOfRole(
         server,
-        createdRole.id,
+        role.id,
         platformRoleData?.gatedChannels,
         platformRoleData?.isGuarded === true,
         inviteChannelId
       );
 
       return {
-        platformRoleId: createdRole.id,
+        platformRoleId: role.id,
         platformGuildData: { inviteChannel: inviteChannelId },
       };
     }
