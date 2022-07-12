@@ -80,7 +80,7 @@ abstract class Slashes {
           embeds: [
             new MessageEmbed({
               title: "Error",
-              description: "There is no Guild associated with this server.",
+              description: "There is no guild associated with this server.",
               color: `#${config.embedColor.error}`,
             }),
           ],

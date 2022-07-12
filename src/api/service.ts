@@ -27,7 +27,7 @@ const handleAccessEvent = async (
 ): Promise<UserResult> => {
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}`);
   const { platformGuildId, platformUserId, guildName, action, roles } = params;
-  const roleIds = roles.map((r) => r.platformRoleId);
+  const roleIds = roles.map((r) => r.platformRoleId).filter((r) => r);
 
   // find the guild
   const guild = await Main.client.guilds.fetch(platformGuildId);
