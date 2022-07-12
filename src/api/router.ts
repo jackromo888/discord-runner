@@ -15,7 +15,7 @@ const createRouter = () => {
     body("*.platformGuildData"),
     validators.bodyArrayValidator("*.roles"),
     validators.bodyStringValidator("*.roles.*.roleName"),
-    validators.bodyDiscordId("*.roles.*.platformRoleId").optional(),
+    // validators.bodyDiscordId("*.roles.*.platformRoleId"),
     controller.access
   );
 
