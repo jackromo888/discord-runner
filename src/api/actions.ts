@@ -212,40 +212,41 @@ const getUserPoap = async (
   try {
     const guild = await Main.platform.guild.get(serverId);
     const poapLinks = await Promise.all(
-      guild?.poaps?.map(async (poap) => {
-        try {
-          const response = await axios.post(
-            `${config.backendUrl}/assets/poap/claim`,
-            {
-              userId,
-              // eslint-disable-next-line no-unsafe-optional-chaining
-              poapId: poap.poapIdentifier,
+      guild?.poaps
+        ?.sort((a, b) => b.id - a.id)
+        .map(async (poap) => {
+          try {
+            const response = await axios.post(
+              `${config.backendUrl}/assets/poap/claim`,
+              {
+                userId,
+                // eslint-disable-next-line no-unsafe-optional-chaining
+                poapId: poap.poapIdentifier,
+              }
+            );
+
+            return new MessageButton({
+              label: `Claim ${poap.fancyId}`.slice(0, 80),
+              style: "LINK",
+              url: response.data,
+            });
+          } catch (err: any) {
+            const errorMessage = getBackendErrorMessage(err);
+            logger.warn(`poapClaim - ${userId} ${errorMessage}`);
+
+            const errorTexts = ["claimable", "expired", "left", "join"];
+
+            if (errorTexts.some((e) => errorMessage.includes(e))) {
+              return null;
             }
-          );
-          return new MessageButton({
-            label: `Claim ${poap.fancyId}`.slice(0, 80),
-            style: "LINK",
-            url: response.data,
-          });
-        } catch (err: any) {
-          const errorMessage = getBackendErrorMessage(err);
-          logger.warn(`poapClaim - ${userId} ${errorMessage}`);
 
-          if (
-            errorMessage.includes(
-              "expired" || "claimable" || "join" || "transaction"
-            )
-          ) {
-            return null;
+            return new MessageButton({
+              label: `Buy ${poap.fancyId}`.slice(0, 80),
+              style: "LINK",
+              url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
+            });
           }
-
-          return new MessageButton({
-            label: `Buy ${poap.fancyId}`.slice(0, 80),
-            style: "LINK",
-            url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
-          });
-        }
-      })
+        })
     );
 
     const contentMessage =
@@ -255,7 +256,9 @@ const getUserPoap = async (
 
     return {
       components: [
-        new MessageActionRow({ components: [poapLinks[poapLinks.length - 1]] }),
+        new MessageActionRow({
+          components: poapLinks.filter((p) => p?.url).slice(0, 5),
+        }),
       ],
       content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
     };
