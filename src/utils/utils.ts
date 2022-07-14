@@ -329,7 +329,9 @@ const getDiscordRoleIds = (
 
   return guildOfServer.roles
     .flatMap((r) =>
-      r.rolePlatforms.filter((rp) => rp.guildPlatformId === guildPlatformId)
+      r.rolePlatforms
+        ? r.rolePlatforms.filter((rp) => rp.guildPlatformId === guildPlatformId)
+        : []
     )
     .map((rp) => rp.platformRoleId);
 };
