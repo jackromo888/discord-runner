@@ -51,56 +51,64 @@ abstract class Slashes {
 
   @Slash("join", { description: "Join the guild of this server." })
   async join(interaction: CommandInteraction) {
-    if (interaction.channel.type === "DM") {
-      interaction.reply(
-        "❌ Use this command in a server to join all of its guilds you have access to!"
-      );
-      return;
-    }
-
-    logger.verbose(
-      `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
-    );
-
-    await interaction.reply({
-      content: "I'll update your accesses as soon as possible.",
-      ephemeral: true,
-    });
-
-    let messagePayload: MessageOptions;
     try {
-      messagePayload = await join(
-        interaction?.user.id,
-        interaction?.guild,
-        interaction?.token
+      if (interaction.channel.type === "DM") {
+        interaction.reply(
+          "❌ Use this command in a server to join all of its guilds you have access to!"
+        );
+        return;
+      }
+
+      logger.verbose(
+        `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
       );
-    } catch (error) {
-      if (error.message?.startsWith("Cannot find guild")) {
+
+      await interaction.reply({
+        content: "I'll update your accesses as soon as possible.",
+        ephemeral: true,
+      });
+
+      let messagePayload: MessageOptions;
+      try {
+        messagePayload = await join(
+          interaction?.user.id,
+          interaction?.guild,
+          interaction?.token
+        );
+      } catch (error) {
+        if (error.message?.startsWith("Cannot find guild")) {
+          await interaction.editReply({
+            embeds: [
+              new MessageEmbed({
+                title: "Error",
+                description: "There is no guild associated with this server.",
+                color: `#${config.embedColor.error}`,
+              }),
+            ],
+          });
+          return;
+        }
+        logger.error(error);
         await interaction.editReply({
           embeds: [
             new MessageEmbed({
               title: "Error",
-              description: "There is no guild associated with this server.",
+              description: "Unkown error occured, please try again later.",
               color: `#${config.embedColor.error}`,
             }),
           ],
         });
         return;
       }
-      logger.error(error);
-      await interaction.editReply({
-        embeds: [
-          new MessageEmbed({
-            title: "Error",
-            description: "Unkown error occured, please try again later.",
-            color: `#${config.embedColor.error}`,
-          }),
-        ],
-      });
-      return;
-    }
 
-    await interaction.editReply(messagePayload);
+      await interaction.editReply(messagePayload);
+    } catch (error) {
+      logger.error(
+        `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${
+          interaction.user.id
+        } error: ${error.message} ${JSON.stringify(error)}`
+      );
+    }
   }
 
   @Slash("join-button", {
