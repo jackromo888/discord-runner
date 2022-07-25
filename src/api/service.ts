@@ -420,7 +420,7 @@ const getInfo = async (
   serverId: string
 ): Promise<{ name: string; inviteCode: string }> => {
   logger.verbose(`getInfo param: ${serverId}`);
-  const redisValue: string = await redisClient.getAsync(serverId);
+  const redisValue: string = await redisClient.getAsync(`info:${serverId}`);
   if (redisValue) {
     logger.verbose(`getInfo returning cached: ${redisValue}`);
     const [cachedName, cachedInviteCode] = redisValue.split(":");
