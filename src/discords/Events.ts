@@ -27,6 +27,7 @@ import config from "../config";
 import { Vote } from "../api/types";
 import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
+import redisClient from "../database";
 
 const messageReactionCommon = async (
   reaction: MessageReaction | PartialMessageReaction,
@@ -317,23 +318,7 @@ abstract class Events {
     Main.client.guilds.fetch(invite.guild.id).then((guild) => {
       logger.verbose(`onInviteDelete guild: ${guild.name}`);
 
-      const inviteChannelId = Main.inviteDataCache.get(
-        guild.id
-      )?.inviteChannelId;
-
-      if (inviteChannelId) {
-        guild.invites
-          .create(inviteChannelId, { maxAge: 0 })
-          .then((newInvite) => {
-            Main.inviteDataCache.set(guild.id, {
-              code: newInvite.code,
-              inviteChannelId,
-            });
-            logger.verbose(
-              `invite code cache updated: ${guild.id}, ${newInvite.code}`
-            );
-          });
-      }
+      redisClient.client.del(`info:${guild.id}`);
     });
   }
 

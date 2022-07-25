@@ -20,8 +20,7 @@ import {
 } from "./actions";
 import {
   fetchUserByAccessToken,
-  getInvite,
-  getServerName,
+  getInfo,
   handleAccessEvent,
   handleGuildEvent,
   handleRoleEvent,
@@ -115,10 +114,12 @@ const controller = {
     }
     try {
       const { platformGuildId } = req.params;
-      const name = await getServerName(platformGuildId);
-      const invite = await getInvite(platformGuildId);
 
-      res.status(200).json({ name, invite });
+      const { name, inviteCode } = await getInfo(platformGuildId);
+
+      res
+        .status(200)
+        .json({ name, invite: `https://discord.gg/${inviteCode}` });
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);

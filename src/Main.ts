@@ -4,15 +4,12 @@ import { Intents, MessageComponentInteraction } from "discord.js";
 import { Client } from "discordx";
 import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
 import api from "./api/api";
-import { InviteData } from "./api/types";
 import config from "./config";
 import logger from "./utils/logger";
 import { logAxiosResponse } from "./utils/utils";
 
 class Main {
   public static client: Client;
-
-  public static inviteDataCache: Map<string, InviteData>;
 
   public static platform: Platform;
 
@@ -75,8 +72,6 @@ class Main {
     await importx(`${__dirname}/discords/*.{ts,js}`);
 
     this.client.login(config.discordToken);
-
-    this.inviteDataCache = new Map();
   }
 }
 

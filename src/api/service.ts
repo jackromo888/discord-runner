@@ -381,16 +381,8 @@ const handleRoleEvent = async (
   }
 };
 
-const getInvite = async (serverId: string) => {
+const getInviteCode = async (serverId: string) => {
   logger.verbose(`getInvite params: ${serverId}`);
-
-  // check if invite is in cache
-  const cachedInvite = Main.inviteDataCache.get(serverId);
-  if (cachedInvite) {
-    logger.verbose(`returning cached invite code: ${cachedInvite.code}`);
-    return `https://discord.gg/${cachedInvite.code}`;
-  }
-
   // find the server
   const server = await Main.client.guilds.fetch(serverId);
 
@@ -413,27 +405,43 @@ const getInvite = async (serverId: string) => {
   // TODO: update in db
 
   // generate the new invite
-  const newInvite = await server.invites.create(channelId, { maxAge: 0 });
-  logger.verbose(`generated invite code: ${newInvite?.code}`);
+  const invite = await server.invites.create(channelId, { maxAge: 0 });
+  logger.verbose(`generated invite code: ${invite?.code}`);
 
-  // update cache
-  Main.inviteDataCache.set(serverId, {
-    code: newInvite.code,
-    inviteChannelId: channelId,
-  });
-
-  return newInvite.url;
+  return invite.code;
 };
 
-const DiscordServerNames: { [guildId: string]: [name: string] } = {};
-
 const getServerName = async (guildId: string) => {
-  if (DiscordServerNames[guildId]) {
-    return DiscordServerNames[guildId];
-  }
   const guild = await Main.client.guilds.fetch(guildId);
-  DiscordServerNames[guildId] = guild.name as any;
   return guild.name;
+};
+
+const getInfo = async (
+  serverId: string
+): Promise<{ name: string; inviteCode: string }> => {
+  logger.verbose(`getInfo param: ${serverId}`);
+  const redisValue: string = await redisClient.getAsync(serverId);
+  if (redisValue) {
+    logger.verbose(`getInfo returning cached: ${redisValue}`);
+    const [cachedName, cachedInviteCode] = redisValue.split(":");
+    return {
+      name: cachedName,
+      inviteCode: cachedInviteCode,
+    };
+  }
+
+  const name = await getServerName(serverId);
+  const inviteCode = await getInviteCode(serverId);
+
+  redisClient.client.set(
+    `info:${serverId}`,
+    `${name}:${inviteCode}`,
+    "EX",
+    5 * 60
+  );
+
+  logger.verbose(`getInfo result: ${name} ${inviteCode}`);
+  return { name, inviteCode };
 };
 
 const fetchUserByAccessToken = async (
@@ -474,8 +482,7 @@ const listServers = async (userId: string) => {
 
 export {
   handleAccessEvent,
-  getInvite,
-  getServerName,
+  getInfo,
   listServers,
   handleGuildEvent,
   handleRoleEvent,

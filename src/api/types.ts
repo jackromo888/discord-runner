@@ -87,11 +87,6 @@ type DiscordChannel = {
   name: string;
 };
 
-type InviteData = {
-  code: string;
-  inviteChannelId: string;
-};
-
 type SelectMenuOption = {
   label: string;
   description: string;
@@ -194,7 +189,6 @@ export {
   ActionError,
   CreateRoleResult,
   DiscordChannel,
-  InviteData,
   SelectMenuOption,
   NewPoll,
   Poll,
