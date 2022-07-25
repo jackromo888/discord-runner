@@ -437,7 +437,7 @@ const getInfo = async (
     `info:${serverId}`,
     `${name}:${inviteCode}`,
     "EX",
-    5 * 60
+    20 * 60
   );
 
   logger.verbose(`getInfo result: ${name} ${inviteCode}`);
