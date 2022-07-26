@@ -117,9 +117,7 @@ const getServerInfo = async (guildId: string) => {
   logger.verbose(`listChannels params: ${guildId}`);
   // TODO rethink includeDetails & isAdmin property
   try {
-    logger.verbose(`fetching guild ${guildId}`);
     const guild = await Main.client.guilds.fetch(guildId);
-    logger.verbose(`guild fetched ${guildId}`);
     const { icon: iconId, name: serverName } = guild;
     const serverIcon =
       iconId === null
@@ -157,15 +155,15 @@ const getServerInfo = async (guildId: string) => {
         name: c?.name,
       }));
 
-    logger.verbose(`before getChannelsByCategoryWithRoles ${guild.id}`);
     const categories: any[] = getChannelsByCategoryWithRoles(guild);
-    logger.verbose(`after getChannelsByCategoryWithRoles ${guild.id}`);
 
+    logger.verbose(`before reduce ${guild.id}`);
     const membersWithoutRole = guild.members.cache.reduce(
       (acc, m) =>
         m.roles.highest.id === guild.roles.everyone.id ? acc + 1 : acc,
       0
     );
+    logger.verbose(`after reduce ${guild.id}`);
 
     return {
       serverIcon,
