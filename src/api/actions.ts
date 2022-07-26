@@ -157,13 +157,14 @@ const getServerInfo = async (guildId: string) => {
 
     const categories: any[] = getChannelsByCategoryWithRoles(guild);
 
-    logger.verbose(`before reduce ${guild.id}`);
-    const membersWithoutRole = guild.members.cache.reduce(
-      (acc, m) =>
-        m.roles.highest.id === guild.roles.everyone.id ? acc + 1 : acc,
-      0
-    );
-    logger.verbose(`after reduce ${guild.id}`);
+    // logger.verbose(`before reduce ${guild.id}`);
+    // const membersWithoutRole = guild.members.cache.reduce(
+    //   (acc, m) =>
+    //     m.roles.highest.id === guild.roles.everyone.id ? acc + 1 : acc,
+    //   0
+    // );
+    // logger.verbose(`after reduce ${guild.id}`);
+    const membersWithoutRole = 0;
 
     return {
       serverIcon,
