@@ -244,7 +244,7 @@ const getUserPoap = async (
             }
 
             return new MessageButton({
-              label: `Buy ${poap.fancyId}`.slice(0, 80),
+              label: `Claim ${poap.fancyId}`.slice(0, 80),
               style: "LINK",
               url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
             });
