@@ -279,7 +279,9 @@ const getUserPoap = async (
     return {
       components: [
         new MessageActionRow({
-          components: poapLinks.filter((p) => p?.url).slice(0, 5),
+          components: poapLinks.some((p) => p.label === "Join")
+            ? [poapLinks[0]]
+            : poapLinks.filter((p) => p?.url).slice(0, 5),
         }),
       ],
       content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
