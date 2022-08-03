@@ -264,7 +264,7 @@ const getUserPoap = async (
             // }
 
             return new MessageButton({
-              label: `Claim ${poap.fancyId}`.slice(0, 80),
+              label: `Join ${poap.fancyId}`.slice(0, 80),
               style: "LINK",
               url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
             });
@@ -277,7 +277,7 @@ const getUserPoap = async (
         ? "These are **your** links"
         : "This is **your** link";
 
-    const buttonData = poapLinks.some((p) => p?.url.includes("hash"))
+    const buttonData = poapLinks.some((p) => p?.url.includes("Join"))
       ? {
           components: [poapLinks[0]],
           content: `This is your Join link for this Guild. Before you claim your POAP, you have to join.Do **NOT** share it with anyone!`,
