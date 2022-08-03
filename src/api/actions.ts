@@ -249,10 +249,16 @@ const getUserPoap = async (
                 serverId,
                 userId
               );
-              const joinLinkButton = getLinkButton(
-                "Join",
-                joinResult.inviteLink
-              );
+
+              const questionMarkIndex = joinResult.inviteLink.indexOf("?");
+              const poapInviteLink = `${joinResult.inviteLink.slice(
+                0,
+                questionMarkIndex
+              )}/claim-poap/${poap.fancyId}${joinResult.inviteLink.slice(
+                questionMarkIndex
+              )}`;
+
+              const joinLinkButton = getLinkButton("Join", poapInviteLink);
               return joinLinkButton;
             }
 
