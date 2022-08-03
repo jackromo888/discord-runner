@@ -28,7 +28,7 @@ import {
   denyViewEntryChannelForRole,
   getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
-  getJoinReplyMessage,
+  getLinkButton,
   getUserResult,
   notifyAccessedChannels,
 } from "../utils/utils";
@@ -249,16 +249,10 @@ const getUserPoap = async (
                 serverId,
                 userId
               );
-              const roleIds = joinResult?.roles?.map((r) => r.platformRoleId);
-
-              const server = await Main.client.guilds.fetch(serverId);
-              const joinLinkButton = await getJoinReplyMessage(
-                roleIds,
-                server,
-                userId,
+              const joinLinkButton = getLinkButton(
+                "Join",
                 joinResult.inviteLink
               );
-
               return joinLinkButton;
             }
 
