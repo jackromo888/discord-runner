@@ -276,10 +276,11 @@ const getUserPoap = async (
         ? "These are **your** links"
         : "This is **your** link";
 
+    logger.verbose(`${JSON.stringify(poapLinks)}`);
     return {
       components: [
         new MessageActionRow({
-          components: poapLinks.some((p) => p.label === "Join")
+          components: poapLinks.some((p) => p?.url.includes("hash"))
             ? [poapLinks[0]]
             : poapLinks.filter((p) => p?.url).slice(0, 5),
         }),
