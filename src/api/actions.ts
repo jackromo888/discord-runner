@@ -238,7 +238,7 @@ const getUserPoap = async (
             const errorMessage = getBackendErrorMessage(err);
             logger.warn(`poapClaim - ${userId} ${errorMessage}`);
 
-            const errorTexts = ["claimable", "expired", "left", "join"];
+            const errorTexts = ["claimable", "expired", "left"];
 
             if (errorTexts.some((e) => errorMessage.includes(e))) {
               return null;
@@ -250,6 +250,8 @@ const getUserPoap = async (
                 userId
               );
 
+              logger.verbose(`joinResult - ${JSON.stringify(joinResult)}`);
+
               const questionMarkIndex = joinResult.inviteLink.indexOf("?");
               const poapInviteLink = `${joinResult.inviteLink.slice(
                 0,
@@ -257,6 +259,8 @@ const getUserPoap = async (
               )}/claim-poap/${poap.fancyId}${joinResult.inviteLink.slice(
                 questionMarkIndex
               )}`;
+
+              logger.verbose(`joinResult - ${poapInviteLink}`);
 
               const joinLinkButton = getLinkButton("Join", poapInviteLink);
               return joinLinkButton;
