@@ -28,7 +28,6 @@ import {
   denyViewEntryChannelForRole,
   getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
-  getLinkButton,
   getUserResult,
   notifyAccessedChannels,
 } from "../utils/utils";
@@ -244,25 +243,25 @@ const getUserPoap = async (
               return null;
             }
 
-            if (errorMessage.includes("join")) {
-              const joinResult = await Main.platform.user.join(
-                serverId,
-                userId
-              );
+            // if (errorMessage.includes("join")) {
+            // const joinResult = await Main.platform.user.join(
+            //   serverId,
+            //   userId
+            // );
 
-              logger.verbose(`joinResult - ${JSON.stringify(joinResult)}`);
+            // logger.verbose(`joinResult - ${JSON.stringify(joinResult)}`);
 
-              const questionMarkIndex = joinResult.inviteLink.indexOf("?");
-              const poapInviteLink = `${joinResult.inviteLink.slice(
-                0,
-                questionMarkIndex
-              )}/claim-poap/${poap.fancyId}${joinResult.inviteLink.slice(
-                questionMarkIndex
-              )}`;
+            // const questionMarkIndex = joinResult.inviteLink.indexOf("?");
+            // const poapInviteLink = `${joinResult.inviteLink.slice(
+            //   0,
+            //   questionMarkIndex
+            // )}/claim-poap/${poap.fancyId}${joinResult.inviteLink.slice(
+            //   questionMarkIndex
+            // )}`;
 
-              const joinLinkButton = getLinkButton("Join", poapInviteLink);
-              return joinLinkButton;
-            }
+            // const joinLinkButton = getLinkButton("Join", poapInviteLink);
+            // return joinLinkButton;
+            // }
 
             return new MessageButton({
               label: `Claim ${poap.fancyId}`.slice(0, 80),
