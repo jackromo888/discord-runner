@@ -14,8 +14,6 @@ class Main {
   public static platform: Platform;
 
   public static async start(): Promise<void> {
-    this.client.login(config.discordToken);
-
     api();
 
     // log all axios responses
@@ -43,6 +41,8 @@ class Main {
       // rejectOnRateLimit: ["/"],
       restGlobalRateLimit: 50,
     });
+
+    await this.client.login(config.discordToken);
 
     this.client.on("ready", async () => {
       logger.info(">> Bot started");
