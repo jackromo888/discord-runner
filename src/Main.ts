@@ -42,8 +42,6 @@ class Main {
       restGlobalRateLimit: 50,
     });
 
-    await this.client.login(config.discordToken);
-
     this.client.on("ready", async () => {
       logger.info(">> Bot started");
 
@@ -72,6 +70,8 @@ class Main {
     });
 
     await importx(`${__dirname}/discords/*.{ts,js}`);
+
+    await this.client.login(config.discordToken);
   }
 }
 
