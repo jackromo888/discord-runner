@@ -14,6 +14,8 @@ class Main {
   public static platform: Platform;
 
   public static async start(): Promise<void> {
+    this.client.login(config.discordToken);
+
     api();
 
     // log all axios responses
@@ -70,8 +72,6 @@ class Main {
     });
 
     await importx(`${__dirname}/discords/*.{ts,js}`);
-
-    this.client.login(config.discordToken);
   }
 }
 
