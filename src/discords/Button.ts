@@ -40,7 +40,7 @@ abstract class Buttons {
         });
         return;
       }
-      logger.error(error);
+      logger.error(`join-button - ${error}`);
       await interaction.editReply({
         embeds: [
           new MessageEmbed({

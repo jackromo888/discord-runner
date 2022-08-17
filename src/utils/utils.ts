@@ -302,7 +302,7 @@ const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
       value: `\n${categories[categoryId]
         .map(
           (c) =>
-            `[${privateChannelEmoji}${c.name}](https://discord.com/channels/${guild.id}/${c.id})`
+            `[${privateChannelEmoji}${c?.name}](https://discord.com/channels/${guild.id}/${c.id})`
         )
         .join("\n")}`,
     });
@@ -314,7 +314,7 @@ const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
 const getRoleNames = (guild: Guild, roleIds: string[]) =>
   guild.roles.cache
     .filter((role) => roleIds.some((roleId) => roleId === role.id))
-    .map((role) => role.name);
+    .map((role) => role?.name);
 
 const getNotAccessedRoleIds = (discordRoleIds: string[], roleIds: string[]) =>
   discordRoleIds.filter((roleId) => !roleIds.includes(roleId));
@@ -380,6 +380,10 @@ const getJoinReplyMessage = async (
 
   const guildOfServer = await Main.platform.guild.get(server.id);
   const discordRoleIds = getDiscordRoleIds(guildOfServer, server.id);
+
+  logger.verbose(
+    `getJoinReplyMessage - guildOfServer ${guildOfServer?.name} ${guildOfServer?.urlName}`
+  );
 
   // if not connected to guild
   if (!roleIds && inviteLink) {
