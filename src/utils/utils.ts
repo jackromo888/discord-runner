@@ -426,7 +426,7 @@ const getJoinReplyMessage = async (
 
     const embed = new MessageEmbed({
       title: `Successfully joined guild`,
-      description: description.substring(0, 4096),
+      description: description.substring(0, 1024),
       color: 0x0dff00,
       fields,
     });
