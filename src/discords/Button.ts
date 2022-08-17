@@ -56,6 +56,9 @@ abstract class Buttons {
     try {
       await interaction.editReply(messagePayload);
     } catch (error) {
+      logger.verbose(
+        `join-button interaction EDITREPLY ${JSON.stringify(error)}`
+      );
       logger.verbose(`join-button interaction EDITREPLY ${error.message}`);
     }
   }
