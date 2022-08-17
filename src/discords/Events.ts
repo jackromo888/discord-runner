@@ -28,6 +28,7 @@ import { Vote } from "../api/types";
 import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
 import redisClient from "../database";
+import api from "../api/api";
 
 const messageReactionCommon = async (
   reaction: MessageReaction | PartialMessageReaction,
@@ -135,6 +136,7 @@ const messageReactionCommon = async (
 abstract class Events {
   @On("ready")
   onReady(): void {
+    api();
     logger.info("Bot logged in.");
   }
 

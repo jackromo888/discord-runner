@@ -3,7 +3,6 @@ import { importx } from "@discordx/importer";
 import { Intents, MessageComponentInteraction } from "discord.js";
 import { Client } from "discordx";
 import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
-import api from "./api/api";
 import config from "./config";
 import logger from "./utils/logger";
 import { logAxiosResponse } from "./utils/utils";
@@ -14,8 +13,6 @@ class Main {
   public static platform: Platform;
 
   public static async start(): Promise<void> {
-    api();
-
     // log all axios responses
     axios.interceptors.response.use(logAxiosResponse);
 
