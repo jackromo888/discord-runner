@@ -297,8 +297,12 @@ const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
   const categories = getCategoriesWithChannels(guild, roleIds);
 
   Object.keys(categories).forEach((categoryId) => {
+    const categoryName = getCategoryNameById(guild, categoryId);
     fields.push({
-      name: `${categoryEmoji} ${getCategoryNameById(guild, categoryId)}`,
+      name:
+        categoryName !== ""
+          ? `${categoryEmoji} ${categoryName}`
+          : "Without category",
       value: `\n${categories[categoryId]
         .map(
           (c) =>
