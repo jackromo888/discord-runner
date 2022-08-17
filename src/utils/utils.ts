@@ -407,6 +407,8 @@ const getJoinReplyMessage = async (
 
     const fields = getCategoryFieldValues(server, roleIds);
 
+    logger.verbose(`getJoinReplyMessage - ${fields}`);
+
     const description = `You got ${roleIds.length} out of ${
       discordRoleIds.length
     } role${
@@ -424,7 +426,7 @@ const getJoinReplyMessage = async (
 
     const embed = new MessageEmbed({
       title: `Successfully joined guild`,
-      description,
+      description: description.substring(0, 4096),
       color: 0x0dff00,
       fields,
     });
