@@ -308,7 +308,7 @@ const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
           (c) =>
             `[${privateChannelEmoji}${c?.name}](https://discord.com/channels/${guild.id}/${c.id})`
         )
-        .join("\n")}`,
+        .join("\n")}`.substring(0, 1024),
     });
   });
 
@@ -426,7 +426,7 @@ const getJoinReplyMessage = async (
 
     const embed = new MessageEmbed({
       title: `Successfully joined guild`,
-      description: description.substring(0, 1024),
+      description,
       color: 0x0dff00,
       fields,
     });
