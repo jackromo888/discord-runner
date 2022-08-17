@@ -283,7 +283,7 @@ const getCategoriesWithChannels = (guild: Guild, roleIds: string[]) => {
 const getCategoryNameById = (guild: Guild, categoryId: string) => {
   const channelsByCategoryWithRoles = getChannelsByCategoryWithRoles(guild);
   const category = channelsByCategoryWithRoles.find((c) => c.id === categoryId);
-  return category.name;
+  return category?.name || "";
 };
 
 const getCategoryFieldValues = (guild: Guild, roleIds: string[]) => {
