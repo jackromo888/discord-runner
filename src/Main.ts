@@ -23,6 +23,7 @@ class Main {
     this.platform = new Platform("DISCORD");
 
     this.client = new Client({
+      shardCount: 3,
       intents: [
         Intents.FLAGS.GUILDS,
         Intents.FLAGS.GUILD_MEMBERS,
