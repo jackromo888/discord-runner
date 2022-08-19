@@ -20,6 +20,8 @@ abstract class Buttons {
       return;
     }
 
+    await interaction.deferReply({ ephemeral: true });
+
     let messagePayload: MessageOptions;
     try {
       messagePayload = await join(
