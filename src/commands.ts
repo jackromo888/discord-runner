@@ -107,6 +107,11 @@ const join = async (
   interactionToken: string
 ): Promise<MessageOptions> => {
   const joinResult = await Main.platform.user.join(server.id, userId);
+  logger.debug(
+    `join-trace ${userId} ${server} api call result: ${JSON.stringify(
+      joinResult
+    )}`
+  );
   const roleIds = joinResult?.roles?.map((r) => r.platformRoleId);
 
   const message = await getJoinReplyMessage(
@@ -115,6 +120,7 @@ const join = async (
     userId,
     joinResult.inviteLink
   );
+  logger.debug(`join-trace ${userId} ${server} get reply message`);
 
   if (!roleIds) {
     redisClient.client.set(
@@ -124,6 +130,7 @@ const join = async (
       15 * 60
     );
   }
+  logger.debug(`join-trace ${userId} ${server} set redis token`);
 
   return message;
 };

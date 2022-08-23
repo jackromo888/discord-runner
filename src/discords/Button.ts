@@ -10,6 +10,9 @@ import logger from "../utils/logger";
 abstract class Buttons {
   @ButtonComponent("join-button")
   async button1(interaction: ButtonInteraction) {
+    logger.debug(
+      `join-trace ${interaction.user?.id} ${interaction.guildId} button pressed`
+    );
     try {
       await interaction.reply({
         content: "I'll update your accesses as soon as possible.",
@@ -19,6 +22,9 @@ abstract class Buttons {
       logger.verbose(`join-button interaction reply ${error.message}`);
       return;
     }
+    logger.debug(
+      `join-trace ${interaction.user?.id} ${interaction.guildId} reply sent`
+    );
 
     let messagePayload: MessageOptions;
     try {
@@ -29,6 +35,9 @@ abstract class Buttons {
       );
     } catch (error) {
       if (error.message?.startsWith("Cannot find guild")) {
+        logger.debug(
+          `join-trace ${interaction.user?.id} ${interaction.guildId} cannot find guild`
+        );
         await interaction.editReply({
           embeds: [
             new MessageEmbed({
@@ -52,9 +61,15 @@ abstract class Buttons {
       });
       return;
     }
+    logger.debug(
+      `join-trace ${interaction.user?.id} ${interaction.guildId} join util successful`
+    );
 
     try {
       await interaction.editReply(messagePayload);
+      logger.debug(
+        `join-trace ${interaction.user?.id} ${interaction.guildId} edited reply`
+      );
     } catch (error) {
       logger.verbose(
         `join-button interaction EDITREPLY ${JSON.stringify(error)}`
