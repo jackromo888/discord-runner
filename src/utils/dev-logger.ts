@@ -12,7 +12,7 @@ const createDevLogger = () => {
       }`
   );
   return createLogger({
-    level: "verbose",
+    level: "debug",
     format: combine(
       colorize(),
       timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
