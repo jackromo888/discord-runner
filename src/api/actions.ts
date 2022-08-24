@@ -33,6 +33,7 @@ import {
 } from "../utils/utils";
 import config from "../config";
 import { createPollText } from "./polls";
+import { manageRoleLimiter, sendMessageLimiter } from "../utils/limiters";
 
 const isMember = async (
   guildId: string,
@@ -332,7 +333,9 @@ const sendDiscordButton = async (
     meta?.isJoinButton
   );
 
-  const message = await channel.send(payload);
+  const message = await sendMessageLimiter.schedule(() =>
+    channel.send(payload)
+  );
   await message.react(config.joinButtonEmojis.emoji1);
   await message.react(config.joinButtonEmojis.emoji2);
 
@@ -353,7 +356,9 @@ const manageMigratedActions = async (
   await Promise.all(
     upgradeableUserIds.map(async (id) => {
       const member = await guild.members.fetch(id);
-      await member.roles.add(roleId);
+      await manageRoleLimiter.schedule({ priority: 9 }, async () =>
+        member.roles.add(roleId)
+      );
       await notifyAccessedChannels(member, roleId, message, role.name);
     })
   );
@@ -367,13 +372,17 @@ const manageMigratedActions = async (
   await Promise.all(
     membersToTakeRoleFrom.map(async (m) => {
       if (!upgradeableUserIds.includes(m.id)) {
-        await m.roles.remove(roleId);
+        await manageRoleLimiter.schedule({ priority: 9 }, async () =>
+          m.roles.remove(roleId)
+        );
         const embed = new MessageEmbed({
           title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
           color: `#${config.embedColor.default}`,
         });
         try {
-          await m.send({ embeds: [embed] });
+          await sendMessageLimiter.schedule({ priority: 9 }, () =>
+            m.send({ embeds: [embed] })
+          );
         } catch (error) {
           if (error?.code === 50007) {
             logger.verbose(
@@ -452,7 +461,9 @@ const sendPollMessage = async (
     description: await createPollText(poll),
   });
 
-  const msg = await channel.send({ embeds: [embed] });
+  const msg = await sendMessageLimiter.schedule(() =>
+    channel.send({ embeds: [embed] })
+  );
 
   poll.reactions.map(async (emoji) => await (msg as Message).react(emoji));
 

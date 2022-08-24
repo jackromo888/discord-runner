@@ -4,6 +4,7 @@ import { ButtonComponent, Discord } from "discordx";
 import { getUserPoap } from "../api/actions";
 import { join } from "../commands";
 import config from "../config";
+import { sendMessageLimiter } from "../utils/limiters";
 import logger from "../utils/logger";
 
 @Discord()
@@ -14,10 +15,12 @@ abstract class Buttons {
       `join-trace ${interaction.user?.id} ${interaction.guildId} button pressed`
     );
     try {
-      await interaction.reply({
-        content: "I'll update your accesses as soon as possible.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "I'll update your accesses as soon as possible.",
+          ephemeral: true,
+        })
+      );
     } catch (error) {
       logger.verbose(`join-button interaction reply ${error.message}`);
       return;
@@ -81,10 +84,12 @@ abstract class Buttons {
   @ButtonComponent("poap-claim-button")
   async claimButton(interaction: ButtonInteraction) {
     try {
-      await interaction.reply({
-        content: "I'll send the link for your POAP right now.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "I'll send the link for your POAP right now.",
+          ephemeral: true,
+        })
+      );
     } catch (error) {
       logger.verbose(`poap-claim-button interaction reply ${error.message}`);
     }

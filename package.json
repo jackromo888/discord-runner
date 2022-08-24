@@ -22,6 +22,7 @@
     "@discordx/utilities": "^4.2.4",
     "@guildxyz/sdk": "github:agoraxyz/guild-sdk#next",
     "axios": "^0.26.1",
+    "bottleneck": "^2.19.5",
     "dayjs": "^1.11.1",
     "discord.js": "^13.6.0",
     "discordx": "^9.5.2",

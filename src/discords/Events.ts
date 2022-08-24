@@ -29,6 +29,7 @@ import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
 import redisClient from "../database";
 import api from "../api/api";
+import { sendMessageLimiter } from "../utils/limiters";
 
 const messageReactionCommon = async (
   reaction: MessageReaction | PartialMessageReaction,
@@ -173,7 +174,11 @@ abstract class Events {
           pollStorage.savePollQuestion(userId, msgText);
           pollStorage.setUserStep(userId, 2);
 
-          message.channel.send("Please give me the first option of your poll.");
+          await sendMessageLimiter.schedule(() =>
+            message.channel.send(
+              "Please give me the first option of your poll."
+            )
+          );
 
           break;
         }
@@ -274,7 +279,9 @@ abstract class Events {
               description: await createPollText(poll),
             });
 
-            const msg = await message.channel.send({ embeds: [embed] });
+            const msg = await sendMessageLimiter.schedule(() =>
+              message.channel.send({ embeds: [embed] })
+            );
 
             reactions.map(async (emoji) => await msg.react(emoji));
 
@@ -302,7 +309,9 @@ abstract class Events {
           "You can find more information on [docs.guild.xyz](https://docs.guild.xyz/).",
       });
 
-      message.channel.send({ embeds: [embed] }).catch(logger.error);
+      sendMessageLimiter.schedule(() =>
+        message.channel.send({ embeds: [embed] }).catch(logger.error)
+      );
 
       logger.verbose(
         `unkown request: ${message.author.username}#${message.author.discriminator}: ${message.content}`

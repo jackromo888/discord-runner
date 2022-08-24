@@ -13,6 +13,7 @@ import logger from "../utils/logger";
 import { createInteractionPayload } from "../utils/utils";
 import config from "../config";
 import Main from "../Main";
+import { sendMessageLimiter } from "../utils/limiters";
 
 @Discord()
 abstract class Slashes {
@@ -36,10 +37,12 @@ abstract class Slashes {
       `/status command was used by ${interaction.user.username}#${interaction.user.discriminator} userId: ${interaction.user.id}`
     );
 
-    await interaction.reply({
-      content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
-      ephemeral: true,
-    });
+    await sendMessageLimiter.schedule(() =>
+      interaction.reply({
+        content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
+        ephemeral: true,
+      })
+    );
 
     const editOptions = await status(interaction.guild.id, interaction.user);
 
@@ -53,8 +56,10 @@ abstract class Slashes {
   async join(interaction: CommandInteraction) {
     try {
       if (interaction.channel.type === "DM") {
-        interaction.reply(
-          "❌ Use this command in a server to join all of its guilds you have access to!"
+        await sendMessageLimiter.schedule(() =>
+          interaction.reply(
+            "❌ Use this command in a server to join all of its guilds you have access to!"
+          )
         );
         return;
       }
@@ -63,10 +68,12 @@ abstract class Slashes {
         `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
       );
 
-      await interaction.reply({
-        content: "I'll update your accesses as soon as possible.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "I'll update your accesses as soon as possible.",
+          ephemeral: true,
+        })
+      );
 
       let messagePayload: MessageOptions;
       try {
@@ -133,7 +140,11 @@ abstract class Slashes {
     interaction: CommandInteraction
   ) {
     if (interaction.channel.type === "DM") {
-      interaction.reply("Use this command in a server to spawn a join button!");
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply(
+          "Use this command in a server to spawn a join button!"
+        )
+      );
       return;
     }
 
@@ -142,10 +153,12 @@ abstract class Slashes {
         Permissions.FLAGS.ADMINISTRATOR
       )
     ) {
-      interaction.reply({
-        content: "❌ Only server admins can use this command.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "❌ Only server admins can use this command.",
+          ephemeral: true,
+        })
+      );
       return;
     }
 
@@ -156,10 +169,12 @@ abstract class Slashes {
       // ignored
     }
     if (!guild) {
-      await interaction.reply({
-        content: "❌ There are no guilds in this server.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "❌ There are no guilds in this server.",
+          ephemeral: true,
+        })
+      );
       return;
     }
 
@@ -171,15 +186,19 @@ abstract class Slashes {
     );
 
     try {
-      const message = await interaction.channel.send(payload);
+      const message = await sendMessageLimiter.schedule(() =>
+        interaction.channel.send(payload)
+      );
 
       await message.react(config.joinButtonEmojis.emoji1);
       await message.react(config.joinButtonEmojis.emoji2);
 
-      await interaction.reply({
-        content: "✅ Join button created successfully.",
-        ephemeral: true,
-      });
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: "✅ Join button created successfully.",
+          ephemeral: true,
+        })
+      );
     } catch (err: any) {
       logger.error(`join-button error -  ${err.message}`);
     }

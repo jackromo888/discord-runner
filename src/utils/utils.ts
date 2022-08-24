@@ -19,6 +19,7 @@ import {
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import Main from "../Main";
+import { sendMessageLimiter } from "./limiters";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -577,7 +578,9 @@ const notifyAccessedChannels = async (
     );
   });
 
-  member.send({ embeds: [embed] }).catch(logger.error);
+  await sendMessageLimiter.schedule(() =>
+    member.send({ embeds: [embed] }).catch()
+  );
 };
 
 const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
