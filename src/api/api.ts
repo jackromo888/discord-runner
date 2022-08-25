@@ -7,7 +7,7 @@ const createApi = () => {
   const api = express();
   api.disable("x-powered-by");
 
-  api.use(express.json());
+  api.use(express.json({ limit: "6mb" }));
   api.use(config.api.prefix, router());
 
   api.listen(config.api.port, () =>
