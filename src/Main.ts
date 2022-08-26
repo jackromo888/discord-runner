@@ -33,6 +33,7 @@ class Main {
         Intents.FLAGS.GUILD_PRESENCES,
         Intents.FLAGS.DIRECT_MESSAGES,
         Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+        Intents.FLAGS.GUILD_VOICE_STATES,
       ],
       partials: ["MESSAGE", "CHANNEL", "REACTION"],
       retryLimit: 3,
@@ -64,7 +65,11 @@ class Main {
       ) {
         return;
       }
-      this.client.executeInteraction(interaction);
+      try {
+        this.client.executeInteraction(interaction);
+      } catch (error) {
+        logger.error(error);
+      }
     });
 
     await importx(`${__dirname}/discords/*.{ts,js}`);
