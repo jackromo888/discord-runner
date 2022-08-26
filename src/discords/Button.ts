@@ -11,15 +11,14 @@ import logger from "../utils/logger";
 abstract class Buttons {
   @ButtonComponent("join-button")
   async button1(interaction: ButtonInteraction) {
-    await interaction.deferReply({ ephemeral: true });
-
     logger.debug(
       `join-trace ${interaction.user?.id} ${interaction.guildId} button pressed`
     );
     try {
       await sendMessageLimiter.schedule(() =>
-        interaction.editReply({
+        interaction.reply({
           content: "I'll update your accesses as soon as possible.",
+          ephemeral: true,
         })
       );
     } catch (error) {
