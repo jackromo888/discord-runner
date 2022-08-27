@@ -37,19 +37,29 @@ abstract class Slashes {
       `/status command was used by ${interaction.user.username}#${interaction.user.discriminator} userId: ${interaction.user.id}`
     );
 
-    await sendMessageLimiter.schedule(() =>
-      interaction.reply({
-        content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
-        ephemeral: true,
-      })
-    );
+    try {
+      await sendMessageLimiter.schedule(() =>
+        interaction.reply({
+          content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
+          ephemeral: true,
+        })
+      );
 
-    const editOptions = await status(interaction.guild.id, interaction.user);
+      const editOptions = await status(interaction.guild.id, interaction.user);
 
-    await interaction.editReply({
-      content: null,
-      ...editOptions,
-    });
+      await sendMessageLimiter.schedule(() =>
+        interaction.editReply({
+          content: null,
+          ...editOptions,
+        })
+      );
+    } catch (error) {
+      logger.verbose(
+        `status command failed ${interaction.user.id} ${
+          error.message
+        } ${JSON.stringify(error)}`
+      );
+    }
   }
 
   @Slash("join", { description: "Join the guild of this server." })
