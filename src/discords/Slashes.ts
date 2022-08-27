@@ -149,53 +149,53 @@ abstract class Slashes {
     buttonText: string,
     interaction: CommandInteraction
   ) {
-    if (interaction.channel.type === "DM") {
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply(
-          "Use this command in a server to spawn a join button!"
+    try {
+      if (interaction.channel.type === "DM") {
+        await sendMessageLimiter.schedule(() =>
+          interaction.reply(
+            "Use this command in a server to spawn a join button!"
+          )
+        );
+        return;
+      }
+
+      if (
+        !(interaction.member as GuildMember).permissions.has(
+          Permissions.FLAGS.ADMINISTRATOR
         )
+      ) {
+        await sendMessageLimiter.schedule(() =>
+          interaction.reply({
+            content: "❌ Only server admins can use this command.",
+            ephemeral: true,
+          })
+        );
+        return;
+      }
+
+      let guild: GetGuildResponse;
+      try {
+        guild = await Main.platform.guild.get(interaction.guild.id);
+      } catch (error) {
+        // ignored
+      }
+      if (!guild) {
+        await sendMessageLimiter.schedule(() =>
+          interaction.reply({
+            content: "❌ There are no guilds in this server.",
+            ephemeral: true,
+          })
+        );
+        return;
+      }
+
+      const payload = createInteractionPayload(
+        guild,
+        title,
+        messageText,
+        buttonText
       );
-      return;
-    }
 
-    if (
-      !(interaction.member as GuildMember).permissions.has(
-        Permissions.FLAGS.ADMINISTRATOR
-      )
-    ) {
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: "❌ Only server admins can use this command.",
-          ephemeral: true,
-        })
-      );
-      return;
-    }
-
-    let guild: GetGuildResponse;
-    try {
-      guild = await Main.platform.guild.get(interaction.guild.id);
-    } catch (error) {
-      // ignored
-    }
-    if (!guild) {
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: "❌ There are no guilds in this server.",
-          ephemeral: true,
-        })
-      );
-      return;
-    }
-
-    const payload = createInteractionPayload(
-      guild,
-      title,
-      messageText,
-      buttonText
-    );
-
-    try {
       const message = await sendMessageLimiter.schedule(() =>
         interaction.channel.send(payload)
       );
