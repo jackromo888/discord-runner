@@ -140,13 +140,20 @@ const createInteractionPayload = (
     emoji: "🔗",
     style: "PRIMARY",
   });
+  const guildPage = new MessageButton({
+    label: "Can't join",
+    url: `https://guild.xyz/${guild.urlName}`,
+    style: "LINK",
+  });
   const guideButton = new MessageButton({
     label: "Guide",
     url: buttonData.guideUrl,
     style: "LINK",
   });
   const row = new MessageActionRow({
-    components: [buttonBase, guideButton],
+    components: isJoinButton
+      ? [buttonBase, guildPage, guideButton]
+      : [buttonBase, guideButton],
   });
 
   return {
