@@ -4,7 +4,6 @@ import { ButtonComponent, Discord } from "discordx";
 import { getUserPoap } from "../api/actions";
 import { join } from "../commands";
 import config from "../config";
-import { sendMessageLimiter } from "../utils/limiters";
 import logger from "../utils/logger";
 
 @Discord()
@@ -82,12 +81,10 @@ abstract class Buttons {
   @ButtonComponent("poap-claim-button")
   async claimButton(interaction: ButtonInteraction) {
     try {
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: "I'll send the link for your POAP right now.",
-          ephemeral: true,
-        })
-      );
+      await interaction.reply({
+        content: "I'll send the link for your POAP right now.",
+        ephemeral: true,
+      });
     } catch (error) {
       logger.verbose(`poap-claim-button interaction reply ${error.message}`);
     }
@@ -102,6 +99,16 @@ abstract class Buttons {
     } catch (error) {
       logger.verbose(
         `poap-claim-button interaction EDITREPLY ${error.message}`
+      );
+    }
+  }
+
+  @ButtonComponent("start-voice-poap")
+  async startVoicePoap(interaction: ButtonInteraction) {
+    try {
+    } catch (error) {
+      logger.error(
+        `start-voice-poap error ${error.message} ${JSON.stringify(error)}`
       );
     }
   }
