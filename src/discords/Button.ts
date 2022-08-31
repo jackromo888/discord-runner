@@ -102,16 +102,6 @@ abstract class Buttons {
       );
     }
   }
-
-  @ButtonComponent("start-voice-poap")
-  async startVoicePoap(interaction: ButtonInteraction) {
-    try {
-    } catch (error) {
-      logger.error(
-        `start-voice-poap error ${error.message} ${JSON.stringify(error)}`
-      );
-    }
-  }
 }
 
 export default Buttons;
