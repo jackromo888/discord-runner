@@ -14,6 +14,7 @@ import {
   RateLimitData,
   Role,
   User,
+  VoiceState,
 } from "discord.js";
 import { Discord, Guard, On } from "discordx";
 import dayjs from "dayjs";
@@ -27,9 +28,10 @@ import config from "../config";
 import { Vote } from "../api/types";
 import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
-import redisClient from "../database";
 import api from "../api/api";
 import { sendMessageLimiter } from "../utils/limiters";
+import { redisClient } from "../database";
+import { handleUserStateDuringVoiceEvent } from "../utils/voiceUtils";
 
 const messageReactionCommon = async (
   reaction: MessageReaction | PartialMessageReaction,
@@ -358,6 +360,18 @@ abstract class Events {
       )?.platformGuildData?.isGuarded
     ) {
       await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
+    }
+  }
+
+  @On("voiceStateUpdate")
+  async onVoiceStateUpdate([oldState, newState]: [
+    VoiceState,
+    VoiceState
+  ]): Promise<any> {
+    try {
+      await handleUserStateDuringVoiceEvent(oldState, newState);
+    } catch (error) {
+      logger.error(`Couldn't handle voiceStatusUpdate event ${error.message}`);
     }
   }
 }

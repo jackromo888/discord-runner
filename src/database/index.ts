@@ -1,6 +1,7 @@
 import redis from "redis";
 import config from "../config";
 import logger from "../utils/logger";
+import CouchDbClient from "./CouchDbClient";
 import RedisClient from "./RedisClient";
 
 const client = redis.createClient({ url: config.redisHost });
@@ -16,4 +17,6 @@ client.on("error", (err) => {
 
 const redisClient = new RedisClient(client);
 
-export default redisClient;
+const couchDbClient = new CouchDbClient();
+
+export { redisClient, couchDbClient };

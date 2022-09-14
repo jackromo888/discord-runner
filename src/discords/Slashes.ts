@@ -14,6 +14,7 @@ import { createInteractionPayload } from "../utils/utils";
 import config from "../config";
 import Main from "../Main";
 import { sendMessageLimiter } from "../utils/limiters";
+import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 
 @Discord()
 abstract class Slashes {
@@ -78,12 +79,7 @@ abstract class Slashes {
         `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
       );
 
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: "I'll update your accesses as soon as possible.",
-          ephemeral: true,
-        })
-      );
+      await interaction.deferReply();
 
       let messagePayload: MessageOptions;
       try {
@@ -214,247 +210,75 @@ abstract class Slashes {
     }
   }
 
-  // @Slash("poll", { description: "Creates a poll." })
-  // async poll(interaction: CommandInteraction) {
-  //   try {
-  //     if (interaction.channel.type !== "DM" && !interaction.user.bot) {
-  //       const userId = interaction.user.id;
+  @Slash("start-voice-event", {
+    description: "Starting a Voice Event on your server in the given channel.",
+  })
+  async startVoiceEvent(
+    @SlashOption("poapid", {
+      required: true,
+      description: "The POAP Identifier for the Voice Event.",
+    })
+    poapId: number,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    logger.verbose(
+      `/start-voice-event was used by ${interaction.user.username}#${interaction.user.discriminator} userId: ${interaction.user.id}`
+    );
 
-  //       if (pollStorage.getPoll(userId)) {
-  //         interaction.reply({
-  //           content:
-  //             "You already have an ongoing poll creation process.\n" +
-  //             "You can cancel it using **/cancel**.",
-  //           ephemeral: true,
-  //         });
+    try {
+      await interaction.deferReply({
+        ephemeral: true,
+      });
 
-  //         return;
-  //       }
+      const guild = await Main.platform.guild.get(interaction.guildId);
+      await startVoiceEvent(guild.id, poapId);
 
-  //       const { channel } = interaction;
-  //       const dcGuildId = channel.guildId;
+      await interaction.editReply({
+        content: `The Voice Event has successfully started for POAP ${poapId}.`,
+      });
+    } catch (error) {
+      logger.verbose(
+        `start-voice-event command failed ${interaction.user.id} ${
+          error.message
+        } ${JSON.stringify(error)}`
+      );
+    }
+  }
 
-  //       const isAdminRes = await axios.get(
-  //         `${config.backendUrl}/guild/isAdmin/${dcGuildId}/${userId}`
-  //       );
+  @Slash("stop-voice-event", {
+    description: "Stopping a Voice Event on your server in the given channel.",
+  })
+  async stopVoiceEvent(
+    @SlashOption("poapid", {
+      required: true,
+      description: "The POAP Identifier for the Voice Event.",
+    })
+    poapId: number,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    logger.verbose(
+      `/stop-voice-event was used by ${interaction.user.username}#${interaction.user.discriminator} userId: ${interaction.user.id}`
+    );
 
-  //       if (isAdminRes?.data) {
-  //         const guildIdRes = await axios.get(
-  //           `${config.backendUrl}/guild/platformId/${dcGuildId}`
-  //         );
+    try {
+      await interaction.deferReply({
+        ephemeral: true,
+      });
 
-  //         const guildId = guildIdRes.data.id;
+      const guild = await Main.platform.guild.get(interaction.guildId);
+      await stopVoiceEvent(guild.id, poapId);
 
-  //         const guildRes = await axios.get(
-  //           `${config.backendUrl}/guild/${guildId}`
-  //         );
-
-  //         const guild = guildRes?.data;
-
-  //         if (!guild) {
-  //           interaction.reply({
-  //             content: "Something went wrong. Please try again or contact us.",
-  //             ephemeral: true,
-  //           });
-
-  //           return;
-  //         }
-
-  //         const tokens = guild.roles.flatMap((role) =>
-  //           role.requirements
-  //             .filter((requirement) => requirement.type === "ERC20")
-  //             .map((req) => ({
-  //               label: req.symbol,
-  //               description: `${req.name} on ${req.chain}`,
-  //               value: `${req.id}`,
-  //             }))
-  //         );
-
-  //         if (tokens.length === 0) {
-  //           interaction.reply({
-  //             content:
-  //               "Your guild has no role with appropriate requirements.\n" +
-  //               "Weighted polls only support ERC20.",
-  //             ephemeral: true,
-  //           });
-
-  //           return;
-  //         }
-
-  //         pollStorage.initPoll(userId, channel.id);
-  //         pollStorage.saveRequirements(userId, tokens);
-
-  //         const row = new MessageActionRow().addComponents(
-  //           new MessageSelectMenu()
-  //             .setCustomId("token-menu")
-  //             .setPlaceholder("No token selected")
-  //             .addOptions(tokens)
-  //         );
-
-  //         await interaction.user.send({
-  //           content:
-  //             "You are creating a token-weighted emoji-based poll in the " +
-  //             `channel "${channel.name}" of the guild "${guild.name}".\n\n` +
-  //             "You can use **/reset** or **/cancel** to restart or stop the process at any time.\n" +
-  //             "Don't worry, I will guide you through the whole process.\n\n" +
-  //             "First, please choose a token as the base of the weighted poll.",
-  //           components: [row],
-  //         });
-
-  //         interaction.reply({
-  //           content: "Check your DM's",
-  //           ephemeral: true,
-  //         });
-  //       } else {
-  //         interaction.reply({
-  //           content: "Seems like you are not a guild admin.",
-  //           ephemeral: true,
-  //         });
-  //       }
-  //     } else {
-  //       interaction.reply({
-  //         content:
-  //           "You have to use this command in the channel " +
-  //           "you want the poll to appear.",
-  //       });
-  //     }
-  //   } catch (err) {
-  //     interaction.reply({
-  //       content:
-  //         "Failed to start poll creation process. Please try again or contact us.",
-  //       ephemeral: true,
-  //     });
-
-  //     logger.error(err);
-  //   }
-  // }
-
-  // @Slash("enough", { description: "Skips adding poll options." })
-  // async enough(interaction: CommandInteraction) {
-  //   if (interaction.channel.type === "DM") {
-  //     const userId = interaction.user.id;
-  //     const poll = pollStorage.getPoll(userId);
-
-  //     if (
-  //       pollStorage.getUserStep(userId) === 2 &&
-  //       poll.options.length === poll.reactions.length &&
-  //       poll.options.length >= 2
-  //     ) {
-  //       pollStorage.setUserStep(userId, 3);
-
-  //       interaction.reply(
-  //         "Please give me the duration of the poll in the DD:HH:mm format (days:hours:minutes)"
-  //       );
-  //     } else {
-  //       interaction.reply("You didn't finish the previous steps.");
-  //     }
-  //   } else {
-  //     interaction.reply({
-  //       content: "You have to use this command in DM.",
-  //       ephemeral: true,
-  //     });
-  //   }
-  // }
-
-  // @Slash("done", { description: "Finalizes a poll." })
-  // async done(interaction: CommandInteraction) {
-  //   try {
-  //     if (await pollBuildResponse(interaction)) {
-  //       return;
-  //     }
-
-  //     const userId = interaction.user.id;
-
-  //     const poll = pollStorage.getPoll(userId);
-
-  //     if (poll && pollStorage.getUserStep(userId) === 4) {
-  //       if (await createPoll(poll)) {
-  //         interaction.reply({
-  //           content: "The poll has been created.",
-  //           ephemeral: interaction.channel.type !== "DM",
-  //         });
-
-  //         pollStorage.deleteMemory(userId);
-  //       } else {
-  //         interaction.reply({
-  //           content: "There was an error while creating the poll.",
-  //           ephemeral: interaction.channel.type !== "DM",
-  //         });
-  //       }
-  //     } else {
-  //       interaction.reply({
-  //         content:
-  //           "Poll creation procedure is not finished, you must continue.",
-  //         ephemeral: interaction.channel.type !== "DM",
-  //       });
-  //     }
-  //   } catch (err) {
-  //     interaction.reply({
-  //       content: "There was an error while creating the poll.",
-  //       ephemeral: interaction.channel.type !== "DM",
-  //     });
-
-  //     logger.error(err);
-  //   }
-  // }
-
-  // @Slash("reset", { description: "Restarts poll creation." })
-  // async reset(interaction: CommandInteraction) {
-  //   try {
-  //     const userId = interaction.user.id;
-
-  //     if (pollStorage.getUserStep(userId) > 0) {
-  //       const { channelId, requirements, roles } = pollStorage.getPoll(userId);
-
-  //       pollStorage.deleteMemory(userId);
-  //       pollStorage.initPoll(userId, channelId);
-  //       pollStorage.saveRequirements(userId, requirements);
-
-  //       await interaction.reply({
-  //         content: "The current poll creation procedure has been restarted.",
-  //         ephemeral: interaction.channel.type !== "DM",
-  //       });
-
-  //       const row = new MessageActionRow().addComponents(
-  //         new MessageSelectMenu()
-  //           .setCustomId("role-menu")
-  //           .setPlaceholder("No role selected")
-  //           .addOptions(roles)
-  //       );
-
-  //       await interaction.user.send({
-  //         content: "Please choose a role",
-  //         components: [row],
-  //       });
-  //     } else {
-  //       interaction.reply({
-  //         content: "You have no active poll creation process.",
-  //         ephemeral: interaction.channel.type !== "DM",
-  //       });
-  //     }
-  //   } catch (err) {
-  //     logger.error(err);
-  //   }
-  // }
-
-  // @Slash("cancel", { description: "Cancels poll creation." })
-  // async cancel(interaction: CommandInteraction) {
-  //   const userId = interaction.user.id;
-
-  //   if (pollStorage.getUserStep(userId) > 0) {
-  //     pollStorage.deleteMemory(userId);
-
-  //     interaction.reply({
-  //       content: "The current poll creation process has been cancelled.",
-  //       ephemeral: interaction.channel.type !== "DM",
-  //     });
-  //   } else {
-  //     interaction.reply({
-  //       content: "You have no active poll creation process.",
-  //       ephemeral: interaction.channel.type !== "DM",
-  //     });
-  //   }
-  // }
+      await interaction.editReply({
+        content: `The Voice Event has successfully stopped for POAP ${poapId}.`,
+      });
+    } catch (error) {
+      logger.verbose(
+        `stop-voice-event command failed ${interaction.user.id} ${
+          error.message
+        } ${JSON.stringify(error)}`
+      );
+    }
+  }
 }
 
 export default Slashes;

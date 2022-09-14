@@ -9,8 +9,6 @@ const envFound = dotenv.config();
 const nodeEnv = process.env.NODE_ENV || "development";
 
 const redisHost = process.env.REDIS_HOST;
-const hmacAlgorithm = process.env.HMAC_ALGORITHM || "sha256";
-const hmacSecret = process.env.HMAC_SECRET;
 const discordToken = process.env.DISCORD_TOKEN;
 const backendUrl = process.env.BACKEND_URL;
 const api = {
@@ -28,6 +26,8 @@ const joinButtonEmojis = {
   emoji2: process.env.JOIN_BUTTON_EMOJI2 || "🤍",
 };
 
+const couchDbUrl = process.env.COUCH_URL;
+
 if (!discordToken) {
   throw new Error(
     "You need to specify the bot's DISCORD_TOKEN in the .env file."
@@ -42,15 +42,13 @@ if (!redisHost) {
   throw new Error("You need to specify the REDIS_HOST in the .env file.");
 }
 
-if (!hmacSecret) {
-  throw new Error("You need to specify the HMAC_SECRET in the .env file.");
+if (!couchDbUrl) {
+  throw new Error("You need to specify the COUCH_URL in the .env file.");
 }
 
 export default {
   nodeEnv,
   redisHost,
-  hmacAlgorithm,
-  hmacSecret,
   discordToken,
   backendUrl,
   api,
@@ -58,4 +56,5 @@ export default {
   embedColor,
   guildUrl,
   joinButtonEmojis,
+  couchDbUrl,
 };

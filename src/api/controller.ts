@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import logger from "../utils/logger";
 import { getErrorResult, updateAccessedChannelsOfRole } from "../utils/utils";
+import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 import {
   createChannel,
   createRole,
@@ -17,6 +18,7 @@ import {
   getMembersByRoleId,
   sendPollMessage,
   sendDiscordButton,
+  getVoiceChannelList,
 } from "./actions";
 import {
   fetchUserByAccessToken,
@@ -120,6 +122,38 @@ const controller = {
       res
         .status(200)
         .json({ name, invite: `https://discord.gg/${inviteCode}` });
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  handleVoiceEvent: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const {
+        guildId,
+        poapId,
+        action,
+        timestamp,
+      }: {
+        guildId: number;
+        poapId: number;
+        action: string;
+        timestamp: number;
+      } = req.body;
+      if (action === "START") {
+        const result = await startVoiceEvent(guildId, poapId, timestamp);
+        res.status(200).json(result);
+      } else {
+        const result = await stopVoiceEvent(guildId, poapId, timestamp);
+        res.status(200).json(result);
+      }
     } catch (error) {
       const errorMsg = getErrorResult(error);
       res.status(400).json(errorMsg);
@@ -462,6 +496,24 @@ const controller = {
     try {
       const guildId = req?.params?.guildId;
       const result = await getChannelList(guildId);
+
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(400).json(getErrorResult(err));
+    }
+  },
+
+  getVoiceChannels: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    try {
+      const guildId = req?.params?.guildId;
+      const result = await getVoiceChannelList(guildId);
 
       res.status(200).json(result);
     } catch (err) {

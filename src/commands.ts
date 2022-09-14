@@ -8,7 +8,7 @@ import {
   WebhookEditMessageOptions,
 } from "discord.js";
 import config from "./config";
-import redisClient from "./database";
+import { redisClient } from "./database";
 import Main from "./Main";
 import logger from "./utils/logger";
 import { getJoinReplyMessage, getLinkButton } from "./utils/utils";

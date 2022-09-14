@@ -494,6 +494,20 @@ const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
     }));
 };
 
+const getVoiceChannelList = async (guildId: string): Promise<ChannelObj[]> => {
+  const guild = await Main.client.guilds.fetch(guildId);
+  const channels = await guild.channels.fetch();
+
+  return channels
+    .filter((channel) =>
+      channel.type.includes("GUILD_VOICE" || "GUILD_STAGE_VOICE")
+    )
+    .map((channel) => ({
+      name: channel.name,
+      id: channel.id,
+    }));
+};
+
 export {
   getMembersByRoleId,
   manageMigratedActions,
@@ -509,6 +523,7 @@ export {
   sendPollMessage,
   getEmoteList,
   getChannelList,
+  getVoiceChannelList,
   resetGuildGuard,
   getUserPoap,
 };

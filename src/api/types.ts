@@ -180,6 +180,39 @@ type ResolveUserResopnse = {
   };
 };
 
+type VoiceEvents = {
+  isActive: boolean;
+  startedAt?: number;
+  endedAt?: number;
+  voiceChannelId: string;
+  poapId: number;
+};
+
+type VoiceParticipation = {
+  discordId: string;
+  discordTag: string;
+  joinedAt: number;
+  participated: number;
+  poapId: number;
+};
+
+type VoiceRequirement =
+  | {
+      percent: number;
+      minute?: never;
+    }
+  | {
+      percent?: never;
+      minute: number;
+    };
+
+type PoapResponse = {
+  poapIdentifier: number;
+  voiceChannelId: string;
+  voiceRequirement: VoiceRequirement;
+  discordServerId: string;
+};
+
 export {
   ButtonMetaData,
   CreateChannelParams,
@@ -203,4 +236,7 @@ export {
   RoleEventParams,
   RoleEventResponse,
   ResolveUserResopnse,
+  VoiceEvents,
+  VoiceParticipation,
+  PoapResponse,
 };

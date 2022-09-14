@@ -130,6 +130,21 @@ const createRouter = () => {
     controller.getChannels
   );
 
+  router.get(
+    "/voiceChannels/:guildId",
+    validators.paramDiscordId("guildId"),
+    controller.getVoiceChannels
+  );
+
+  router.post(
+    "/handleVoiceEvent",
+    validators.bodyIdValidator("guildId"),
+    validators.bodyIdValidator("poapId"),
+    validators.bodyStringValidator("action"),
+    validators.bodyIdValidator("timestamp"),
+    controller.handleVoiceEvent
+  );
+
   return router;
 };
 

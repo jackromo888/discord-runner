@@ -2,7 +2,7 @@ import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
 import { GuildMember, MessageEmbed, Permissions, Role } from "discord.js";
 import config from "../config";
-import redisClient from "../database";
+import { redisClient } from "../database";
 import Main from "../Main";
 import { manageRoleLimiter, sendMessageLimiter } from "../utils/limiters";
 import logger from "../utils/logger";
