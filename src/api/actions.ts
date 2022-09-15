@@ -274,7 +274,7 @@ const getUserPoap = async (
 
     logger.verbose(`poapLinks - ${JSON.stringify(poapLinks)}`);
 
-    const buttonData = poapLinks.some((p) => p?.label.includes("Join"))
+    const buttonData = poapLinks.some((p) => p?.label?.includes("Join"))
       ? {
           content: `This is your Join link for this Guild. Before you claim your POAP, you have to join.Do **NOT** share it with anyone!`,
         }
