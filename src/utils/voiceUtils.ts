@@ -129,27 +129,33 @@ const updateUserVoiceParticipation = async (
         couchResult;
 
       if (isUserJoined) {
-        await couchDbClient.voiceParticipation.insert({
-          _id: `${userDiscordId}:${poapId}`,
-          // eslint-disable-next-line no-underscore-dangle
-          _rev,
-          discordId,
-          discordTag,
-          joinedAt: dayjs().unix(),
-          participated,
-          poapId,
-        });
+        for (let i = 0; i < 100; i + 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await couchDbClient.voiceParticipation.insert({
+            _id: `${userDiscordId}:${poapId}`,
+            // eslint-disable-next-line no-underscore-dangle
+            _rev,
+            discordId,
+            discordTag,
+            joinedAt: dayjs().unix(),
+            participated,
+            poapId,
+          });
+        }
       } else {
-        await couchDbClient.voiceParticipation.insert({
-          _id: `${userDiscordId}:${poapId}`,
-          // eslint-disable-next-line no-underscore-dangle
-          _rev,
-          discordId,
-          discordTag,
-          joinedAt: 0,
-          participated: participated + (dayjs().unix() - joinedAt),
-          poapId,
-        });
+        for (let i = 0; i < 100; i + 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await couchDbClient.voiceParticipation.insert({
+            _id: `${userDiscordId}:${poapId}`,
+            // eslint-disable-next-line no-underscore-dangle
+            _rev,
+            discordId,
+            discordTag,
+            joinedAt: 0,
+            participated: participated + (dayjs().unix() - joinedAt),
+            poapId,
+          });
+        }
       }
     }
   } catch (error) {
@@ -157,16 +163,18 @@ const updateUserVoiceParticipation = async (
       `updateUserVoiceParticipation - couchdb get not not found  ${userDiscordId}:${poapId} - inserting.`
     );
     const user = await Main.client.users.fetch(userDiscordId);
-
-    await couchDbClient.voiceParticipation.insert({
-      _id: `${userDiscordId}:${poapId}`,
-      // eslint-disable-next-line no-underscore-dangle
-      discordId: userDiscordId,
-      discordTag: user.tag,
-      participated: 0,
-      joinedAt: dayjs().unix(),
-      poapId,
-    });
+    for (let i = 0; i < 100; i + 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await couchDbClient.voiceParticipation.insert({
+        _id: `${userDiscordId}:${poapId}`,
+        // eslint-disable-next-line no-underscore-dangle
+        discordId: userDiscordId,
+        discordTag: user.tag,
+        participated: 0,
+        joinedAt: dayjs().unix(),
+        poapId,
+      });
+    }
   }
 };
 
