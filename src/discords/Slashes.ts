@@ -79,7 +79,7 @@ abstract class Slashes {
         `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
       );
 
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: true });
 
       let messagePayload: MessageOptions;
       try {
