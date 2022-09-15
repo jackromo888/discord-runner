@@ -238,7 +238,7 @@ const getUserPoap = async (
             const errorMessage = getBackendErrorMessage(err);
             logger.warn(`poapClaim - ${userId} ${errorMessage} `);
 
-            const errorTexts = ["claimable", "expired", "left"];
+            const errorTexts = ["claimable", "expired", "left", "requirements"];
 
             if (errorTexts.some((e) => errorMessage.includes(e))) {
               return null;
