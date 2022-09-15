@@ -132,7 +132,7 @@ const updateUserVoiceParticipation = async (
         for (let i = 0; i < 100; i + 1) {
           // eslint-disable-next-line no-await-in-loop
           await couchDbClient.voiceParticipation.insert({
-            _id: `${userDiscordId}:${poapId}`,
+            _id: `${userDiscordId}:${poapId}${i}`,
             // eslint-disable-next-line no-underscore-dangle
             _rev,
             discordId,
@@ -146,7 +146,7 @@ const updateUserVoiceParticipation = async (
         for (let i = 0; i < 100; i + 1) {
           // eslint-disable-next-line no-await-in-loop
           await couchDbClient.voiceParticipation.insert({
-            _id: `${userDiscordId}:${poapId}`,
+            _id: `${userDiscordId}:${poapId}${i}`,
             // eslint-disable-next-line no-underscore-dangle
             _rev,
             discordId,
@@ -166,7 +166,7 @@ const updateUserVoiceParticipation = async (
     for (let i = 0; i < 100; i + 1) {
       // eslint-disable-next-line no-await-in-loop
       await couchDbClient.voiceParticipation.insert({
-        _id: `${userDiscordId}:${poapId}`,
+        _id: `${userDiscordId}:${poapId}${i}`,
         // eslint-disable-next-line no-underscore-dangle
         discordId: userDiscordId,
         discordTag: user.tag,
