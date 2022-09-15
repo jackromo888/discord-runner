@@ -64,6 +64,7 @@ const updateParticipationdWhenEventEnds = async (
       selector: {
         joinedAt: { $ne: 0 },
       },
+      limit: 100000,
     });
     await Promise.all(
       updateableUsers.docs.map(async (userResult) => {
