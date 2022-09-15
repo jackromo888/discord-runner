@@ -36,18 +36,16 @@ const updateVoiceParticipationWhenEventStarts = async (
     const voiceChannel = await guild.channels.fetch(voiceChannelId);
 
     await Promise.all(
-      voiceChannel.members
-        .filter((m) => !m.voice.selfDeaf)
-        .map(async (user) => {
-          await couchDbClient.voiceParticipation.insert({
-            _id: `${user.id}:${poapId}`,
-            discordId: user.id,
-            discordTag: user.user.tag,
-            joinedAt: dayjs().unix(),
-            participated: 0,
-            poapId,
-          });
-        })
+      voiceChannel.members.map(async (user) => {
+        await couchDbClient.voiceParticipation.insert({
+          _id: `${user.id}:${poapId}`,
+          discordId: user.id,
+          discordTag: user.user.tag,
+          joinedAt: user.voice.selfDeaf ? 0 : dayjs().unix(),
+          participated: 0,
+          poapId,
+        });
+      })
     );
   } catch (error) {
     logger.error(
