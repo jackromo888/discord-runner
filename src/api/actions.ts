@@ -13,6 +13,7 @@ import {
   MessageActionRow,
 } from "discord.js";
 import axios from "axios";
+import dayjs from "dayjs";
 import Main from "../Main";
 import logger from "../utils/logger";
 import {
@@ -218,6 +219,9 @@ const getUserPoap = async (
     const poapLinks = await Promise.all(
       guild?.poaps
         ?.sort((a, b) => b.id - a.id)
+        .filter(
+          (p) => p.activated && dayjs().isBefore(dayjs.unix(p.expiryDate))
+        )
         .map(async (poap) => {
           try {
             const response = await axios.post(
@@ -277,6 +281,12 @@ const getUserPoap = async (
       guild?.poaps?.length > 1
         ? "These are **your** links"
         : "This is **your** link";
+
+    if (poapLinks.length === 0) {
+      return {
+        content: "There is no claimable POAP right now. Check back later!",
+      };
+    }
 
     const buttonData = poapLinks.some((p) => p?.label.includes("Join"))
       ? {
