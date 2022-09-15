@@ -244,7 +244,7 @@ const getUserPoap = async (
             logger.warn(`poapClaim - ${userId} ${errorMessage} `);
 
             if (errorTexts.some((e) => errorMessage.includes(e))) {
-              return null;
+              return errorMessage;
             }
 
             return new MessageButton({
@@ -266,6 +266,12 @@ const getUserPoap = async (
       };
     }
 
+    if (poapLinks.every((pl) => typeof pl === "string")) {
+      return {
+        content: poapLinks[0],
+      };
+    }
+
     logger.verbose(`poapLinks - ${JSON.stringify(poapLinks)}`);
 
     const buttonData = poapLinks.some((p) => p?.label.includes("Join"))
@@ -278,7 +284,7 @@ const getUserPoap = async (
     return {
       components: [
         new MessageActionRow({
-          components: poapLinks.filter((p) => p?.url).slice(0, 5),
+          components: poapLinks.filter((p) => p !== null && p.url).slice(0, 5),
         }),
       ],
       content: buttonData.content,
