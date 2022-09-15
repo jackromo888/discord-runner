@@ -215,6 +215,7 @@ const getUserPoap = async (
   serverId: string
 ): Promise<MessageOptions> => {
   try {
+    const errorTexts = ["claimable", "expired", "left", "requirements"];
     const guild = await Main.platform.guild.get(serverId);
     const poapLinks = await Promise.all(
       guild?.poaps
@@ -242,8 +243,6 @@ const getUserPoap = async (
             const errorMessage = getBackendErrorMessage(err);
             logger.warn(`poapClaim - ${userId} ${errorMessage} `);
 
-            const errorTexts = ["claimable", "expired", "left", "requirements"];
-
             if (errorTexts.some((e) => errorMessage.includes(e))) {
               return null;
             }
@@ -266,6 +265,8 @@ const getUserPoap = async (
         content: "There is no claimable POAP right now. Check back later!",
       };
     }
+
+    logger.verbose(`poapLinks - ${JSON.stringify(poapLinks)}`);
 
     const buttonData = poapLinks.some((p) => p?.label.includes("Join"))
       ? {
