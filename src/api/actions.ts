@@ -248,26 +248,6 @@ const getUserPoap = async (
               return null;
             }
 
-            // if (errorMessage.includes("join")) {
-            // const joinResult = await Main.platform.user.join(
-            //   serverId,
-            //   userId
-            // );
-
-            // logger.verbose(`joinResult - ${JSON.stringify(joinResult)}`);
-
-            // const questionMarkIndex = joinResult.inviteLink.indexOf("?");
-            // const poapInviteLink = `${joinResult.inviteLink.slice(
-            //   0,
-            //   questionMarkIndex
-            // )}/claim-poap/${poap.fancyId}${joinResult.inviteLink.slice(
-            //   questionMarkIndex
-            // )}`;
-
-            // const joinLinkButton = getLinkButton("Join", poapInviteLink);
-            // return joinLinkButton;
-            // }
-
             return new MessageButton({
               label: `Join ${poap.fancyId}`.slice(0, 80),
               style: "LINK",
@@ -276,7 +256,6 @@ const getUserPoap = async (
           }
         })
     );
-
     const contentMessage =
       guild?.poaps?.length > 1
         ? "These are **your** links"
@@ -290,17 +269,15 @@ const getUserPoap = async (
 
     const buttonData = poapLinks.some((p) => p?.label.includes("Join"))
       ? {
-          components: [poapLinks[0]],
           content: `This is your Join link for this Guild. Before you claim your POAP, you have to join.Do **NOT** share it with anyone!`,
         }
       : {
-          components: poapLinks.filter((p) => p?.url).slice(0, 5),
           content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
         };
     return {
       components: [
         new MessageActionRow({
-          components: buttonData.components,
+          components: poapLinks.filter((p) => p?.url).slice(0, 5),
         }),
       ],
       content: buttonData.content,
