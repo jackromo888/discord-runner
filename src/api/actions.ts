@@ -491,10 +491,11 @@ const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
 const getVoiceChannelList = async (guildId: string): Promise<ChannelObj[]> => {
   const guild = await Main.client.guilds.fetch(guildId);
   const channels = await guild.channels.fetch();
-
   return channels
-    .filter((channel) =>
-      channel.type.includes("GUILD_VOICE" || "GUILD_STAGE_VOICE")
+    .filter(
+      (channel) =>
+        channel.type.includes("GUILD_STAGE_VOICE") ||
+        channel.type.includes("GUILD_VOICE")
     )
     .map((channel) => ({
       name: channel.name,
