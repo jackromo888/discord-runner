@@ -10,6 +10,7 @@ const nodeEnv = process.env.NODE_ENV || "development";
 
 const redisHost = process.env.REDIS_HOST;
 const clientId = process.env.CLIENT_ID;
+const clientSecret = process.env.CLIENT_SECRET;
 const discordToken = process.env.DISCORD_TOKEN;
 const backendUrl = process.env.BACKEND_URL;
 const api = {
@@ -59,4 +60,5 @@ export default {
   joinButtonEmojis,
   couchDbUrl,
   clientId,
+  clientSecret,
 };

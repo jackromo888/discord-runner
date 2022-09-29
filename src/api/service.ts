@@ -488,7 +488,7 @@ const refreshAccessToken = async (
       `https://discord.com/api/v10/oauth2/token`,
       {
         client_id: config.clientId,
-        client_secret: config.discordToken,
+        client_secret: config.clientSecret,
         grant_type: "refresh_token",
         refresh_token: refreshToken,
       },
@@ -524,15 +524,16 @@ const fetchUserByCode = async (
   redirectUri: string
 ): Promise<ResolveUserResopnse> => {
   try {
+    const params = new URLSearchParams();
+    params.append("client_id", config.clientId);
+    params.append("client_secret", config.clientSecret);
+    params.append("grant_type", "authorization_code");
+    params.append("code", code);
+    params.append("redirect_uri", redirectUri);
+
     const apiResponse = await axios.post<TokenExchangeResponse>(
       `https://discord.com/api/v10/oauth2/token`,
-      {
-        client_id: config.clientId,
-        client_secret: config.discordToken,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: redirectUri,
-      },
+      params,
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
