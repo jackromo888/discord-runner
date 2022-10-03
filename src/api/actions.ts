@@ -312,11 +312,15 @@ const sendDiscordButton = async (
   meta?: ButtonMetaData
 ) => {
   const server = await Main.client.guilds.fetch(guildId);
-  const channel = server.channels.cache.find((c) => c.id === channelId);
+  const modifiableChannel = await server.channels.fetch(channelId);
 
-  if (!channel?.isText()) {
+  if (!modifiableChannel?.isText()) {
     return false;
   }
+
+  await modifiableChannel.permissionOverwrites.create(Main.client.user.id, {
+    SEND_MESSAGES: true,
+  });
 
   const guildOfServer = await Main.platform.guild.get(guildId);
   const payload = createInteractionPayload(
@@ -328,10 +332,14 @@ const sendDiscordButton = async (
   );
 
   const message = await sendMessageLimiter.schedule(() =>
-    channel.send(payload)
+    modifiableChannel.send(payload)
   );
   await message.react(config.joinButtonEmojis.emoji1);
   await message.react(config.joinButtonEmojis.emoji2);
+
+  await modifiableChannel.permissionOverwrites.create(Main.client.user.id, {
+    SEND_MESSAGES: false,
+  });
 
   return true;
 };
