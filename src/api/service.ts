@@ -500,7 +500,7 @@ const refreshAccessToken = async (
     );
 
     /* eslint-disable camelcase */
-    const { access_token, expires_in, refresh_token } = apiResponse.data;
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
 
     const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
 
@@ -508,6 +508,7 @@ const refreshAccessToken = async (
       accessToken: access_token,
       expiresIn,
       refreshToken: refresh_token,
+      scope,
     };
     /* eslint-enable camelcase */
   } catch (error) {
@@ -542,7 +543,7 @@ const fetchUserByCode = async (
     );
 
     /* eslint-disable camelcase */
-    const { access_token, expires_in, refresh_token } = apiResponse.data;
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
 
     const { platformUserId } = await fetchUserByAccessToken(access_token);
 
@@ -554,6 +555,7 @@ const fetchUserByCode = async (
         accessToken: access_token,
         expiresIn,
         refreshToken: refresh_token,
+        scope,
       },
     };
     /* eslint-enable camelcase */

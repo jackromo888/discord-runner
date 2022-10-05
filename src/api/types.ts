@@ -195,6 +195,7 @@ type ResolveUserResopnse = {
     accessToken: string;
     expiresIn?: number;
     refreshToken?: string;
+    scope?: string;
   };
 };
 
