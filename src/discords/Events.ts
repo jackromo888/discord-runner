@@ -353,13 +353,21 @@ abstract class Events {
 
   @On("roleCreate")
   async onRoleCreate([role]: [Role]): Promise<void> {
-    const guildOfServer = await Main.platform.guild.get(role.guild.id);
-    if (
-      guildOfServer?.guildPlatforms.find(
-        (gp) => gp.platformGuildId === role.guild.id
-      )?.platformGuildData?.isGuarded
-    ) {
-      await role.edit({ permissions: role.permissions.remove("VIEW_CHANNEL") });
+    try {
+      const guildOfServer = await Main.platform.guild.get(role.guild.id);
+      if (
+        guildOfServer?.guildPlatforms?.find(
+          (gp) => gp.platformGuildId === role.guild.id
+        )?.platformGuildData?.isGuarded
+      ) {
+        await role.edit({
+          permissions: role.permissions.remove("VIEW_CHANNEL"),
+        });
+      }
+    } catch (error) {
+      logger.warn(
+        `roleCreate event error: serverId=${role.guild.id} ${error.message}`
+      );
     }
   }
 
