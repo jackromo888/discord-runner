@@ -1,6 +1,5 @@
 /* eslint no-return-await: "off" */
-
-import { CommandInteraction, TextChannel } from "discord.js";
+import { CommandInteraction, TextChannel, ChannelType } from "discord.js";
 import axios from "axios";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -79,7 +78,7 @@ const pollBuildResponse = async (
     if (poll.requirementId === 0) {
       interaction.reply({
         content: "You must choose a token for weighting.",
-        ephemeral: interaction.channel.type !== "DM",
+        ephemeral: interaction.channel.type === ChannelType.GuildText,
       });
 
       return true;
@@ -87,7 +86,7 @@ const pollBuildResponse = async (
     if (poll.question === "") {
       interaction.reply({
         content: "The poll must have a question.",
-        ephemeral: interaction.channel.type !== "DM",
+        ephemeral: interaction.channel.type === ChannelType.GuildText,
       });
 
       return true;
@@ -95,7 +94,7 @@ const pollBuildResponse = async (
     if (poll.options.length <= 1) {
       interaction.reply({
         content: "The poll must have at least two options.",
-        ephemeral: interaction.channel.type !== "DM",
+        ephemeral: interaction.channel.type === ChannelType.GuildText,
       });
 
       return true;
@@ -103,7 +102,7 @@ const pollBuildResponse = async (
     if (poll.options.length !== poll.reactions.length) {
       interaction.reply({
         content: "The amount of options and reactions must be the same.",
-        ephemeral: interaction.channel.type !== "DM",
+        ephemeral: interaction.channel.type === ChannelType.GuildText,
       });
 
       return true;
@@ -111,7 +110,7 @@ const pollBuildResponse = async (
     if (poll.expDate === "") {
       interaction.reply({
         content: "The poll must have an expriation date.",
-        ephemeral: interaction.channel.type !== "DM",
+        ephemeral: interaction.channel.type === ChannelType.GuildText,
       });
 
       return true;
@@ -119,7 +118,7 @@ const pollBuildResponse = async (
   } else {
     interaction.reply({
       content: "You don't have an active poll creation process.",
-      ephemeral: interaction.channel.type !== "DM",
+      ephemeral: interaction.channel.type === ChannelType.GuildText,
     });
 
     return true;

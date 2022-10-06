@@ -1,6 +1,6 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
-import { GuildMember, MessageEmbed, Permissions, Role } from "discord.js";
+import { GuildMember, EmbedBuilder, Role } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
@@ -101,14 +101,15 @@ const handleAccessEvent = async (
       );
 
       // notify user about removed roles
-      const embed = new MessageEmbed({
-        title: `You no longer have access to the \`${rolesToRemove
-          .map((r) => r.name)
-          .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
-          guild.name
-        }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-        color: `#${config.embedColor.default}`,
-      });
+      const embed = new EmbedBuilder()
+        .setTitle(
+          `You no longer have access to the \`${rolesToRemove
+            .map((r) => r.name)
+            .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
+            guild.name
+          }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`
+        )
+        .setColor(`#${config.embedColor.default}`);
       try {
         await sendMessageLimiter.schedule({ priority: highPrio ? 5 : 6 }, () =>
           updatedMember.send({ embeds: [embed] })
@@ -204,16 +205,12 @@ const handleRoleEvent = async (
       // check if role exists
       let role: Role;
       if (roleInServer) {
-        role = await roleInServer.edit(
-          {
-            name: roleName,
-            permissions:
-              platformRoleData?.isGuarded === true
-                ? Permissions.FLAGS.VIEW_CHANNEL
-                : undefined,
-          },
-          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
-        );
+        role = await roleInServer.edit({
+          name: roleName,
+          permissions:
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
+          reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
+        });
       } else {
         // if not exists create a new
         role = await server.roles.create({
@@ -221,9 +218,7 @@ const handleRoleEvent = async (
           hoist: true,
           reason: `Created by ${Main.client.user.username} for a Guild role.`,
           permissions:
-            platformRoleData?.isGuarded === true
-              ? Permissions.FLAGS.VIEW_CHANNEL
-              : undefined,
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
         });
       }
 
@@ -236,14 +231,14 @@ const handleRoleEvent = async (
       // if guarded, hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        await inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
-          VIEW_CHANNEL: true,
-        });
+
+        await inviteChannel.permissionsFor(role).add("ViewChannel");
+        await inviteChannel
+          .permissionsFor(server.roles.everyone)
+          .add("ViewChannel");
+
         await server.roles.everyone.setPermissions(
-          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+          server.roles.everyone.permissions.remove("ViewChannel")
         );
 
         // if grantAccessToExistingUsers, give everyone this role
@@ -290,16 +285,12 @@ const handleRoleEvent = async (
       // check if role exists
       let role: Role;
       if (roleInServer) {
-        role = await roleInServer.edit(
-          {
-            name: roleName,
-            permissions:
-              platformRoleData?.isGuarded === true
-                ? Permissions.FLAGS.VIEW_CHANNEL
-                : undefined,
-          },
-          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
-        );
+        role = await roleInServer.edit({
+          name: roleName,
+          permissions:
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
+          reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
+        });
       } else {
         // if not exists create a new
         role = await server.roles.create({
@@ -307,9 +298,7 @@ const handleRoleEvent = async (
           hoist: true,
           reason: `Created by ${Main.client.user.username} for a Guild role.`,
           permissions:
-            platformRoleData?.isGuarded === true
-              ? Permissions.FLAGS.VIEW_CHANNEL
-              : undefined,
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
         });
       }
 
@@ -322,17 +311,14 @@ const handleRoleEvent = async (
       // if guarded hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
-          VIEW_CHANNEL: true,
-        });
+
+        await inviteChannel.permissionsFor(role).remove("ViewChannel");
+        await inviteChannel
+          .permissionsFor(server.roles.everyone)
+          .add("ViewChannel");
+
         await server.roles.everyone.setPermissions(
-          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+          server.roles.everyone.permissions.remove("ViewChannel")
         );
 
         // if grantAccessToExistingUsers, give everyone this role
