@@ -4,17 +4,19 @@ import { AxiosResponse } from "axios";
 import {
   GuildMember,
   DiscordAPIError,
-  MessageButton,
-  MessageActionRow,
-  MessageEmbed,
   Guild,
   Collection,
   GuildChannel,
-  Permissions,
-  MessageOptions,
   Role,
   PartialGuildMember,
   PermissionOverwrites,
+  ActionRowBuilder,
+  MessageActionRowComponentBuilder,
+  ButtonStyle,
+  ButtonBuilder,
+  ChannelType,
+  EmbedBuilder,
+  BaseMessageOptions,
 } from "discord.js";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
@@ -134,53 +136,52 @@ const createInteractionPayload = (
 
   logger.verbose(`${JSON.stringify(buttonData)}`);
 
-  const buttonBase = new MessageButton({
-    customId: buttonData.customId,
-    label: buttonData.label,
-    emoji: "🔗",
-    style: "PRIMARY",
-  });
-  const guildPage = new MessageButton({
-    label: "Can't join",
-    url: `https://guild.xyz/${guild.urlName}`,
-    style: "LINK",
-  });
-  const guideButton = new MessageButton({
-    label: "Guide",
-    url: buttonData.guideUrl,
-    style: "LINK",
-  });
-  const row = new MessageActionRow({
-    components: isJoinButton
-      ? [buttonBase, guildPage, guideButton]
-      : [buttonBase, guideButton],
-  });
+  const buttonBase = new ButtonBuilder()
+    .setCustomId(buttonData.customId)
+    .setLabel(buttonData.label)
+    .setEmoji("🔗")
+    .setStyle(ButtonStyle.Primary);
+
+  const guildPage = new ButtonBuilder()
+    .setLabel("Can't join")
+    .setURL(`https://guild.xyz/${guild.urlName}`)
+    .setStyle(ButtonStyle.Link);
+
+  const guideButton = new ButtonBuilder()
+    .setLabel("Guide")
+    .setURL(buttonData.guideUrl)
+    .setStyle(ButtonStyle.Link);
+
+  const row =
+    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      isJoinButton
+        ? [buttonBase, guildPage, guideButton]
+        : [buttonBase, guideButton]
+    );
 
   return {
     embeds: [
-      new MessageEmbed({
-        title: buttonData.title,
-        url: guild ? `${config.guildUrl}/${guild?.urlName}` : null,
-        description:
+      new EmbedBuilder()
+        .setTitle(buttonData.title)
+        .setURL(guild ? `${config.guildUrl}/${guild?.urlName}` : null)
+        .setDescription(
           messageText ||
-          guild?.description ||
-          "Join this guild and get your role(s)!",
-        color: `#${config.embedColor.default}`,
-        author: {
+            guild?.description ||
+            "Join this guild and get your role(s)!"
+        )
+        .setColor(`#${config.embedColor.default}`)
+        .setAuthor({
           name: guild?.name || "Guild",
           iconURL: encodeURI(
             guild?.imageUrl?.startsWith("https")
               ? guild?.imageUrl
               : "https://cdn.discordapp.com/attachments/950682012866465833/951448319169802250/kerek.png"
           ),
-        },
-        thumbnail: {
-          url: buttonData.thumbnailUrl,
-        },
-        footer: {
+        })
+        .setThumbnail(buttonData.thumbnailUrl)
+        .setFooter({
           text: "Do not share your private keys. We will never ask for your seed phrase.",
-        },
-      }),
+        }),
     ],
     components: [row],
   };
@@ -189,12 +190,12 @@ const createInteractionPayload = (
 const getAccessedChannelsByRoles = (guild: Guild, accessedRoles: string[]) =>
   guild.channels.cache.filter(
     (channel) =>
-      channel.type !== "GUILD_CATEGORY" &&
+      channel.type !== ChannelType.GuildCategory &&
       !channel.isThread() &&
       channel.permissionOverwrites.cache.some(
         (po) =>
           accessedRoles.some((ar) => ar === po.id) &&
-          po.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
+          po.allow.has("ViewChannel")
       )
   ) as Collection<string, GuildChannel>;
 
@@ -210,10 +211,10 @@ const denyViewEntryChannelForRole = async (
       !!entryChannel &&
       !entryChannel.permissionOverwrites.cache
         .get(role.id)
-        ?.deny.has(Permissions.FLAGS.VIEW_CHANNEL)
+        ?.deny.has("ViewChannel")
     ) {
       await entryChannel.permissionOverwrites.create(role.id, {
-        VIEW_CHANNEL: false,
+        ViewChannel: false,
       });
     }
   } catch (error) {
@@ -230,7 +231,10 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
     Map<string, { id: string; name: string; roles: string[] }[]>
   >((acc, ch) => {
     // skip if not text or news channel
-    if (ch.type !== "GUILD_TEXT" && ch.type !== "GUILD_NEWS") {
+    if (
+      ch.type !== ChannelType.GuildText &&
+      ch.type !== ChannelType.GuildAnnouncement
+    ) {
       return acc;
     }
 
@@ -245,9 +249,7 @@ const getChannelsByCategoryWithRoles = (guild: Guild) => {
     // filter for roles that have explicit permission overwrites
     const roles = guild.roles.cache
       .filter((role) =>
-        ch.permissionOverwrites.cache
-          .get(role.id)
-          ?.allow.has(Permissions.FLAGS.VIEW_CHANNEL)
+        ch.permissionOverwrites.cache.get(role.id)?.allow.has("ViewChannel")
       )
       .map((role) => role.id);
 
@@ -373,21 +375,19 @@ const printRoleNames = (
 };
 
 const getLinkButton = (label: string, url: string) =>
-  new MessageButton({
-    label,
-    style: "LINK",
-    url,
-    disabled: false,
-    type: 2,
-  });
+  new ButtonBuilder()
+    .setLabel(label)
+    .setStyle(ButtonStyle.Link)
+    .setURL(url)
+    .setDisabled(false);
 
 const getJoinReplyMessage = async (
   roleIds: string[],
   server: Guild,
   userId: string,
   inviteLink: string
-): Promise<MessageOptions> => {
-  let message: MessageOptions;
+): Promise<BaseMessageOptions> => {
+  let message: BaseMessageOptions;
   logger.verbose(`getJoinReply - ${roleIds} ${server.id} ${userId}`);
 
   const guildOfServer = await Main.platform.guild.get(server.id);
@@ -402,7 +402,11 @@ const getJoinReplyMessage = async (
     const button = getLinkButton("Join", inviteLink);
 
     return {
-      components: [new MessageActionRow({ components: [button] })],
+      components: [
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents([
+          button,
+        ]),
+      ],
       content: `This is **your** join link. Do **NOT** share it with anyone!`,
     };
   }
@@ -432,12 +436,11 @@ const getJoinReplyMessage = async (
         : ""
     }`;
 
-    const embed = new MessageEmbed({
-      title: `Successfully joined guild`,
-      description,
-      color: 0x0dff00,
-      fields,
-    });
+    const embed = new EmbedBuilder()
+      .setColor("#0dff00")
+      .setTitle("Successfully joined guild")
+      .setDescription(description)
+      .addFields(fields);
 
     const guild = await Main.platform.guild.get(server.id);
     const button = getLinkButton(
@@ -447,7 +450,11 @@ const getJoinReplyMessage = async (
 
     message = {
       content: "We have updated your accesses.",
-      components: [new MessageActionRow({ components: [button] })],
+      components: [
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents([
+          button,
+        ]),
+      ],
       embeds: [embed],
     };
   } else if (roleIds && roleIds.length === 0) {
@@ -461,18 +468,23 @@ const getJoinReplyMessage = async (
       `${config.guildUrl}/${guild.urlName}`
     );
 
-    const embed = new MessageEmbed({
-      title: `No access`,
-      description: `You don't satisfy the requirements to any roles on this server with your connected address(es).\n\n${printRoleNames(
-        notAccessedRoleNames,
-        false
-      )}`,
-      color: `#${config.embedColor.error}`,
-    });
+    const embed = new EmbedBuilder()
+      .setTitle("No access")
+      .setDescription(
+        `You don't satisfy the requirements to any roles on this server with your connected address(es).\n\n${printRoleNames(
+          notAccessedRoleNames,
+          false
+        )}`
+      )
+      .setColor(`#${config.embedColor.error}`);
 
     message = {
       content: "We have updated your accesses successfully.",
-      components: [new MessageActionRow({ components: [button] })],
+      components: [
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents([
+          button,
+        ]),
+      ],
       embeds: [embed],
     };
   }
@@ -505,7 +517,7 @@ const updateAccessedChannelsOfRole = (
     (channel) =>
       shouldHaveAccess.has(channel.id) ||
       shouldHaveAccess.has(channel.parentId) ||
-      (channel.type !== "GUILD_CATEGORY" &&
+      (channel.type !== ChannelType.GuildCategory &&
         !channel.parent &&
         shouldHaveAccess.has("-"))
   );
@@ -513,19 +525,19 @@ const updateAccessedChannelsOfRole = (
   return Promise.all([
     ...channelsToDeny.map((channelToDenyAccessTo) =>
       channelToDenyAccessTo.permissionOverwrites.edit(roleId, {
-        VIEW_CHANNEL: null,
+        ViewChannel: null,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
       channelToAllowAccessTo.permissionOverwrites.edit(roleId, {
-        VIEW_CHANNEL: true,
+        ViewChannel: true,
       })
     ),
     ...channelsToAllow.map((channelToAllowAccessTo) =>
       channelToAllowAccessTo.permissionOverwrites.edit(
         server.roles.everyone.id,
         {
-          VIEW_CHANNEL: false,
+          ViewChannel: false,
         }
       )
     ),
@@ -561,10 +573,9 @@ const notifyAccessedChannels = async (
     } with the \`${guildName}\` role in \`${member.guild.name}\`:`;
   }
 
-  const embed = new MessageEmbed({
-    title: message,
-    color: `#${config.embedColor.default}`,
-  });
+  const embed = new EmbedBuilder()
+    .setTitle(message)
+    .setColor(`#${config.embedColor.default}`);
 
   const categoryEmoji = Main.client.emojis.cache.get("893836008712441858");
   const privateChannelEmoji =
@@ -579,10 +590,11 @@ const notifyAccessedChannels = async (
           }](https://discord.com/channels/${member.guild.id}/${c.id})`
       )
       .join("\n");
-    embed.addField(
-      `${categoryEmoji || ""}${key || "Without Category"}`,
-      fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024)
-    );
+    embed.addFields({
+      name: `${categoryEmoji || ""}${key || "Uncategorized"}`,
+      value:
+        fieldValue.length < 1025 ? fieldValue : fieldValue.substring(0, 1024),
+    });
   });
 
   await sendMessageLimiter.schedule(() =>
@@ -597,7 +609,11 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
   if (
     inviteChannelId &&
     server.channels.cache
-      .filter((c) => c.type === "GUILD_TEXT" || c.type === "GUILD_NEWS")
+      .filter(
+        (c) =>
+          c.type === ChannelType.GuildText ||
+          c.type === ChannelType.GuildAnnouncement
+      )
       .find((c) => c.id === inviteChannelId)
   ) {
     channelId = inviteChannelId;
@@ -605,10 +621,10 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
     // find the first channel which is visible to everyone
     const publicChannel = server.channels.cache.find(
       (c) =>
-        c.isText() &&
+        c.isTextBased() &&
         !(c as any).permissionOverwrites?.cache.some(
           (po: PermissionOverwrites) =>
-            po.id === server.roles.everyone.id && po.deny.any("VIEW_CHANNEL")
+            po.id === server.roles.everyone.id && po.deny.any("ViewChannel")
         )
     );
 
@@ -617,7 +633,7 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
     } else {
       // if there are no visible channels, find the first text channel
       logger.verbose(`Cannot find public channel in ${server.id}`);
-      channelId = server.channels.cache.find((c) => c.isText())?.id;
+      channelId = server.channels.cache.find((c) => c.isTextBased())?.id;
     }
 
     logger.warn(

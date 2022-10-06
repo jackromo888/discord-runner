@@ -36,7 +36,7 @@ const updateVoiceParticipationWhenEventStarts = async (
     const voiceChannel = await guild.channels.fetch(voiceChannelId);
 
     await Promise.all(
-      voiceChannel.members.map(async (user) => {
+      Object.values(voiceChannel.members).map(async (user) => {
         await couchDbClient.voiceParticipation.insert({
           _id: `${user.id}:${poapId}`,
           discordId: user.id,
