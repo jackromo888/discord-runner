@@ -1,11 +1,12 @@
 import { PlatformStatusResponse } from "@guildxyz/sdk";
 import {
   Guild,
-  MessageActionRow,
-  MessageEmbed,
-  MessageOptions,
+  EmbedBuilder,
   User,
   WebhookEditMessageOptions,
+  ActionRowBuilder,
+  MessageActionRowComponentBuilder,
+  BaseMessageOptions,
 } from "discord.js";
 import config from "./config";
 import { redisClient } from "./database";
@@ -41,16 +42,17 @@ const status = async (
         "Connect",
         inviteLink || config.guildUrl
       );
-      const connectButtonRow = new MessageActionRow({
-        components: [connectButton],
-      });
+      const connectButtonRow =
+        new ActionRowBuilder<MessageActionRowComponentBuilder>({
+          components: [connectButton],
+        });
       return {
         embeds: [
-          new MessageEmbed({
-            description:
-              "It seems you haven't connected this Discord account to Guild yet.",
-            color: `#${config.embedColor.error}`,
-          }),
+          new EmbedBuilder()
+            .setDescription(
+              "It seems you haven't connected this Discord account to Guild yet."
+            )
+            .setColor(`#${config.embedColor.error}`),
         ],
         components: [connectButtonRow],
       };
@@ -60,42 +62,43 @@ const status = async (
     logger.error(`status error: ${error.message}`);
     return {
       embeds: [
-        new MessageEmbed({
-          description: "An error occured while updating your status.",
-          color: `#${config.embedColor.error}`,
-        }),
+        new EmbedBuilder()
+          .setDescription("An error occured while updating your status.")
+          .setColor(`#${config.embedColor.error}`),
       ],
     };
   }
 
   if (statusResult?.length > 0) {
-    const embed = new MessageEmbed({
-      author: {
+    const embed = new EmbedBuilder()
+      .setColor(`#${config.embedColor.default}`)
+      .setAuthor({
         name: `${user.username}'s Guilds`,
         iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
-      },
-      color: `#${config.embedColor.default}`,
-    });
+      })
+      .setColor(`#${config.embedColor.default}`);
+
     statusResult.forEach((sr) => {
-      embed.addField(
-        sr.guildName,
-        sr.roles.map((r) => r.roleName).join(", ") || "-"
-      );
+      embed.addFields({
+        name: sr.guildName,
+        value: sr.roles.map((r) => r.roleName).join(", ") || "-",
+      });
     });
 
     return { embeds: [embed] };
   }
 
   const button = getLinkButton("Guild.xyz", config.guildUrl);
-  const row = new MessageActionRow({ components: [button] });
+  const row = new ActionRowBuilder<MessageActionRowComponentBuilder>({
+    components: [button],
+  });
 
   return {
     embeds: [
-      new MessageEmbed({
-        title: "It seems you haven't joined any guilds yet.",
-        color: `#${config.embedColor.error}`,
-        description: "Find out more:",
-      }),
+      new EmbedBuilder()
+        .setTitle("It seems you haven't joined any guilds yet.")
+        .setColor(`#${config.embedColor.error}`)
+        .setDescription("Find out more:"),
     ],
     components: [row],
   };
@@ -105,7 +108,7 @@ const join = async (
   userId: string,
   server: Guild,
   interactionToken: string
-): Promise<MessageOptions> => {
+): Promise<BaseMessageOptions> => {
   const joinResult = await Main.platform.user.join(server.id, userId);
   logger.debug(
     `join-trace ${userId} ${server} api call result: ${JSON.stringify(

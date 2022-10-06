@@ -1,10 +1,12 @@
 /* eslint-disable class-methods-use-this */
 import {
+  ApplicationCommandOptionType,
+  BaseMessageOptions,
+  ChannelType,
   CommandInteraction,
+  EmbedBuilder,
   GuildMember,
-  MessageEmbed,
-  MessageOptions,
-  Permissions,
+  PermissionsBitField,
 } from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
 import { GetGuildResponse } from "@guildxyz/sdk";
@@ -18,7 +20,8 @@ import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 
 @Discord()
 abstract class Slashes {
-  @Slash("ping", {
+  @Slash({
+    name: "ping",
     description: "Get the latency of the bot and the Discord API.",
   })
   ping(interaction: CommandInteraction): void {
@@ -30,7 +33,8 @@ abstract class Slashes {
       .catch(logger.error);
   }
 
-  @Slash("status", {
+  @Slash({
+    name: "status",
     description: "Update all of your guild accesses in every server.",
   })
   async status(interaction: CommandInteraction): Promise<void> {
@@ -63,10 +67,10 @@ abstract class Slashes {
     }
   }
 
-  @Slash("join", { description: "Join the guild of this server." })
+  @Slash({ name: "join", description: "Join the guild of this server." })
   async join(interaction: CommandInteraction) {
     try {
-      if (interaction.channel.type === "DM") {
+      if (interaction.channel.type !== ChannelType.GuildText) {
         await sendMessageLimiter.schedule(() =>
           interaction.reply(
             "❌ Use this command in a server to join all of its guilds you have access to!"
@@ -81,7 +85,7 @@ abstract class Slashes {
 
       await interaction.deferReply({ ephemeral: true });
 
-      let messagePayload: MessageOptions;
+      let messagePayload: BaseMessageOptions;
       try {
         messagePayload = await join(
           interaction?.user.id,
@@ -92,11 +96,12 @@ abstract class Slashes {
         if (error.message?.startsWith("Cannot find guild")) {
           await interaction.editReply({
             embeds: [
-              new MessageEmbed({
-                title: "Error",
-                description: "There is no guild associated with this server.",
-                color: `#${config.embedColor.error}`,
-              }),
+              new EmbedBuilder()
+                .setTitle("Error")
+                .setDescription(
+                  "There is no guild associated with this server."
+                )
+                .setColor(`#${config.embedColor.error}`),
             ],
           });
           return;
@@ -104,11 +109,10 @@ abstract class Slashes {
         logger.error(error);
         await interaction.editReply({
           embeds: [
-            new MessageEmbed({
-              title: "Error",
-              description: "Unkown error occured, please try again later.",
-              color: `#${config.embedColor.error}`,
-            }),
+            new EmbedBuilder()
+              .setTitle("Error")
+              .setDescription("Unkown error occured, please try again later.")
+              .setColor(`#${config.embedColor.error}`),
           ],
         });
         return;
@@ -124,21 +128,28 @@ abstract class Slashes {
     }
   }
 
-  @Slash("join-button", {
+  @Slash({
+    name: "join-button",
     description: "Generate a join button. (Only for server administrators!)",
   })
   async joinButton(
-    @SlashOption("title", {
+    @SlashOption({
+      name: "title",
+      type: ApplicationCommandOptionType.String,
       required: false,
       description: "The title of the embed message.",
     })
     title: string,
-    @SlashOption("message", {
+    @SlashOption({
+      name: "message",
+      type: ApplicationCommandOptionType.String,
       required: false,
       description: "The text that will be shown in the embed message.",
     })
     messageText: string,
-    @SlashOption("buttontext", {
+    @SlashOption({
+      name: "buttontext",
+      type: ApplicationCommandOptionType.String,
       required: false,
       description: "The text that will be shown on the button.",
     })
@@ -146,7 +157,7 @@ abstract class Slashes {
     interaction: CommandInteraction
   ) {
     try {
-      if (interaction.channel.type === "DM") {
+      if (interaction.channel.type !== ChannelType.GuildText) {
         await sendMessageLimiter.schedule(() =>
           interaction.reply(
             "Use this command in a server to spawn a join button!"
@@ -157,7 +168,7 @@ abstract class Slashes {
 
       if (
         !(interaction.member as GuildMember).permissions.has(
-          Permissions.FLAGS.ADMINISTRATOR
+          PermissionsBitField.Flags.Administrator
         )
       ) {
         await sendMessageLimiter.schedule(() =>
@@ -210,11 +221,14 @@ abstract class Slashes {
     }
   }
 
-  @Slash("start-voice-event", {
+  @Slash({
+    name: "start-voice-event",
     description: "Starting a Voice Event on your server in the given channel.",
   })
   async startVoiceEvent(
-    @SlashOption("poapid", {
+    @SlashOption({
+      name: "poapid",
+      type: ApplicationCommandOptionType.Number,
       required: true,
       description: "The POAP Identifier for the Voice Event.",
     })
@@ -245,11 +259,14 @@ abstract class Slashes {
     }
   }
 
-  @Slash("stop-voice-event", {
+  @Slash({
+    name: "stop-voice-event",
     description: "Stopping a Voice Event on your server in the given channel.",
   })
   async stopVoiceEvent(
-    @SlashOption("poapid", {
+    @SlashOption({
+      name: "poapid",
+      type: ApplicationCommandOptionType.Number,
       required: true,
       description: "The POAP Identifier for the Voice Event.",
     })
