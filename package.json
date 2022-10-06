@@ -30,7 +30,7 @@
     "express": "^4.18.1",
     "express-validator": "^6.14.2",
     "nano": "^10.0.0",
-    "redis": "^4.3.1",
+    "redis": "^3.1.2",
     "reflect-metadata": "^0.1.13",
     "winston": "^3.8.2"
   },
