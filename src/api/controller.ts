@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import logger from "../utils/logger";
-import { getErrorResult, updateAccessedChannelsOfRole } from "../utils/utils";
+import {
+  getErrorResult,
+  hasNecessaryPermissions,
+  updateAccessedChannelsOfRole,
+} from "../utils/utils";
 import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 import {
   createChannel,
@@ -80,6 +84,7 @@ const controller = {
     const params: GuildEventParams = req.body;
 
     try {
+      await hasNecessaryPermissions(params.platformGuildId);
       const result = await handleGuildEvent(params);
       res.status(200).json(result);
     } catch (error) {
@@ -99,6 +104,7 @@ const controller = {
     const params: RoleEventParams = req.body;
 
     try {
+      await hasNecessaryPermissions(params.platformGuildId);
       const result = await handleRoleEvent(params);
       res.status(200).json(result);
     } catch (error) {
@@ -374,6 +380,7 @@ const controller = {
     }
     try {
       const { guildId, channelId, ...buttonMetaData } = req.body;
+      await hasNecessaryPermissions(guildId);
       const result = await sendDiscordButton(
         guildId,
         channelId,
