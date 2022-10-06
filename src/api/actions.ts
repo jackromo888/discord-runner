@@ -126,10 +126,7 @@ const getServerInfo = async (guildId: string) => {
         ? ""
         : `https://cdn.discordapp.com/icons/${guildId}/${iconId}.png`;
 
-    if (
-      !guild.me.permissions.has(Permissions.FLAGS.ADMINISTRATOR) &&
-      !guild.me.permissions.has(Permissions.FLAGS.MANAGE_ROLES)
-    ) {
+    if (!guild.me.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
       return {
         serverIcon,
         serverName,

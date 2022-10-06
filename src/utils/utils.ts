@@ -99,6 +99,60 @@ const logAxiosResponse = (res: AxiosResponse<any>) => {
 const isNumber = (value: any) =>
   typeof value === "number" && Number.isFinite(value);
 
+const getMissingPermissions = (bot: GuildMember) => [
+  {
+    name: "VIEW_CHANNEL",
+    value: bot.permissions.has(Permissions.FLAGS.VIEW_CHANNEL),
+  },
+  {
+    name: "MANAGE_CHANNELS",
+    value: bot.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS),
+  },
+  {
+    name: "MANAGE_ROLES",
+    value: bot.permissions.has(Permissions.FLAGS.MANAGE_ROLES),
+  },
+  {
+    name: "CREATE_INSTANT_INVITE",
+    value: bot.permissions.has(Permissions.FLAGS.CREATE_INSTANT_INVITE),
+  },
+  {
+    name: "SEND_MESSAGES",
+    value: bot.permissions.has(Permissions.FLAGS.SEND_MESSAGES),
+  },
+  {
+    name: "EMBED_LINKS",
+    value: bot.permissions.has(Permissions.FLAGS.EMBED_LINKS),
+  },
+  {
+    name: "ADD_REACTIONS",
+    value: bot.permissions.has(Permissions.FLAGS.ADD_REACTIONS),
+  },
+  {
+    name: "USE_EXTERNAL_EMOJIS",
+    value: bot.permissions.has(Permissions.FLAGS.USE_EXTERNAL_EMOJIS),
+  },
+];
+
+const hasNecessaryPermissions = async (guildId: string): Promise<boolean> => {
+  const guild = await Main.client.guilds.fetch(guildId);
+  const bot = guild.me;
+  const botPermissions = getMissingPermissions(bot);
+  if (botPermissions.some((bp) => !bp.value)) {
+    const errorMessage = botPermissions
+      .filter((p) => !p.value)
+      .map((p) => p.name)
+      .join(", ");
+    logger.error(
+      `missing permissions ${guild.name} ${guildId} ${errorMessage}`
+    );
+    throw new Error(
+      `Missing permissions! You should grant the following permission(s) for our bot to work properly: ${errorMessage}`
+    );
+  }
+  return true;
+};
+
 const createInteractionPayload = (
   guild: GetGuildResponse,
   title?: string,
@@ -651,4 +705,5 @@ export {
   getDiscordRoleIds,
   printRoleNames,
   getLinkButton,
+  hasNecessaryPermissions,
 };
