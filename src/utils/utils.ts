@@ -37,7 +37,7 @@ const getErrorResult = (error: Error): ErrorResult => {
   if (error instanceof DiscordAPIError) {
     if (error.code === 50001) {
       // Missing access
-      errorMsg = "guild not found";
+      errorMsg = "missing access";
     } else if (error.code === 10013) {
       // Unknown User
       errorMsg = "cannot fetch member";
@@ -101,36 +101,40 @@ const isNumber = (value: any) =>
 
 const getMissingPermissions = (bot: GuildMember) => [
   {
-    name: "VIEW_CHANNEL",
+    name: "View Channel",
     value: bot.permissions.has(Permissions.FLAGS.VIEW_CHANNEL),
   },
   {
-    name: "MANAGE_CHANNELS",
+    name: "Manage Channels",
     value: bot.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS),
   },
   {
-    name: "MANAGE_ROLES",
+    name: "Manage Roles",
     value: bot.permissions.has(Permissions.FLAGS.MANAGE_ROLES),
   },
   {
-    name: "CREATE_INSTANT_INVITE",
+    name: "Create Instant Invite",
     value: bot.permissions.has(Permissions.FLAGS.CREATE_INSTANT_INVITE),
   },
   {
-    name: "SEND_MESSAGES",
+    name: "Send Messages",
     value: bot.permissions.has(Permissions.FLAGS.SEND_MESSAGES),
   },
   {
-    name: "EMBED_LINKS",
+    name: "Embed Links",
     value: bot.permissions.has(Permissions.FLAGS.EMBED_LINKS),
   },
   {
-    name: "ADD_REACTIONS",
+    name: "Add Reactions",
     value: bot.permissions.has(Permissions.FLAGS.ADD_REACTIONS),
   },
   {
-    name: "USE_EXTERNAL_EMOJIS",
+    name: "Use External Emojis",
     value: bot.permissions.has(Permissions.FLAGS.USE_EXTERNAL_EMOJIS),
+  },
+  {
+    name: "Read Message History",
+    value: bot.permissions.has(Permissions.FLAGS.READ_MESSAGE_HISTORY),
   },
 ];
 
