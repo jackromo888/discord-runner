@@ -671,11 +671,9 @@ const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
     } else {
       // if there are no visible channels, find the first text channel
       logger.verbose(`Cannot find public channel in ${server.id}`);
-      channelId = server.channels.cache.find((c) => c.isText())?.id;
-      const foundTextChannel = await server.channels.fetch(channelId);
-      await foundTextChannel.permissionOverwrites.create(Main.client.user.id, {
-        VIEW_CHANNEL: true,
-      });
+      channelId = server.channels.cache.filter(
+        (c) => c.type !== "GUILD_CATEGORY" && c.type !== "GUILD_PRIVATE_THREAD"
+      )[0]?.id;
     }
 
     logger.warn(
