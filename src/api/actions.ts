@@ -334,10 +334,6 @@ const sendDiscordButton = async (
   await message.react(config.joinButtonEmojis.emoji1);
   await message.react(config.joinButtonEmojis.emoji2);
 
-  await modifiableChannel.permissionOverwrites.create(Main.client.user.id, {
-    SEND_MESSAGES: false,
-  });
-
   return true;
 };
 
