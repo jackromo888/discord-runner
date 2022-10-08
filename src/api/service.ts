@@ -143,7 +143,7 @@ const handleGuildEvent = async (
       const server = await Main.client.guilds.fetch(platformGuildId);
 
       // check if invite channel exists, if not select another one
-      const inviteChannelId = checkInviteChannel(
+      const inviteChannelId = await checkInviteChannel(
         server,
         platformGuildData?.inviteChannel
       );
@@ -160,7 +160,7 @@ const handleGuildEvent = async (
       const server = await Main.client.guilds.fetch(platformGuildId);
 
       // check if invite channel exists, if not select another one
-      const inviteChannelId = checkInviteChannel(
+      const inviteChannelId = await checkInviteChannel(
         server,
         platformGuildData?.inviteChannel
       );
@@ -223,7 +223,7 @@ const handleRoleEvent = async (
       }
 
       // check if invite channel exists, if not select another one
-      const inviteChannelId = checkInviteChannel(
+      const inviteChannelId = await checkInviteChannel(
         server,
         platformGuildData?.inviteChannel
       );
@@ -303,7 +303,7 @@ const handleRoleEvent = async (
       }
 
       // check if invite channel exists, if not select another one
-      const inviteChannelId = checkInviteChannel(
+      const inviteChannelId = await checkInviteChannel(
         server,
         platformGuildData.inviteChannel
       );
@@ -401,7 +401,7 @@ const getInviteCode = async (serverId: string) => {
     (gp) => gp.platformGuildId === serverId
   )?.platformGuildData?.inviteChannel;
 
-  const channelId = checkInviteChannel(server, inviteChannelInDb);
+  const channelId = await checkInviteChannel(server, inviteChannelInDb);
   // TODO: update in db
 
   // generate the new invite
