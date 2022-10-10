@@ -647,7 +647,7 @@ const notifyAccessedChannels = async (
   );
 };
 
-const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
+const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
   // check if invite channel exists
   let channelId: string;
 
@@ -674,7 +674,9 @@ const checkInviteChannel = (server: Guild, inviteChannelId: string) => {
     } else {
       // if there are no visible channels, find the first text channel
       logger.verbose(`Cannot find public channel in ${server.id}`);
-      channelId = server.channels.cache.find((c) => c.isText())?.id;
+      channelId = server.channels.cache.filter(
+        (c) => c.type !== "GUILD_CATEGORY" && c.type !== "GUILD_PRIVATE_THREAD"
+      )[0]?.id;
     }
 
     logger.warn(
