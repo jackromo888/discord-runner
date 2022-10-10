@@ -558,7 +558,6 @@ const updateAccessedChannelsOfRole = (
     shouldHaveAccess.delete(entryChannelId);
     channels.delete(entryChannelId);
   }
-
   const [channelsToAllow, channelsToDeny] = channels.partition(
     (channel) =>
       shouldHaveAccess.has(channel.id) ||

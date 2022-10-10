@@ -145,6 +145,13 @@ const createRouter = () => {
     controller.handleVoiceEvent
   );
 
+  router.post(
+    "/resetVoiceEvent",
+    validators.bodyIdValidator("guildId"),
+    validators.bodyIdValidator("poapId"),
+    controller.resetVoiceEvent
+  );
+
   return router;
 };
 
