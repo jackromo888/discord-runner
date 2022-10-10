@@ -32,6 +32,7 @@
     "nano": "^10.0.0",
     "redis": "^3.1.2",
     "reflect-metadata": "^0.1.13",
+    "tweetnacl": "^1.0.3",
     "winston": "^3.7.2"
   },
   "devDependencies": {

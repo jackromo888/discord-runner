@@ -30,6 +30,9 @@ const joinButtonEmojis = {
 
 const couchDbUrl = process.env.COUCH_URL;
 
+const naclSecret = process.env.NACL_SECRET;
+const naclPublic = process.env.NACL_PUBLIC;
+
 if (!discordToken) {
   throw new Error(
     "You need to specify the bot's DISCORD_TOKEN in the .env file."
@@ -47,6 +50,12 @@ if (!redisHost) {
 if (!couchDbUrl) {
   throw new Error("You need to specify the COUCH_URL in the .env file.");
 }
+if (!naclSecret) {
+  throw new Error("You need to specify the NACL_SECRET in the .env file.");
+}
+if (!naclPublic) {
+  throw new Error("You need to specify the NACL_PUBLIC in the .env file.");
+}
 
 export default {
   nodeEnv,
@@ -61,4 +70,6 @@ export default {
   couchDbUrl,
   clientId,
   clientSecret,
+  naclSecret,
+  naclPublic,
 };

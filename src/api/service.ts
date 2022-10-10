@@ -11,6 +11,8 @@ import {
   getJoinReplyMessage,
   getUserResult,
   notifyAccessedChannels,
+  readNacl,
+  signNacl,
   updateAccessedChannelsOfRole,
 } from "../utils/utils";
 import {
@@ -469,7 +471,7 @@ const fetchUserByAccessToken = async (
     });
     return {
       platformUserId: apiResponse.data.id,
-      platformUserData: { accessToken },
+      platformUserData: { accessToken: signNacl(accessToken) },
     };
   } catch (error) {
     throw Error(
@@ -490,7 +492,7 @@ const refreshAccessToken = async (
         client_id: config.clientId,
         client_secret: config.clientSecret,
         grant_type: "refresh_token",
-        refresh_token: refreshToken,
+        refresh_token: readNacl(refreshToken),
       },
       {
         headers: {
@@ -505,9 +507,9 @@ const refreshAccessToken = async (
     const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
 
     return {
-      accessToken: access_token,
+      accessToken: signNacl(access_token),
       expiresIn,
-      refreshToken: refresh_token,
+      refreshToken: signNacl(refresh_token),
       scope,
     };
     /* eslint-enable camelcase */
@@ -552,9 +554,9 @@ const fetchUserByCode = async (
     return {
       platformUserId,
       platformUserData: {
-        accessToken: access_token,
+        accessToken: signNacl(access_token),
         expiresIn,
-        refreshToken: refresh_token,
+        refreshToken: signNacl(refresh_token),
         scope,
       },
     };
