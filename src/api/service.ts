@@ -264,7 +264,6 @@ const handleRoleEvent = async (
           );
         }
       }
-
       await updateAccessedChannelsOfRole(
         server,
         role.id,

@@ -6,7 +6,11 @@ import {
   hasNecessaryPermissions,
   updateAccessedChannelsOfRole,
 } from "../utils/utils";
-import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
+import {
+  startVoiceEvent,
+  stopVoiceEvent,
+  resetVoiceEvent,
+} from "../utils/voiceUtils";
 import {
   createChannel,
   createRole,
@@ -169,6 +173,29 @@ const controller = {
     }
   },
 
+  resetVoiceEvent: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const {
+        guildId,
+        poapId,
+      }: {
+        guildId: number;
+        poapId: number;
+      } = req.body;
+
+      const result = await resetVoiceEvent(guildId, poapId);
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
   resolveUser: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 

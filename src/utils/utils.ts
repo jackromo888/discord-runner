@@ -40,7 +40,7 @@ const getErrorResult = (error: Error): ErrorResult => {
   if (error instanceof DiscordAPIError) {
     if (error.code === 50001) {
       // Missing access
-      errorMsg = "guild not found";
+      errorMsg = "missing access";
     } else if (error.code === 10013) {
       // Unknown User
       errorMsg = "cannot fetch member";
@@ -134,6 +134,10 @@ const getMissingPermissions = (bot: GuildMember) => [
   {
     name: "USE_EXTERNAL_EMOJIS",
     value: bot.permissions.has("UseExternalEmojis"),
+  },
+  {
+    name: "Read Message History",
+    value: bot.permissions.has("ReadMessageHistory"),
   },
 ];
 
@@ -567,7 +571,6 @@ const updateAccessedChannelsOfRole = (
     shouldHaveAccess.delete(entryChannelId);
     channels.delete(entryChannelId);
   }
-
   const [channelsToAllow, channelsToDeny] = channels.partition(
     (channel) =>
       shouldHaveAccess.has(channel.id) ||

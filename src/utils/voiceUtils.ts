@@ -275,6 +275,30 @@ const stopVoiceEvent = async (
   }
 };
 
+const resetVoiceEvent = async (
+  guildId: number,
+  poapId: number
+): Promise<boolean> => {
+  try {
+    const couchResult = await couchDbClient.voiceEvents.get(
+      `${guildId}:${poapId}`
+    );
+    if (couchResult) {
+      const { _rev, _id } = couchResult;
+
+      await couchDbClient.voiceEvents.destroy(_id, _rev);
+
+      return true;
+    }
+    return false;
+  } catch (error) {
+    logger.error(
+      `resetVoiceEvent - failed voice event reset ${guildId}:${poapId}.`
+    );
+    return false;
+  }
+};
+
 const handleUserStateDuringVoiceEvent = async (
   oldState: VoiceState,
   newState: VoiceState
@@ -353,4 +377,9 @@ const handleUserStateDuringVoiceEvent = async (
   }
 };
 
-export { startVoiceEvent, stopVoiceEvent, handleUserStateDuringVoiceEvent };
+export {
+  startVoiceEvent,
+  stopVoiceEvent,
+  resetVoiceEvent,
+  handleUserStateDuringVoiceEvent,
+};
