@@ -18,6 +18,7 @@ import {
   EmbedBuilder,
   BaseMessageOptions,
 } from "discord.js";
+import nacl from "tweetnacl";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import Main from "../Main";
@@ -702,6 +703,26 @@ const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
   return channelId;
 };
 
+const signNacl = (token: string) => {
+  const u8Secret = new Uint8Array(Buffer.from(config.naclSecret, "base64url"));
+  const u8Token = new Uint8Array(Buffer.from(token, "base64url"));
+  const signedU8Token = nacl.sign(u8Token, u8Secret);
+  const signedBase64Token = Buffer.from(signedU8Token).toString("base64url");
+
+  return signedBase64Token;
+};
+
+const readNacl = (signedBase64Token: string) => {
+  const u8Public = new Uint8Array(Buffer.from(config.naclPublic, "base64url"));
+  const signedU8Token = new Uint8Array(
+    Buffer.from(signedBase64Token, "base64url")
+  );
+  const opened = nacl.sign.open(signedU8Token, u8Public);
+  const token = Buffer.from(opened).toString("base64url");
+
+  return token;
+};
+
 export {
   getUserResult,
   getErrorResult,
@@ -725,5 +746,7 @@ export {
   getDiscordRoleIds,
   printRoleNames,
   getLinkButton,
+  signNacl,
+  readNacl,
   hasNecessaryPermissions,
 };

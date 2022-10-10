@@ -11,6 +11,8 @@ import {
   getJoinReplyMessage,
   getUserResult,
   notifyAccessedChannels,
+  readNacl,
+  signNacl,
   updateAccessedChannelsOfRole,
 } from "../utils/utils";
 import {
@@ -21,6 +23,8 @@ import {
   RoleEventParams,
   RoleEventResponse,
   ResolveUserResopnse,
+  DiscordServerData,
+  TokenExchangeResponse,
 } from "./types";
 
 const handleAccessEvent = async (
@@ -453,7 +457,7 @@ const fetchUserByAccessToken = async (
     });
     return {
       platformUserId: apiResponse.data.id,
-      platformUserData: { access_token: accessToken },
+      platformUserData: { accessToken: signNacl(accessToken) },
     };
   } catch (error) {
     throw Error(
@@ -464,20 +468,123 @@ const fetchUserByAccessToken = async (
   }
 };
 
-const listServers = async (userId: string) => {
-  const mutualServers = Main.client.guilds.cache.filter((g) =>
-    g.members.cache.has(userId)
-  );
-  const serverDatas = mutualServers.reduce((acc: any, guild) => {
-    acc[guild.id] = {
-      name: guild.name,
-      iconURL: guild.iconURL(),
-      bannerURL: guild.bannerURL(),
-    };
-    return acc;
-  }, {});
+const refreshAccessToken = async (
+  refreshToken: string
+): Promise<ResolveUserResopnse["platformUserData"]> => {
+  try {
+    const apiResponse = await axios.post<TokenExchangeResponse>(
+      `https://discord.com/api/v10/oauth2/token`,
+      {
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: readNacl(refreshToken),
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  return serverDatas;
+    /* eslint-disable camelcase */
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
+
+    const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
+
+    return {
+      accessToken: signNacl(access_token),
+      expiresIn,
+      refreshToken: signNacl(refresh_token),
+      scope,
+    };
+    /* eslint-enable camelcase */
+  } catch (error) {
+    throw Error(
+      `refreshAccessToken: cannot refresh token. ${JSON.stringify(
+        JSON.stringify(error.response.data)
+      )}`
+    );
+  }
+};
+
+const fetchUserByCode = async (
+  code: string,
+  redirectUri: string
+): Promise<ResolveUserResopnse> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("client_id", config.clientId);
+    params.append("client_secret", config.clientSecret);
+    params.append("grant_type", "authorization_code");
+    params.append("code", code);
+    params.append("redirect_uri", redirectUri);
+
+    const apiResponse = await axios.post<TokenExchangeResponse>(
+      `https://discord.com/api/v10/oauth2/token`,
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    /* eslint-disable camelcase */
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
+
+    const { platformUserId } = await fetchUserByAccessToken(access_token);
+
+    const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
+
+    return {
+      platformUserId,
+      platformUserData: {
+        accessToken: signNacl(access_token),
+        expiresIn,
+        refreshToken: signNacl(refresh_token),
+        scope,
+      },
+    };
+    /* eslint-enable camelcase */
+  } catch (error) {
+    throw Error(
+      `reolveUser: cannot fetch user from access_token. ${JSON.stringify(
+        JSON.stringify(error.response.data)
+      )}`
+    );
+  }
+};
+
+const listServers = async (
+  userId: string,
+  platformUserData: { accessToken: string }
+) => {
+  const res = await axios.get<DiscordServerData[]>(
+    "https://discord.com/api/users/@me/guilds",
+    {
+      headers: { authorization: `Bearer ${platformUserData.accessToken}` },
+    }
+  );
+  if (!(res.status >= 200 && res.status < 300)) {
+    throw new Error("Failed to retrieve Discord servers");
+  }
+
+  if (!Array.isArray(res.data)) return [];
+
+  return res.data
+    .filter(
+      // eslint-disable-next-line no-bitwise
+      ({ owner, permissions }) => owner || (permissions & (1 << 3)) === 1 << 3
+    )
+    .map(({ icon, id, name, owner }) => ({
+      img: icon
+        ? `https://cdn.discordapp.com/icons/${id}/${icon}.png`
+        : "/default_discord_icon.png",
+      id,
+      name,
+      owner,
+    }));
 };
 
 export {
@@ -487,4 +594,6 @@ export {
   handleGuildEvent,
   handleRoleEvent,
   fetchUserByAccessToken,
+  fetchUserByCode,
+  refreshAccessToken,
 };

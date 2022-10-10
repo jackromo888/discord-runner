@@ -173,11 +173,40 @@ type ChannelObj = {
   id: string;
 };
 
+type TokenExchangeResponse = {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token: string;
+  scope: string;
+};
+
+type ResolveUserParams =
+  | {
+      access_token: string;
+      code: undefined;
+      redirect_url: undefined;
+    }
+  | { access_token: undefined; code: string; redirect_url: string };
+
 type ResolveUserResopnse = {
   platformUserId: string;
   platformUserData: {
-    access_token: string;
+    accessToken: string;
+    expiresIn?: number;
+    refreshToken?: string;
+    scope?: string;
   };
+};
+
+type DiscordServerData = {
+  id: string;
+  name: string;
+  icon: string;
+  owner: boolean;
+  permissions: number;
+  features: string[];
+  permissions_new: string;
 };
 
 type VoiceEvents = {
@@ -239,4 +268,7 @@ export {
   VoiceEvents,
   VoiceParticipation,
   PoapResponse,
+  ResolveUserParams,
+  TokenExchangeResponse,
+  DiscordServerData,
 };
