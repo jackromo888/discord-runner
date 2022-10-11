@@ -550,43 +550,46 @@ const updateAccessedChannelsOfRole = (
   );
   const shouldHaveAccess = new Set(channelIds);
 
-  const channels = server.channels.cache.filter(
-    (channel) => !channel.isThread()
-  ) as Collection<string, GuildChannel>;
+  if (channelIds?.length > 0) {
+    const channels = server.channels.cache.filter(
+      (channel) => !channel.isThread()
+    ) as Collection<string, GuildChannel>;
 
-  if (isGuarded) {
-    shouldHaveAccess.delete(entryChannelId);
-    channels.delete(entryChannelId);
+    if (isGuarded) {
+      shouldHaveAccess.delete(entryChannelId);
+      channels.delete(entryChannelId);
+    }
+    const [channelsToAllow, channelsToDeny] = channels.partition(
+      (channel) =>
+        shouldHaveAccess.has(channel.id) ||
+        shouldHaveAccess.has(channel.parentId) ||
+        (channel.type !== "GUILD_CATEGORY" &&
+          !channel.parent &&
+          shouldHaveAccess.has("-"))
+    );
+
+    return Promise.all([
+      ...channelsToDeny.map((channelToDenyAccessTo) =>
+        channelToDenyAccessTo.permissionOverwrites.edit(roleId, {
+          VIEW_CHANNEL: null,
+        })
+      ),
+      ...channelsToAllow.map((channelToAllowAccessTo) =>
+        channelToAllowAccessTo.permissionOverwrites.edit(roleId, {
+          VIEW_CHANNEL: true,
+        })
+      ),
+      ...channelsToAllow.map((channelToAllowAccessTo) =>
+        channelToAllowAccessTo.permissionOverwrites.edit(
+          server.roles.everyone.id,
+          {
+            VIEW_CHANNEL: false,
+          }
+        )
+      ),
+    ]);
   }
-  const [channelsToAllow, channelsToDeny] = channels.partition(
-    (channel) =>
-      shouldHaveAccess.has(channel.id) ||
-      shouldHaveAccess.has(channel.parentId) ||
-      (channel.type !== "GUILD_CATEGORY" &&
-        !channel.parent &&
-        shouldHaveAccess.has("-"))
-  );
-
-  return Promise.all([
-    ...channelsToDeny.map((channelToDenyAccessTo) =>
-      channelToDenyAccessTo.permissionOverwrites.edit(roleId, {
-        VIEW_CHANNEL: null,
-      })
-    ),
-    ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.edit(roleId, {
-        VIEW_CHANNEL: true,
-      })
-    ),
-    ...channelsToAllow.map((channelToAllowAccessTo) =>
-      channelToAllowAccessTo.permissionOverwrites.edit(
-        server.roles.everyone.id,
-        {
-          VIEW_CHANNEL: false,
-        }
-      )
-    ),
-  ]);
+  return [];
 };
 
 const notifyAccessedChannels = async (
@@ -674,9 +677,7 @@ const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
     } else {
       // if there are no visible channels, find the first text channel
       logger.verbose(`Cannot find public channel in ${server.id}`);
-      channelId = server.channels.cache.filter(
-        (c) => c.type !== "GUILD_CATEGORY" && c.type !== "GUILD_PRIVATE_THREAD"
-      )[0]?.id;
+      channelId = server.channels.cache[0]?.id;
     }
 
     logger.warn(
