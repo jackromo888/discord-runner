@@ -2,13 +2,12 @@
 import {
   ApplicationCommandOptionType,
   BaseMessageOptions,
-  ChannelType,
   CommandInteraction,
   EmbedBuilder,
   GuildMember,
   PermissionsBitField,
 } from "discord.js";
-import { Discord, Slash, SlashOption } from "discordx";
+import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { GetGuildResponse } from "@guildxyz/sdk";
 import { join, ping, status } from "../commands";
 import logger from "../utils/logger";
@@ -17,6 +16,7 @@ import config from "../config";
 import Main from "../Main";
 import { sendMessageLimiter } from "../utils/limiters";
 import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
+import OnlyGuild from "../guards/OnlyGuild";
 
 @Discord()
 abstract class Slashes {
@@ -37,6 +37,7 @@ abstract class Slashes {
     name: "status",
     description: "Update all of your guild accesses in every server.",
   })
+  @Guard(OnlyGuild)
   async status(interaction: CommandInteraction): Promise<void> {
     logger.verbose(
       `/status command was used by ${interaction.user.username}#${interaction.user.discriminator} userId: ${interaction.user.id}`
@@ -68,17 +69,9 @@ abstract class Slashes {
   }
 
   @Slash({ name: "join", description: "Join the guild of this server." })
+  @Guard(OnlyGuild)
   async join(interaction: CommandInteraction) {
     try {
-      if (interaction.channel.type !== ChannelType.GuildText) {
-        await sendMessageLimiter.schedule(() =>
-          interaction.reply(
-            "❌ Use this command in a server to join all of its guilds you have access to!"
-          )
-        );
-        return;
-      }
-
       logger.verbose(
         `/join command was used by ${interaction.user.username}#${interaction.user.discriminator}`
       );
@@ -132,6 +125,7 @@ abstract class Slashes {
     name: "join-button",
     description: "Generate a join button. (Only for server administrators!)",
   })
+  @Guard(OnlyGuild)
   async joinButton(
     @SlashOption({
       name: "title",
@@ -157,15 +151,6 @@ abstract class Slashes {
     interaction: CommandInteraction
   ) {
     try {
-      if (interaction.channel.type !== ChannelType.GuildText) {
-        await sendMessageLimiter.schedule(() =>
-          interaction.reply(
-            "Use this command in a server to spawn a join button!"
-          )
-        );
-        return;
-      }
-
       if (
         !(interaction.member as GuildMember).permissions.has(
           PermissionsBitField.Flags.Administrator
@@ -225,6 +210,7 @@ abstract class Slashes {
     name: "start-voice-event",
     description: "Starting a Voice Event on your server in the given channel.",
   })
+  @Guard(OnlyGuild)
   async startVoiceEvent(
     @SlashOption({
       name: "poapid",
@@ -263,6 +249,7 @@ abstract class Slashes {
     name: "stop-voice-event",
     description: "Stopping a Voice Event on your server in the given channel.",
   })
+  @Guard(OnlyGuild)
   async stopVoiceEvent(
     @SlashOption({
       name: "poapid",
