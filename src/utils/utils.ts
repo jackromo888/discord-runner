@@ -708,7 +708,7 @@ const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
 
 const signNacl = (token: string) => {
   const u8Secret = new Uint8Array(Buffer.from(config.naclSecret, "base64url"));
-  const u8Token = new Uint8Array(Buffer.from(token, "base64url"));
+  const u8Token = new Uint8Array(Buffer.from(token, "utf8"));
   const signedU8Token = nacl.sign(u8Token, u8Secret);
   const signedBase64Token = Buffer.from(signedU8Token).toString("base64url");
 
@@ -721,7 +721,7 @@ const readNacl = (signedBase64Token: string) => {
     Buffer.from(signedBase64Token, "base64url")
   );
   const opened = nacl.sign.open(signedU8Token, u8Public);
-  const token = Buffer.from(opened).toString("base64url");
+  const token = Buffer.from(opened).toString("utf8");
 
   return token;
 };
