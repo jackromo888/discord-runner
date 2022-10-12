@@ -15,7 +15,8 @@
     "prod": "node build/Main.js",
     "prepare": "husky install",
     "format": "prettier --write .",
-    "lint-fix": "eslint --fix . --ext .ts,.tsx,.js,.jsx"
+    "lint-fix": "eslint --fix . --ext .ts,.tsx,.js,.jsx",
+    "type-check": "tsc --pretty --noEmit --incremental false"
   },
   "dependencies": {
     "@discordx/importer": "^1.1.10",
