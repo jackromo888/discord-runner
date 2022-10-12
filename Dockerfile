@@ -1,5 +1,31 @@
 # syntax=docker/dockerfile:1.3
-FROM node:17.9.0-alpine3.15 AS builder
+
+#
+# Builder stage.
+# This state compile our TypeScript to get the JavaScript code
+#
+
+ARG PROJECT_NAME=discord-runner \
+    NODE_VERSION=18.10.0 \
+    ALPINE_VERSION=3.16 \
+    ARCH=amd64 \
+    BRANCH=main \
+    COMMIT=aaaaaaa \
+    DEVELOPER=GitHubUser \
+    TIMESTAMP=2022-10-12T14:30:27+02:00 \
+    USER=appuser \
+    UID=10001 \
+    PORT=8989
+
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS builder
+
+ARG USER \
+    UID
+
+RUN apk update --no-cache \
+   && apk add --no-cache ca-certificates tzdata \
+   && update-ca-certificates \
+   && adduser --disabled-password --gecos "" --home "/nonexistent" --shell "/sbin/nologin" --no-create-home --uid ${UID} ${USER}
 
 WORKDIR /app
 
@@ -7,26 +33,40 @@ COPY package*.json ./
 COPY tsconfig*.json ./
 COPY ./src ./src
 
-RUN npm ci --quiet && npm run build
+RUN npm ci --quiet \
+  && npm run build
 
-FROM node:17.9.0-alpine3.15 AS app
+#
+# Production stage.
+# This state compile get back the JavaScript code from builder stage
+# It will also install the production package only
+#
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS app
 
+ARG PROJECT_NAME \
+    DEVELOPER \
+    TIMESTAMP \
+    COMMIT \
+    BRANCH \
+    NODE_VERSION \
+    ALPINE_VERSION \
+    USER \
+    PORT
+
+LABEL xyz.guild.image.authors="D3v <security@guild.xyz>" \
+    project_name=${PROJECT_NAME} \
+    developer=${DEVELOPER} \
+    timestamp=${TIMESTAMP} \
+    commit_sha=${COMMIT} \
+    commit_branch=${BRANCH} \
+    node_version=${NODE_VERSION} \
+    alpine_version=${ALPINE_VERSION}
+    
 ENV NODE_ENV=production
-ENV TZ=Europe/Budapest
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \ 
-  && chmod +x /usr/local/bin/dumb-init
 
 WORKDIR /app
 
-RUN apk update --no-cache \
-  && apk upgrade --no-cache \
-  && apk add --no-cache git \
-  && deluser --remove-home node \
-  && addgroup -S node -g 1001 \
-  && adduser -S -G node -u 1001 node \
-  && chmod u+s /bin/ping \
+RUN chmod u+s /bin/ping \
   && rm -rf /lib/apk \
   && rm -rf /etc/apk \
   && rm -rf /usr/share/apk \
@@ -36,9 +76,14 @@ RUN apk update --no-cache \
   && rm -rf /usr/local/lib/node_modules/npm \
   && rm -rf /usr/local/bin/LICENSE
 
-COPY --chown=node:node --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node --from=builder /app/build ./build
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo 
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-EXPOSE 8990
+COPY --from=builder --chown=${USER}:${USER} /app/node_modules ./node_modules
+COPY --from=builder --chown=${USER}:${USER} /app/build ./build
 
-CMD ["/usr/local/bin/dumb-init", "node", "build/Main.js"]
+EXPOSE ${PORT}
+
+CMD ["node", "build/Main.js"]
