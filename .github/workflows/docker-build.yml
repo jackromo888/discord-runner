@@ -88,11 +88,6 @@ jobs:
           username: ${{ secrets.DOCKER_LOGIN_NAME }}
           password: ${{ secrets.DOCKER_API_TOKEN }}
 
-      - name: Check container image with dive
-        run: |
-          docker pull wagoodman/dive:$DIVE_VERSION
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --mount type=bind,source="$(pwd)"/.github/.dive-ci,target=/.dive-ci,readonly wagoodman/dive:$DIVE_VERSION --ci $REGISTRY:$BRANCH --ci-config /.dive-ci
-
       - name: Build and push
         uses: docker/build-push-action@v3.1.1
         with:
