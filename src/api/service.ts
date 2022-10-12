@@ -562,7 +562,9 @@ const listServers = async (
   const res = await axios.get<DiscordServerData[]>(
     "https://discord.com/api/users/@me/guilds",
     {
-      headers: { authorization: `Bearer ${platformUserData.accessToken}` },
+      headers: {
+        authorization: `Bearer ${readNacl(platformUserData.accessToken)}`,
+      },
     }
   );
   if (!(res.status >= 200 && res.status < 300)) {
