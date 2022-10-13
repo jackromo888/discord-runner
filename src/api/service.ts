@@ -235,10 +235,8 @@ const handleRoleEvent = async (
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
 
-        await inviteChannel.permissionsFor(role).add("ViewChannel");
-        await inviteChannel
-          .permissionsFor(server.roles.everyone)
-          .add("ViewChannel");
+        inviteChannel.permissionsFor(role).add("ViewChannel");
+        inviteChannel.permissionsFor(server.roles.everyone).add("ViewChannel");
 
         await server.roles.everyone.setPermissions(
           server.roles.everyone.permissions.remove("ViewChannel")
@@ -314,10 +312,8 @@ const handleRoleEvent = async (
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
 
-        await inviteChannel.permissionsFor(role).remove("ViewChannel");
-        await inviteChannel
-          .permissionsFor(server.roles.everyone)
-          .add("ViewChannel");
+        inviteChannel.permissionsFor(role).remove("ViewChannel");
+        inviteChannel.permissionsFor(server.roles.everyone).add("ViewChannel");
 
         await server.roles.everyone.setPermissions(
           server.roles.everyone.permissions.remove("ViewChannel")
