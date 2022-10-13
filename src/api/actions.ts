@@ -64,6 +64,18 @@ const createChannel = async (params: CreateChannelParams) => {
         type: OverwriteType.Role,
         deny: "SendMessages",
       },
+      {
+        id: Main.client.user.id,
+        type: OverwriteType.Member,
+        allow: [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AddReactions",
+          "UseExternalEmojis",
+          "ReadMessageHistory",
+        ],
+      },
     ],
   });
 
@@ -318,17 +330,6 @@ const sendDiscordButton = async (
   if (!modifiableChannel?.isTextBased()) {
     return false;
   }
-
-  modifiableChannel
-    .permissionsFor(Main.client.user.id)
-    .add(
-      "ViewChannel",
-      "SendMessages",
-      "EmbedLinks",
-      "AddReactions",
-      "UseExternalEmojis",
-      "ReadMessageHistory"
-    );
 
   const guildOfServer = await Main.platform.guild.get(guildId);
   const payload = createInteractionPayload(
