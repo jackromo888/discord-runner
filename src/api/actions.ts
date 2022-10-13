@@ -319,9 +319,16 @@ const sendDiscordButton = async (
     return false;
   }
 
-  await modifiableChannel
+  modifiableChannel
     .permissionsFor(Main.client.user.id)
-    .add("SendMessages");
+    .add(
+      "ViewChannel",
+      "SendMessages",
+      "EmbedLinks",
+      "AddReactions",
+      "UseExternalEmojis",
+      "ReadMessageHistory"
+    );
 
   const guildOfServer = await Main.platform.guild.get(guildId);
   const payload = createInteractionPayload(
