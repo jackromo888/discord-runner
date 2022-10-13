@@ -210,7 +210,6 @@ const handleRoleEvent = async (
       let role: Role;
       if (roleInServer) {
         role = await roleInServer.edit({
-          name: roleName,
           permissions:
             platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
           reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
