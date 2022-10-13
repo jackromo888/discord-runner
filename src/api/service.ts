@@ -1,6 +1,6 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
-import { GuildMember, EmbedBuilder, Role } from "discord.js";
+import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
@@ -235,8 +235,17 @@ const handleRoleEvent = async (
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
 
-        inviteChannel.permissionsFor(role).add("ViewChannel");
-        inviteChannel.permissionsFor(server.roles.everyone).add("ViewChannel");
+        if (inviteChannel instanceof TextChannel) {
+          await inviteChannel.permissionOverwrites.create(
+            server.roles.everyone,
+            {
+              ViewChannel: true,
+            }
+          );
+          await inviteChannel.permissionOverwrites.create(role, {
+            ViewChannel: true,
+          });
+        }
 
         await server.roles.everyone.setPermissions(
           server.roles.everyone.permissions.remove("ViewChannel")
