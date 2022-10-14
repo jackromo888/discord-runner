@@ -1,6 +1,10 @@
 import axios from "axios";
 import { importx } from "@discordx/importer";
-import { Intents, MessageComponentInteraction } from "discord.js";
+import {
+  IntentsBitField,
+  MessageComponentInteraction,
+  Partials,
+} from "discord.js";
 import { Client } from "discordx";
 import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
 import config from "./config";
@@ -25,27 +29,29 @@ class Main {
     this.client = new Client({
       shardCount: 3,
       intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MEMBERS,
-        Intents.FLAGS.GUILD_INVITES,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-        Intents.FLAGS.GUILD_PRESENCES,
-        Intents.FLAGS.DIRECT_MESSAGES,
-        Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-        Intents.FLAGS.GUILD_VOICE_STATES,
+        IntentsBitField.Flags.Guilds,
+        IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildInvites,
+        IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildMessageReactions,
+        IntentsBitField.Flags.GuildPresences,
+        IntentsBitField.Flags.DirectMessages,
+        IntentsBitField.Flags.DirectMessageReactions,
+        IntentsBitField.Flags.GuildVoiceStates,
       ],
-      partials: ["MESSAGE", "CHANNEL", "REACTION"],
-      retryLimit: 3,
-      // rejectOnRateLimit: ["/"],
-      restGlobalRateLimit: 50,
+      partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+      rest: {
+        retries: 3,
+        globalRequestsPerSecond: 50,
+        // rejectOnRateLimit: ["/"],
+      },
     });
 
     this.client.on("ready", async () => {
       logger.info(">> Bot started");
 
       await this.client.initApplicationCommands();
-      await this.client.initApplicationPermissions();
+      await this.client.initGlobalApplicationCommands();
     });
 
     this.client.on("messageCreate", (message) => {

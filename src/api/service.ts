@@ -1,6 +1,6 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
-import { GuildMember, MessageEmbed, Permissions, Role } from "discord.js";
+import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
@@ -11,6 +11,8 @@ import {
   getJoinReplyMessage,
   getUserResult,
   notifyAccessedChannels,
+  readNacl,
+  signNacl,
   updateAccessedChannelsOfRole,
 } from "../utils/utils";
 import {
@@ -21,6 +23,8 @@ import {
   RoleEventParams,
   RoleEventResponse,
   ResolveUserResopnse,
+  DiscordServerData,
+  TokenExchangeResponse,
 } from "./types";
 
 const handleAccessEvent = async (
@@ -101,14 +105,15 @@ const handleAccessEvent = async (
       );
 
       // notify user about removed roles
-      const embed = new MessageEmbed({
-        title: `You no longer have access to the \`${rolesToRemove
-          .map((r) => r.name)
-          .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
-          guild.name
-        }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-        color: `#${config.embedColor.default}`,
-      });
+      const embed = new EmbedBuilder()
+        .setTitle(
+          `You no longer have access to the \`${rolesToRemove
+            .map((r) => r.name)
+            .join(",")}\` role${rolesToRemove.size > 1 ? "s" : ""} in \`${
+            guild.name
+          }\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`
+        )
+        .setColor(`#${config.embedColor.default}`);
       try {
         await sendMessageLimiter.schedule({ priority: highPrio ? 5 : 6 }, () =>
           updatedMember.send({ embeds: [embed] })
@@ -204,16 +209,11 @@ const handleRoleEvent = async (
       // check if role exists
       let role: Role;
       if (roleInServer) {
-        role = await roleInServer.edit(
-          {
-            name: roleName,
-            permissions:
-              platformRoleData?.isGuarded === true
-                ? Permissions.FLAGS.VIEW_CHANNEL
-                : undefined,
-          },
-          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
-        );
+        role = await roleInServer.edit({
+          permissions:
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
+          reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
+        });
       } else {
         // if not exists create a new
         role = await server.roles.create({
@@ -221,9 +221,7 @@ const handleRoleEvent = async (
           hoist: true,
           reason: `Created by ${Main.client.user.username} for a Guild role.`,
           permissions:
-            platformRoleData?.isGuarded === true
-              ? Permissions.FLAGS.VIEW_CHANNEL
-              : undefined,
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
         });
       }
 
@@ -236,14 +234,21 @@ const handleRoleEvent = async (
       // if guarded, hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        await inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
-          VIEW_CHANNEL: true,
-        });
+
+        if (inviteChannel instanceof TextChannel) {
+          await inviteChannel.permissionOverwrites.create(
+            server.roles.everyone,
+            {
+              ViewChannel: true,
+            }
+          );
+          await inviteChannel.permissionOverwrites.create(role, {
+            ViewChannel: true,
+          });
+        }
+
         await server.roles.everyone.setPermissions(
-          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+          server.roles.everyone.permissions.remove("ViewChannel")
         );
 
         // if grantAccessToExistingUsers, give everyone this role
@@ -289,16 +294,12 @@ const handleRoleEvent = async (
       // check if role exists
       let role: Role;
       if (roleInServer) {
-        role = await roleInServer.edit(
-          {
-            name: roleName,
-            permissions:
-              platformRoleData?.isGuarded === true
-                ? Permissions.FLAGS.VIEW_CHANNEL
-                : undefined,
-          },
-          `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
-        );
+        role = await roleInServer.edit({
+          name: roleName,
+          permissions:
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
+          reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
+        });
       } else {
         // if not exists create a new
         role = await server.roles.create({
@@ -306,9 +307,7 @@ const handleRoleEvent = async (
           hoist: true,
           reason: `Created by ${Main.client.user.username} for a Guild role.`,
           permissions:
-            platformRoleData?.isGuarded === true
-              ? Permissions.FLAGS.VIEW_CHANNEL
-              : undefined,
+            platformRoleData?.isGuarded === true ? "ViewChannel" : undefined,
         });
       }
 
@@ -321,17 +320,12 @@ const handleRoleEvent = async (
       // if guarded hide invite channel for role
       if (platformRoleData?.isGuarded === true) {
         const inviteChannel = await server.channels.fetch(inviteChannelId);
-        inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(role, {
-          VIEW_CHANNEL: false,
-        });
-        await inviteChannel.permissionOverwrites.create(server.roles.everyone, {
-          VIEW_CHANNEL: true,
-        });
+
+        inviteChannel.permissionsFor(role).remove("ViewChannel");
+        inviteChannel.permissionsFor(server.roles.everyone).add("ViewChannel");
+
         await server.roles.everyone.setPermissions(
-          server.roles.everyone.permissions.remove("VIEW_CHANNEL")
+          server.roles.everyone.permissions.remove("ViewChannel")
         );
 
         // if grantAccessToExistingUsers, give everyone this role
@@ -466,7 +460,7 @@ const fetchUserByAccessToken = async (
     });
     return {
       platformUserId: apiResponse.data.id,
-      platformUserData: { access_token: accessToken },
+      platformUserData: { accessToken: signNacl(accessToken) },
     };
   } catch (error) {
     throw Error(
@@ -477,20 +471,125 @@ const fetchUserByAccessToken = async (
   }
 };
 
-const listServers = async (userId: string) => {
-  const mutualServers = Main.client.guilds.cache.filter((g) =>
-    g.members.cache.has(userId)
-  );
-  const serverDatas = mutualServers.reduce((acc: any, guild) => {
-    acc[guild.id] = {
-      name: guild.name,
-      iconURL: guild.iconURL(),
-      bannerURL: guild.bannerURL(),
-    };
-    return acc;
-  }, {});
+const refreshAccessToken = async (
+  refreshToken: string
+): Promise<ResolveUserResopnse["platformUserData"]> => {
+  try {
+    const apiResponse = await axios.post<TokenExchangeResponse>(
+      `https://discord.com/api/v10/oauth2/token`,
+      {
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: readNacl(refreshToken),
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  return serverDatas;
+    /* eslint-disable camelcase */
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
+
+    const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
+
+    return {
+      accessToken: signNacl(access_token),
+      expiresIn,
+      refreshToken: signNacl(refresh_token),
+      scope,
+    };
+    /* eslint-enable camelcase */
+  } catch (error) {
+    throw Error(
+      `refreshAccessToken: cannot refresh token. ${JSON.stringify(
+        JSON.stringify(error.response.data)
+      )}`
+    );
+  }
+};
+
+const fetchUserByCode = async (
+  code: string,
+  redirectUri: string
+): Promise<ResolveUserResopnse> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("client_id", config.clientId);
+    params.append("client_secret", config.clientSecret);
+    params.append("grant_type", "authorization_code");
+    params.append("code", code);
+    params.append("redirect_uri", redirectUri);
+
+    const apiResponse = await axios.post<TokenExchangeResponse>(
+      `https://discord.com/api/v10/oauth2/token`,
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    /* eslint-disable camelcase */
+    const { access_token, expires_in, refresh_token, scope } = apiResponse.data;
+
+    const { platformUserId } = await fetchUserByAccessToken(access_token);
+
+    const expiresIn = Date.now() + (expires_in - 300) * 1000; // 5 minutes before the actual expiry time
+
+    return {
+      platformUserId,
+      platformUserData: {
+        accessToken: signNacl(access_token),
+        expiresIn,
+        refreshToken: signNacl(refresh_token),
+        scope,
+      },
+    };
+    /* eslint-enable camelcase */
+  } catch (error) {
+    throw Error(
+      `reolveUser: cannot fetch user from access_token. ${JSON.stringify(
+        JSON.stringify(error.response.data)
+      )}`
+    );
+  }
+};
+
+const listServers = async (
+  userId: string,
+  platformUserData: { accessToken: string }
+) => {
+  const res = await axios.get<DiscordServerData[]>(
+    "https://discord.com/api/users/@me/guilds",
+    {
+      headers: {
+        authorization: `Bearer ${readNacl(platformUserData.accessToken)}`,
+      },
+    }
+  );
+  if (!(res.status >= 200 && res.status < 300)) {
+    throw new Error("Failed to retrieve Discord servers");
+  }
+
+  if (!Array.isArray(res.data)) return [];
+
+  return res.data
+    .filter(
+      // eslint-disable-next-line no-bitwise
+      ({ owner, permissions }) => owner || (permissions & (1 << 3)) === 1 << 3
+    )
+    .map(({ icon, id, name, owner }) => ({
+      img: icon
+        ? `https://cdn.discordapp.com/icons/${id}/${icon}.png`
+        : "/default_discord_icon.png",
+      id,
+      name,
+      owner,
+    }));
 };
 
 export {
@@ -500,4 +599,6 @@ export {
   handleGuildEvent,
   handleRoleEvent,
   fetchUserByAccessToken,
+  fetchUserByCode,
+  refreshAccessToken,
 };

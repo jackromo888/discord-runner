@@ -1,9 +1,9 @@
-name: Branch based docker build and publish
+name: Docker build, sign, publish, SBOM generate and Grype scan
 
 # Language: typescript
-# Version: 2.0.0
-# Runner: self-hosted
-# Visibility: private
+# Version: 1.0.3
+# Runner: ubuntu-latest
+# Visibility: public
 
 on:
   push:
@@ -20,14 +20,17 @@ env:
 
 jobs:
   build:
-    name: Build and publish the container image
+    name: Build, push, sign
     runs-on: self-hosted
     if: github.event_name == 'push' || github.event.pull_request.merged == true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
       - name: Setup buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
         with:
           install: true
 
@@ -43,70 +46,92 @@ jobs:
         run: echo "REPOSITORY_NAME=$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//")" >> $GITHUB_ENV
         shell: bash
 
-      - name: Determine tag name
+      - name: Determine tag name and build arguments
         run: |
-          IMAGE_ID=${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_LOGIN_NAME }}/$REPOSITORY_NAME
+          REGISTRY=${{ secrets.DOCKER_REPO }}/${{ secrets.DOCKER_LOGIN_NAME }}/$REPOSITORY_NAME
+          REGISTRY=$(echo $REGISTRY | tr '[A-Z]' '[a-z]')  
+          echo "REGISTRY=$REGISTRY" >> $GITHUB_ENV
+          echo "BRANCH=$(echo ${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}})" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(echo $(date --iso-8601="seconds"))" >> $GITHUB_ENV
+        shell: bash
 
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-
-          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Docker tag meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}
+          tags: |
+            type=ref,event=branch
+            type=sha
 
       - name: Build container image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3.1.1
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
+          platforms: linux/amd64
           file: Dockerfile
           load: true
-          tags: app:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          outputs: type=docker,dest=/tmp/image.tar
+          build-args: |
+            COMMIT=${{ github.sha }}
+            DEVELOPER=${{ github.actor }}
+            BRANCH=${{ env.BRANCH }}
+            TIMESTAMP=${{ env.TIMESTAMP }}
 
       - name: Login to External Container Registry
-        uses: docker/login-action@v1
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
         with:
           registry: ${{ secrets.DOCKER_REPO }}
           username: ${{ secrets.DOCKER_LOGIN_NAME }}
           password: ${{ secrets.DOCKER_API_TOKEN }}
 
-      - name: Check container image with dive
-        run: |
-          docker pull wagoodman/dive:$DIVE_VERSION
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --mount type=bind,source="$(pwd)"/.github/.dive-ci,target=/.dive-ci,readonly wagoodman/dive:$DIVE_VERSION --ci app:latest --ci-config /.dive-ci
+      - name: Build and push
+        uses: docker/build-push-action@v3.1.1
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            COMMIT=${{ github.sha }}
+            DEVELOPER=${{ github.actor }}
+            BRANCH=${{ env.BRANCH }}
+            TIMESTAMP=${{ env.TIMESTAMP }}
 
-      - name: Tag the container images
+      - name: Sign container image
         run: |
-          docker tag app:latest $IMAGE_ID:$VERSION
+          cosign sign --key env://COSIGN_PRIVATE_KEY -a REPO=$REPOSITORY_NAME -a TAG=$VERSION -a SIGNER=GitHub -a DEVELOPER=${{ github.actor }} -a TIMESTAMP=$(date --iso-8601="seconds") ${TAGS}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{secrets.COSIGN_PRIVATE_KEY}}
+          COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
+      # Syft can't attest multiple container image at same time
+      # and can't read the cosign private key from env
       - name: Setup Cosign Private Key
         run: echo "$KEY" > cosign.key
         shell: bash
         env:
           KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
 
-      - name: Push container image to External Container Registry
-        run: docker push $IMAGE_ID:$VERSION
-
-      - name: Sign container image
-        run: |
-          cosign sign --key cosign.key -a REPO=$REPOSITORY_NAME -a TAG=$VERSION -a SIGNER=GitHub -a DEVELOPER=${{ github.actor }} -a TIMESTAMP=$(date --iso-8601="seconds") $IMAGE_ID:$VERSION
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-
       - name: Generate SBOM, sign and push
         run: |
-          syft attest --output syft-json --key cosign.key $IMAGE_ID:$VERSION > sbom_attestation.json
-          cosign attach attestation --attestation sbom_attestation.json $IMAGE_ID:$VERSION
+          syft attest --output syft-json --key cosign.key ${TAGS} > sbom_attestation.json
+          cosign attach attestation --attestation sbom_attestation.json ${TAGS}
         env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          TAGS: ${{ env.REGISTRY}}:${{ env.BRANCH }}
+          COSIGN_PRIVATE_KEY: ${{secrets.COSIGN_PRIVATE_KEY}}
+          COSIGN_PASSWORD: ${{secrets.COSIGN_PASSWORD}}
 
       - name: Wipe cosign.key
         run: |
           openssl rand -hex 1024 > cosign.key
           rm cosign.key
-
+          
       - name: Archive sbom results
         uses: actions/upload-artifact@v3
         with:
@@ -143,12 +168,13 @@ jobs:
       - name: Scan SBOM attestation file
         run: |
           grype sbom_attestation.json --key cosign.pub --only-fixed -o table -f medium --file grype_report.txt
-        continue-on-error: true
+        #continue-on-error: true
+
+      - name: Print Grype report
+        run: cat grype_report.txt
 
       - name: Archive grype results
         uses: actions/upload-artifact@v3
         with:
           name: GRYPE_REPORT
           path: grype_report.txt
-
-

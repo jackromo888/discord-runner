@@ -1,5 +1,9 @@
 /* eslint-disable class-methods-use-this */
-import { ButtonInteraction, MessageEmbed, MessageOptions } from "discord.js";
+import {
+  ButtonInteraction,
+  EmbedBuilder,
+  BaseMessageOptions,
+} from "discord.js";
 import { ButtonComponent, Discord } from "discordx";
 import { getUserPoap } from "../api/actions";
 import { join } from "../commands";
@@ -8,7 +12,9 @@ import logger from "../utils/logger";
 
 @Discord()
 abstract class Buttons {
-  @ButtonComponent("join-button")
+  @ButtonComponent({
+    id: "join-button",
+  })
   async joinButton(interaction: ButtonInteraction) {
     logger.debug(
       `join-trace ${interaction.user?.id} ${interaction.guildId} button pressed`
@@ -26,7 +32,7 @@ abstract class Buttons {
       `join-trace ${interaction.user?.id} ${interaction.guildId} reply sent`
     );
 
-    let messagePayload: MessageOptions;
+    let messagePayload: BaseMessageOptions;
     try {
       messagePayload = await join(
         interaction?.user.id,
@@ -40,11 +46,10 @@ abstract class Buttons {
         );
         await interaction.editReply({
           embeds: [
-            new MessageEmbed({
-              title: "Error",
-              description: "There is no guild associated with this server.",
-              color: `#${config.embedColor.error}`,
-            }),
+            new EmbedBuilder()
+              .setTitle("Error")
+              .setDescription("There is no guild associated with this server.")
+              .setColor(`#${config.embedColor.error}`),
           ],
         });
         return;
@@ -52,11 +57,10 @@ abstract class Buttons {
       logger.error(`join-button - ${error}`);
       await interaction.editReply({
         embeds: [
-          new MessageEmbed({
-            title: "Error",
-            description: "Unkown error occured, please try again later.",
-            color: `#${config.embedColor.error}`,
-          }),
+          new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription("Unkown error occured, please try again later.")
+            .setColor(`#${config.embedColor.error}`),
         ],
       });
       return;
@@ -78,7 +82,9 @@ abstract class Buttons {
     }
   }
 
-  @ButtonComponent("poap-claim-button")
+  @ButtonComponent({
+    id: "poap-claim-button",
+  })
   async claimButton(interaction: ButtonInteraction) {
     try {
       await interaction.reply({

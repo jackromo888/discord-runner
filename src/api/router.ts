@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body } from "express-validator";
+import { body, oneOf } from "express-validator";
 import controller from "./controller";
 import validators from "./validators";
 
@@ -45,13 +45,22 @@ const createRouter = () => {
 
   router.post(
     "/resolveUser",
-    validators.bodyStringValidator("access_token"),
+    oneOf([
+      validators.bodyStringValidator("access_token"),
+      validators.bodyStringValidator("code"),
+    ]),
     controller.resolveUser
   );
 
-  router.get(
-    "/listGateables/:platformUserId",
-    validators.paramDiscordId("platformUserId"),
+  router.post(
+    "/refreshTokens",
+    validators.bodyStringValidator("refreshToken"),
+    controller.refresh
+  );
+
+  router.post(
+    "/listGateables",
+    validators.bodyDiscordId("platformUserId"),
     controller.listGateables
   );
 

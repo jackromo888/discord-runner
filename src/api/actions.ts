@@ -2,15 +2,18 @@
 
 import {
   Role,
-  Permissions,
-  MessageEmbed,
   ThreadChannel,
   Collection,
   TextChannel,
   Message,
-  MessageButton,
-  MessageOptions,
-  MessageActionRow,
+  ChannelType,
+  OverwriteType,
+  BaseMessageOptions,
+  ButtonBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  MessageActionRowComponentBuilder,
+  ButtonStyle,
 } from "discord.js";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -52,10 +55,27 @@ const createChannel = async (params: CreateChannelParams) => {
   const { guildId, channelName } = params;
   const guild = await Main.client.guilds.fetch(guildId);
 
-  const createdChannel = await guild.channels.create(channelName, {
-    type: "GUILD_TEXT",
+  const createdChannel = await guild.channels.create({
+    name: channelName,
+    type: ChannelType.GuildText,
     permissionOverwrites: [
-      { type: "role", id: guild.roles.everyone.id, deny: "SEND_MESSAGES" },
+      {
+        id: guild.roles.everyone.id,
+        type: OverwriteType.Role,
+        deny: "SendMessages",
+      },
+      {
+        id: Main.client.user.id,
+        type: OverwriteType.Member,
+        allow: [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AddReactions",
+          "UseExternalEmojis",
+          "ReadMessageHistory",
+        ],
+      },
     ],
   });
 
@@ -75,7 +95,7 @@ const createRole = async (
     name: roleName,
     hoist: true,
     reason: `Created by ${Main.client.user.username} for a Guild role.`,
-    permissions: Permissions.FLAGS.VIEW_CHANNEL,
+    permissions: "ViewChannel",
   });
   logger.verbose(`role created: ${role.id}`);
 
@@ -100,13 +120,11 @@ const updateRoleName = async (
 
   const role = await guild.roles.fetch(roleId);
 
-  const updatedRole = await role.edit(
-    {
-      name: newRoleName,
-      permissions: isGuarded ? role.permissions.add("VIEW_CHANNEL") : undefined,
-    },
-    `Updated by ${Main.client.user.username} because the role name has changed in Guild.`
-  );
+  const updatedRole = await role.edit({
+    name: newRoleName,
+    permissions: isGuarded ? role.permissions.add("ViewChannel") : undefined,
+    reason: `Updated by ${Main.client.user.username} because the role name has changed in Guild.`,
+  });
 
   if (isGuarded) {
     denyViewEntryChannelForRole(role, entryChannelId);
@@ -126,7 +144,7 @@ const getServerInfo = async (guildId: string) => {
         ? ""
         : `https://cdn.discordapp.com/icons/${guildId}/${iconId}.png`;
 
-    if (!guild.me.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
+    if (!guild.members.me.permissions.has("ManageRoles")) {
       return {
         serverIcon,
         serverName,
@@ -144,10 +162,8 @@ const getServerInfo = async (guildId: string) => {
     const channels = guild?.channels.cache
       .filter(
         (c) =>
-          c.type === "GUILD_TEXT" &&
-          c
-            .permissionsFor(guild.roles.everyone)
-            .has(Permissions.FLAGS.VIEW_CHANNEL)
+          c.isTextBased() &&
+          c.permissionsFor(guild.roles.everyone).has("ViewChannel")
       )
       .map((c) => ({
         id: c?.id,
@@ -193,7 +209,7 @@ const listAdministeredServers = async (userId: string) => {
 
   const administeredServers = Main.client.guilds.cache
     .filter((g) =>
-      g.members.cache.get(userId)?.permissions.has("ADMINISTRATOR")
+      g.members.cache.get(userId)?.permissions.has("Administrator")
     )
     .map((g) => ({ name: g.name, id: g.id }));
 
@@ -210,7 +226,7 @@ const getRole = async (guildId: string, roleId: string) => {
 const getUserPoap = async (
   userId: string,
   serverId: string
-): Promise<MessageOptions> => {
+): Promise<BaseMessageOptions> => {
   try {
     const errorTexts = ["claimable", "expired", "left", "requirements"];
     const guild = await Main.platform.guild.get(serverId);
@@ -231,11 +247,10 @@ const getUserPoap = async (
               }
             );
 
-            return new MessageButton({
-              label: `Claim ${poap.fancyId}`.slice(0, 80),
-              style: "LINK",
-              url: response.data,
-            });
+            return new ButtonBuilder()
+              .setLabel(`Claim ${poap.fancyId}`.slice(0, 80))
+              .setStyle(ButtonStyle.Link)
+              .setURL(response.data);
           } catch (err: any) {
             const errorMessage = getBackendErrorMessage(err);
             logger.warn(`poapClaim - ${userId} ${errorMessage} `);
@@ -244,11 +259,12 @@ const getUserPoap = async (
               return errorMessage;
             }
 
-            return new MessageButton({
-              label: `Join ${poap.fancyId}`.slice(0, 80),
-              style: "LINK",
-              url: `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`,
-            });
+            return new ButtonBuilder()
+              .setLabel(`Join ${poap.fancyId}`.slice(0, 80))
+              .setStyle(ButtonStyle.Link)
+              .setURL(
+                `https://guild.xyz/${guild.urlName}/claim-poap/${poap.fancyId}`
+              );
           }
         })
     );
@@ -280,7 +296,7 @@ const getUserPoap = async (
         };
     return {
       components: [
-        new MessageActionRow({
+        new ActionRowBuilder<MessageActionRowComponentBuilder>({
           components: poapLinks.filter((p) => p !== null && p.url).slice(0, 5),
         }),
       ],
@@ -311,13 +327,9 @@ const sendDiscordButton = async (
   const server = await Main.client.guilds.fetch(guildId);
   const modifiableChannel = await server.channels.fetch(channelId);
 
-  if (!modifiableChannel?.isText()) {
+  if (!modifiableChannel?.isTextBased()) {
     return false;
   }
-
-  await modifiableChannel.permissionOverwrites.create(Main.client.user.id, {
-    SEND_MESSAGES: true,
-  });
 
   const guildOfServer = await Main.platform.guild.get(guildId);
   const payload = createInteractionPayload(
@@ -370,10 +382,11 @@ const manageMigratedActions = async (
         await manageRoleLimiter.schedule({ priority: 9 }, async () =>
           m.roles.remove(roleId)
         );
-        const embed = new MessageEmbed({
-          title: `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`,
-          color: `#${config.embedColor.default}`,
-        });
+        const embed = new EmbedBuilder()
+          .setTitle(
+            `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`
+          )
+          .setColor(`#${config.embedColor.default}`);
         try {
           await sendMessageLimiter.schedule({ priority: 9 }, () =>
             m.send({ embeds: [embed] })
@@ -407,7 +420,7 @@ const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
     throw Error("Entry channel cannot be a thread.");
   }
 
-  if (entryChannel.type === "GUILD_VOICE") {
+  if (entryChannel.type === ChannelType.GuildVoice) {
     throw Error("Entry channel cannot be a voice channel.");
   }
 
@@ -420,18 +433,16 @@ const resetGuildGuard = async (guildId: string, entryChannelId: string) => {
 
   await Promise.all(
     guild.roles.cache
-      .filter((role) => !role.permissions.has("VIEW_CHANNEL"))
+      .filter((role) => !role.permissions.has("ViewChannel"))
       .map((role) =>
-        role.edit({ permissions: role.permissions.add("VIEW_CHANNEL") })
+        role.edit({ permissions: role.permissions.add("ViewChannel") })
       )
   );
 
-  await guild.roles.everyone.edit(
-    {
-      permissions: guild.roles.everyone.permissions.add("VIEW_CHANNEL"),
-    },
-    editReason
-  );
+  await guild.roles.everyone.edit({
+    permissions: guild.roles.everyone.permissions.add("ViewChannel"),
+    reason: editReason,
+  });
 };
 
 const getMembersByRoleId = async (serverId: string, roleId: string) => {
@@ -450,11 +461,10 @@ const sendPollMessage = async (
 
   const channel = (await Main.client.channels.fetch(channelId)) as TextChannel;
 
-  const embed = new MessageEmbed({
-    title: `Poll #${id}: ${question}`,
-    color: `#${config.embedColor.default}`,
-    description: await createPollText(poll),
-  });
+  const embed = new EmbedBuilder()
+    .setTitle(`Poll #${id}: ${question}`)
+    .setColor(`#${config.embedColor.default}`)
+    .setDescription(await createPollText(poll));
 
   const msg = await sendMessageLimiter.schedule(() =>
     channel.send({ embeds: [embed] })
@@ -483,7 +493,12 @@ const getChannelList = async (guildId: string): Promise<ChannelObj[]> => {
 
   return channels
     .filter(
-      (channel) => !!channel && !channel.type.match(/^GUILD_(CATEGORY|VOICE)$/)
+      (channel) =>
+        !!channel &&
+        !channel.type
+          .toString()
+          .includes(ChannelType.GuildCategory.toString()) &&
+        !channel.type.toString().includes(ChannelType.GuildVoice.toString())
     )
     .map((channel) => ({
       name: channel.name,
@@ -497,8 +512,10 @@ const getVoiceChannelList = async (guildId: string): Promise<ChannelObj[]> => {
   return channels
     .filter(
       (channel) =>
-        channel?.type?.includes("GUILD_STAGE_VOICE") ||
-        channel?.type?.includes("GUILD_VOICE")
+        channel?.type
+          ?.toString()
+          .includes(ChannelType.GuildStageVoice.toString()) ||
+        channel?.type?.toString().includes(ChannelType.GuildVoice.toString())
     )
     .map((channel) => ({
       name: channel.name,

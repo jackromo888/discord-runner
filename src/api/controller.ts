@@ -30,16 +30,19 @@ import {
 } from "./actions";
 import {
   fetchUserByAccessToken,
+  fetchUserByCode,
   getInfo,
   handleAccessEvent,
   handleGuildEvent,
   handleRoleEvent,
   listServers,
+  refreshAccessToken,
 } from "./service";
 import {
   AccessEventParams,
   CreateChannelParams,
   GuildEventParams,
+  ResolveUserParams,
   RoleEventParams,
 } from "./types";
 
@@ -202,9 +205,28 @@ const controller = {
     }
     try {
       // eslint-disable-next-line camelcase
-      const { access_token } = req.body;
-      const result = await fetchUserByAccessToken(access_token);
+      const { access_token, code, redirect_url } =
+        req.body as ResolveUserParams;
+      const result = await ("access_token" in req.body
+        ? fetchUserByAccessToken(access_token)
+        : fetchUserByCode(code, redirect_url));
 
+      res.status(200).json(result);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  refresh: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    try {
+      const result = await refreshAccessToken(req.body.refreshToken);
       res.status(200).json(result);
     } catch (error) {
       const errorMsg = getErrorResult(error);
@@ -220,8 +242,8 @@ const controller = {
       return;
     }
     try {
-      const { platformUserId } = req.params;
-      const serverList = await listServers(platformUserId);
+      const { platformUserId, platformUserData } = req.body;
+      const serverList = await listServers(platformUserId, platformUserData);
 
       res.status(200).json(serverList);
     } catch (error) {

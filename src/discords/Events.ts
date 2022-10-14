@@ -6,7 +6,7 @@ import {
   GuildMember,
   Invite,
   Message,
-  MessageEmbed,
+  EmbedBuilder,
   MessageReaction,
   PartialGuildMember,
   PartialMessageReaction,
@@ -122,7 +122,9 @@ const messageReactionCommon = async (
             `${config.backendUrl}/poll/results/${pollId}`
           );
 
-          msg.embeds[0].description = await createPollText(poll, results);
+          EmbedBuilder.from(msg.embeds[0]).setDescription(
+            await createPollText(poll, results)
+          );
 
           msg.edit({ embeds: [msg.embeds[0]] });
         } else {
@@ -137,18 +139,24 @@ const messageReactionCommon = async (
 
 @Discord()
 abstract class Events {
-  @On("ready")
+  @On({
+    event: "ready",
+  })
   onReady(): void {
     api();
     logger.info("Bot logged in.");
   }
 
-  @On("rateLimit")
+  @On.rest({
+    event: "rateLimited",
+  })
   onRateLimit(rateLimited: RateLimitData): void {
     logger.warn(`BOT Rate Limited. ${JSON.stringify(rateLimited)}`);
   }
 
-  @On("messageCreate")
+  @On({
+    event: "messageCreate",
+  })
   @Guard(NotABot, NotDM)
   async onPublicMessage([message]: [Message]): Promise<void> {
     if (
@@ -161,7 +169,9 @@ abstract class Events {
     }
   }
 
-  @On("messageCreate")
+  @On({
+    event: "messageCreate",
+  })
   @Guard(NotABot, IsDM)
   async onPrivateMessage([message]: [Message]): Promise<void> {
     const userId = message.author.id;
@@ -176,10 +186,11 @@ abstract class Events {
           pollStorage.savePollQuestion(userId, msgText);
           pollStorage.setUserStep(userId, 2);
 
-          await sendMessageLimiter.schedule(() =>
-            message.channel.send(
-              "Please give me the first option of your poll."
-            )
+          await sendMessageLimiter.schedule(
+            (): Promise<Message> =>
+              message.channel.send(
+                "Please give me the first option of your poll."
+              )
           );
 
           break;
@@ -275,14 +286,13 @@ abstract class Events {
 
             await message.reply("Your poll will look like this:");
 
-            const embed = new MessageEmbed({
-              title: `Poll #69: ${question}`,
-              color: `#${config.embedColor.default}`,
-              description: await createPollText(poll),
-            });
+            const embed = new EmbedBuilder()
+              .setTitle(`Poll #69: ${question}`)
+              .setColor(`#${config.embedColor.default}`)
+              .setDescription(await createPollText(poll));
 
-            const msg = await sendMessageLimiter.schedule(() =>
-              message.channel.send({ embeds: [embed] })
+            const msg = await sendMessageLimiter.schedule(
+              (): Promise<Message> => message.channel.send({ embeds: [embed] })
             );
 
             reactions.map(async (emoji) => await msg.react(emoji));
@@ -304,15 +314,16 @@ abstract class Events {
         }
       }
     } else {
-      const embed = new MessageEmbed({
-        title: "I'm sorry, but I couldn't interpret your request.",
-        color: `#${config.embedColor.error}`,
-        description:
-          "You can find more information on [docs.guild.xyz](https://docs.guild.xyz/).",
-      });
+      const embed = new EmbedBuilder()
+        .setTitle("I'm sorry, but I couldn't interpret your request.")
+        .setColor(`#${config.embedColor.error}`)
+        .setDescription(
+          "You can find more information on [docs.guild.xyz](https://docs.guild.xyz/)."
+        );
 
-      sendMessageLimiter.schedule(() =>
-        message.channel.send({ embeds: [embed] }).catch(logger.error)
+      sendMessageLimiter.schedule(
+        (): Promise<Message | any> =>
+          message.channel.send({ embeds: [embed] }).catch(logger.error)
       );
 
       logger.verbose(
@@ -321,12 +332,16 @@ abstract class Events {
     }
   }
 
-  @On("guildMemberAdd")
+  @On({
+    event: "guildMemberAdd",
+  })
   onGuildMemberAdd([member]: [GuildMember | PartialGuildMember]): void {
     Main.platform.user.join(member.guild.id, member.user.id).catch(() => {});
   }
 
-  @On("inviteDelete")
+  @On({
+    event: "inviteDelete",
+  })
   onInviteDelete([invite]: [Invite]): void {
     Main.client.guilds.fetch(invite.guild.id).then((guild) => {
       logger.verbose(`onInviteDelete guild: ${guild.name}`);
@@ -335,7 +350,7 @@ abstract class Events {
     });
   }
 
-  @On("messageReactionAdd")
+  @On({ event: "messageReactionAdd" })
   onMessageReactionAdd([reaction, user]: [
     reaction: MessageReaction | PartialMessageReaction,
     user: User | PartialUser
@@ -343,7 +358,9 @@ abstract class Events {
     messageReactionCommon(reaction, user, false);
   }
 
-  @On("messageReactionRemove")
+  @On({
+    event: "messageReactionRemove",
+  })
   onMessageReactionRemove([reaction, user]: [
     reaction: MessageReaction | PartialMessageReaction,
     user: User | PartialUser
@@ -351,7 +368,9 @@ abstract class Events {
     messageReactionCommon(reaction, user, true);
   }
 
-  @On("roleCreate")
+  @On({
+    event: "roleCreate",
+  })
   async onRoleCreate([role]: [Role]): Promise<void> {
     try {
       const guildOfServer = await Main.platform.guild.get(role.guild.id);
@@ -361,7 +380,7 @@ abstract class Events {
         )?.platformGuildData?.isGuarded
       ) {
         await role.edit({
-          permissions: role.permissions.remove("VIEW_CHANNEL"),
+          permissions: role.permissions.remove("ViewChannel"),
         });
       }
     } catch (error) {
@@ -371,7 +390,9 @@ abstract class Events {
     }
   }
 
-  @On("voiceStateUpdate")
+  @On({
+    event: "voiceStateUpdate",
+  })
   async onVoiceStateUpdate([oldState, newState]: [
     VoiceState,
     VoiceState

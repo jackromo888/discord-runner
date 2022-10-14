@@ -5,7 +5,9 @@ import pollStorage from "../api/pollStorage";
 
 @Discord()
 abstract class Menus {
-  @SelectMenuComponent("token-menu")
+  @SelectMenuComponent({
+    id: "token-menu",
+  })
   async equipMenu(interaction: SelectMenuInteraction) {
     await interaction.deferReply();
 
