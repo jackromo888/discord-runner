@@ -237,6 +237,7 @@ const getUserPoap = async (
           (p) => p.activated && dayjs().isBefore(dayjs.unix(p.expiryDate))
         )
         .map(async (poap) => {
+          console.log(1);
           try {
             const response = await axios.post(
               `${config.backendUrl}/assets/poap/claim`,
@@ -294,11 +295,12 @@ const getUserPoap = async (
       : {
           content: `${contentMessage} to your POAP(s). Do **NOT** share it with anyone!`,
         };
+
     return {
       components: [
-        new ActionRowBuilder<MessageActionRowComponentBuilder>({
-          components: poapLinks.filter((p) => p !== null && p.url).slice(0, 5),
-        }),
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().setComponents(
+          poapLinks.slice(0, 5)
+        ),
       ],
       content: buttonData.content,
     };
