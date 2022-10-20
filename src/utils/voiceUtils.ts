@@ -60,7 +60,7 @@ const updateParticipationdWhenEventEnds = async (
   try {
     const updateableUsers = await couchDbClient.voiceParticipation.find({
       selector: {
-        joinedAt: { $ne: 0 },
+        poapId: { $eq: poapId },
       },
       limit: 100000,
     });
@@ -76,7 +76,10 @@ const updateParticipationdWhenEventEnds = async (
             discordId,
             discordTag,
             joinedAt: 0,
-            participated: participated + (dayjs().unix() - joinedAt),
+            participated:
+              joinedAt === 0
+                ? participated
+                : participated + (dayjs().unix() - joinedAt),
             poapId,
           });
         } catch (error) {
@@ -222,10 +225,6 @@ const stopVoiceEvent = async (
     if (couchResult) {
       const { _rev, startedAt, voiceChannelId } = couchResult;
       const endedAt = timestamp || dayjs().unix();
-
-      const { data: poapResponse }: { data: PoapResponse } = await axios.get(
-        `${config.backendUrl}/assets/poap/eventDetails/${poapId}`
-      );
 
       await couchDbClient.voiceEvents.insert({
         _id: `${guildId}:${poapId}`,
