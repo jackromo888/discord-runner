@@ -25,23 +25,21 @@ const hasUserChangedChannels = (
 
 const updateVoiceParticipationWhenEventStarts = async (
   poapId: number,
-  voiceChannelId: string,
   guildId: string
 ) => {
   logger.verbose(
-    `updateVoiceParticipationWhenEventStarts - ${poapId}  ${voiceChannelId}`
+    `updateVoiceParticipationWhenEventStarts - ${poapId}  ${guildId}`
   );
   try {
     const guild = await Main.client.guilds.fetch(guildId);
-    const voiceChannel = await guild.channels.fetch(voiceChannelId);
 
     await Promise.all(
-      Object.values(voiceChannel.members).map(async (user) => {
+      guild.voiceStates.cache.map(async (user) => {
         await couchDbClient.voiceParticipation.insert({
           _id: `${user.id}:${poapId}`,
           discordId: user.id,
-          discordTag: user.user.tag,
-          joinedAt: user.voice.selfDeaf ? 0 : dayjs().unix(),
+          discordTag: user.member.user.tag,
+          joinedAt: user.selfDeaf ? 0 : dayjs().unix(),
           participated: 0,
           poapId,
         });
@@ -199,11 +197,7 @@ const startVoiceEvent = async (
       });
     }
 
-    await updateVoiceParticipationWhenEventStarts(
-      poapId,
-      voiceChannelId,
-      discordServerId
-    );
+    await updateVoiceParticipationWhenEventStarts(poapId, discordServerId);
 
     return { started: true };
   } catch (error) {
