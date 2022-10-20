@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import logger from "../utils/logger";
-import {
-  getErrorResult,
-  hasNecessaryPermissions,
-  updateAccessedChannelsOfRole,
-} from "../utils/utils";
+import { getErrorResult, hasNecessaryPermissions } from "../utils/utils";
 import {
   startVoiceEvent,
   stopVoiceEvent,
@@ -281,6 +277,7 @@ const controller = {
     }
 
     try {
+      // eslint-disable-next-line no-unused-vars
       const { serverId, roleName, isGuarded, entryChannelId, gatedChannels } =
         req.body;
 
@@ -291,13 +288,13 @@ const controller = {
         entryChannelId
       );
 
-      await updateAccessedChannelsOfRole(
-        serverId,
-        roleId,
-        gatedChannels,
-        isGuarded,
-        entryChannelId
-      );
+      // await updateAccessedChannelsOfRole(
+      //   serverId,
+      //   roleId,
+      //   gatedChannels,
+      //   isGuarded,
+      //   entryChannelId
+      // );
 
       res.status(201).json(roleId);
     } catch (error) {
@@ -321,6 +318,7 @@ const controller = {
         roleName,
         isGuarded,
         entryChannelId,
+        // eslint-disable-next-line no-unused-vars
         gatedChannels,
       } = req.body;
 
@@ -332,13 +330,13 @@ const controller = {
         entryChannelId
       );
 
-      await updateAccessedChannelsOfRole(
-        serverId,
-        roleId,
-        gatedChannels,
-        isGuarded,
-        entryChannelId
-      );
+      // await updateAccessedChannelsOfRole(
+      //   serverId,
+      //   roleId,
+      //   gatedChannels,
+      //   isGuarded,
+      //   entryChannelId
+      // );
 
       res.status(200).send();
     } catch (error) {

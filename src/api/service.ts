@@ -13,7 +13,6 @@ import {
   notifyAccessedChannels,
   readNacl,
   signNacl,
-  updateAccessedChannelsOfRole,
 } from "../utils/utils";
 import {
   AccessEventParams,
@@ -270,13 +269,13 @@ const handleRoleEvent = async (
           );
         }
       }
-      await updateAccessedChannelsOfRole(
-        server,
-        role.id,
-        platformRoleData?.gatedChannels,
-        platformRoleData?.isGuarded === true,
-        inviteChannelId
-      );
+      // await updateAccessedChannelsOfRole(
+      //   server,
+      //   role.id,
+      //   platformRoleData?.gatedChannels,
+      //   platformRoleData?.isGuarded === true,
+      //   inviteChannelId
+      // );
 
       return {
         platformRoleId: role.id,
@@ -348,15 +347,15 @@ const handleRoleEvent = async (
         }
       }
 
-      if (platformRoleData?.gatedChannels) {
-        await updateAccessedChannelsOfRole(
-          server,
-          role.id,
-          platformRoleData.gatedChannels,
-          platformRoleData?.isGuarded === true,
-          inviteChannelId
-        );
-      }
+      // if (platformRoleData?.gatedChannels) {
+      //   await updateAccessedChannelsOfRole(
+      //     server,
+      //     role.id,
+      //     platformRoleData.gatedChannels,
+      //     platformRoleData?.isGuarded === true,
+      //     inviteChannelId
+      //   );
+      // }
 
       return {
         platformGuildData: { inviteChannel: inviteChannelId },
