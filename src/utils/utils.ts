@@ -692,9 +692,11 @@ const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
     if (publicChannel) {
       channelId = publicChannel.id;
     } else {
-      // if there are no visible channels, find the first text channel
+      // if there are no visible channels, throwing an error
       logger.verbose(`Cannot find public channel in ${server.id}`);
-      channelId = server.channels.cache[0]?.id;
+      throw new Error(
+        `Cannot find public channel in the ${server.name} discord server. Guild.xyz bot needs at least one channel for creating invites. `
+      );
     }
 
     logger.warn(
