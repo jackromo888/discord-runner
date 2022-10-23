@@ -55,14 +55,26 @@ abstract class Buttons {
         return;
       }
       logger.error(`join-button - ${error}`);
-      await interaction.editReply({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("Unkown error occured, please try again later.")
-            .setColor(`#${config.embedColor.error}`),
-        ],
-      });
+      try {
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle("Error")
+              .setDescription("Unkown error occured, please try again later.")
+              .setColor(`#${config.embedColor.error}`),
+          ],
+        });
+      } catch (error2) {
+        logger.error(
+          `Cannot send "Unkown error occured" to serverId=${
+            interaction.guildId
+          } serverName=${interaction.guild?.name} channelId=${
+            interaction.channelId
+          } channelName=${interaction.channel?.name} error=${
+            error.message
+          } ${JSON.stringify(error)}`
+        );
+      }
       return;
     }
     logger.debug(
