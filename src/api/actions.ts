@@ -342,7 +342,7 @@ const sendDiscordButton = async (
     meta?.isJoinButton
   );
 
-  const message = await sendMessageLimiter.schedule(() =>
+  const message = await sendMessageLimiter.schedule({ priority: 3 }, () =>
     modifiableChannel.send(payload)
   );
   await message.react(config.joinButtonEmojis.emoji1);
