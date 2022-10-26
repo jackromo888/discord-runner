@@ -57,7 +57,16 @@ const controller = {
       const results = await Promise.all(
         params.map(async (aep) => {
           try {
-            await handleAccessEvent(aep);
+            const highPrio = params.length <= 2;
+            if (highPrio) {
+              logger.verbose(
+                `status update detected, first param: ${JSON.stringify(
+                  params[0]
+                )}`
+              );
+            }
+
+            await handleAccessEvent(aep, highPrio);
             return { success: true };
           } catch (error) {
             logger.error(

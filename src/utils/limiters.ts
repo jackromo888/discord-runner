@@ -1,17 +1,31 @@
 import Bottleneck from "bottleneck";
 import logger from "./logger";
 
-const manageRoleLimiter = new Bottleneck({
-  reservoir: 10,
-  reservoirRefreshAmount: 10,
-  reservoirRefreshInterval: 10 * 1000,
-  maxConcurrent: 5,
-});
+class Limiters {
+  private manageRoleLimiters: Map<string, Bottleneck> = new Map();
 
-manageRoleLimiter.on("depleted", () => {
-  const queued = manageRoleLimiter.queued();
-  logger.warn(`manageRoleLimiter depleted, queued requests: ${queued}`);
-});
+  getManageRoleLimiter(serverId: string) {
+    let limiter = this.manageRoleLimiters.get(serverId);
+    if (limiter) return limiter;
+
+    limiter = new Bottleneck({
+      reservoir: 4,
+      reservoirRefreshAmount: 4,
+      reservoirRefreshInterval: 10 * 1000,
+      maxConcurrent: 4,
+    });
+
+    limiter.on("depleted", () => {
+      const queued = limiter.queued();
+      logger.warn(
+        `manageRoleLimiter depleted for ${serverId}, queued requests: ${queued}`
+      );
+    });
+
+    this.manageRoleLimiters.set(serverId, limiter);
+    return limiter;
+  }
+}
 
 const sendMessageLimiter = new Bottleneck({
   reservoir: 5,
@@ -21,8 +35,10 @@ const sendMessageLimiter = new Bottleneck({
 });
 
 sendMessageLimiter.on("depleted", () => {
-  const queued = manageRoleLimiter.queued();
+  const queued = sendMessageLimiter.queued();
   logger.warn(`sendMessageLimiter depleted, queued requests: ${queued}`);
 });
 
-export { manageRoleLimiter, sendMessageLimiter };
+const limiters = new Limiters();
+
+export { limiters, sendMessageLimiter };

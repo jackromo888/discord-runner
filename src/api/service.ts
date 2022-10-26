@@ -4,6 +4,7 @@ import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
+import { limiters } from "../utils/limiters";
 import logger from "../utils/logger";
 import {
   checkInviteChannel,
@@ -26,7 +27,8 @@ import {
 } from "./types";
 
 const handleAccessEvent = async (
-  params: AccessEventParams
+  params: AccessEventParams,
+  highPrio: boolean
 ): Promise<UserResult> => {
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}`);
   const { platformGuildId, platformUserId, guildName, action, roles } = params;
@@ -67,7 +69,16 @@ const handleAccessEvent = async (
     // check if user would get a new role
     const rolesToAdd = roleIds.filter((r) => !member.roles.cache.has(r));
     if (rolesToAdd.length > 0) {
-      updatedMember = await member.roles.add(rolesToAdd);
+      if (highPrio) {
+        updatedMember = await member.roles.add(rolesToAdd);
+      } else {
+        const manageRoleLimiter = limiters.getManageRoleLimiter(
+          params.platformGuildId
+        );
+        updatedMember = await manageRoleLimiter.schedule(() =>
+          member.roles.add(rolesToAdd)
+        );
+      }
       // notify user about new roles
       try {
         await Promise.all(
@@ -92,7 +103,16 @@ const handleAccessEvent = async (
       roleIds.includes(r.id)
     );
     if (rolesToRemove.size > 0) {
-      updatedMember = await member.roles.remove(rolesToRemove);
+      if (highPrio) {
+        updatedMember = await member.roles.remove(rolesToRemove);
+      } else {
+        const manageRoleLimiter = limiters.getManageRoleLimiter(
+          params.platformGuildId
+        );
+        updatedMember = await manageRoleLimiter.schedule(() =>
+          member.roles.remove(rolesToRemove)
+        );
+      }
 
       // notify user about removed roles
       const embed = new EmbedBuilder()
