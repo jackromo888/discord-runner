@@ -4,7 +4,7 @@ import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
-import { manageRoleLimiter, sendMessageLimiter } from "../utils/limiters";
+import { sendMessageLimiter } from "../utils/limiters";
 import logger from "../utils/logger";
 import {
   checkInviteChannel,
@@ -69,11 +69,7 @@ const handleAccessEvent = async (
     // check if user would get a new role
     const rolesToAdd = roleIds.filter((r) => !member.roles.cache.has(r));
     if (rolesToAdd.length > 0) {
-      updatedMember = await manageRoleLimiter.schedule(
-        { priority: highPrio ? 5 : 6 },
-        async () => member.roles.add(rolesToAdd)
-      );
-
+      updatedMember = await member.roles.add(rolesToAdd);
       // notify user about new roles
       try {
         await Promise.all(
@@ -98,10 +94,7 @@ const handleAccessEvent = async (
       roleIds.includes(r.id)
     );
     if (rolesToRemove.size > 0) {
-      updatedMember = await manageRoleLimiter.schedule(
-        { priority: highPrio ? 5 : 6 },
-        async () => member.roles.remove(rolesToRemove)
-      );
+      updatedMember = await member.roles.remove(rolesToRemove);
 
       // notify user about removed roles
       const embed = new EmbedBuilder()
@@ -256,9 +249,7 @@ const handleRoleEvent = async (
             server.members.cache.map(async (m) => {
               if (!m.roles.cache.has(role.id)) {
                 try {
-                  await manageRoleLimiter.schedule({ priority: 7 }, async () =>
-                    m.roles.add(role)
-                  );
+                  await m.roles.add(role);
                 } catch (error) {
                   logger.verbose(
                     `Couldn't give role to ${m.id} in ${server.id} (${error.message})`
@@ -333,9 +324,7 @@ const handleRoleEvent = async (
             server.members.cache.map(async (m) => {
               if (!m.roles.cache.has(role.id)) {
                 try {
-                  await manageRoleLimiter.schedule({ priority: 7 }, async () =>
-                    m.roles.add(role)
-                  );
+                  await m.roles.add(role);
                 } catch (error) {
                   logger.verbose(
                     `Couldn't give role to ${m.id} in ${server.id} (${error.message})`

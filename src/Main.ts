@@ -27,7 +27,7 @@ class Main {
     this.platform = new Platform("DISCORD");
 
     this.client = new Client({
-      shardCount: 3,
+      shardCount: 4,
       intents: [
         IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMembers,

@@ -37,7 +37,7 @@ import {
 } from "../utils/utils";
 import config from "../config";
 import { createPollText } from "./polls";
-import { manageRoleLimiter, sendMessageLimiter } from "../utils/limiters";
+import { sendMessageLimiter } from "../utils/limiters";
 
 const isMember = async (
   guildId: string,
@@ -237,7 +237,6 @@ const getUserPoap = async (
           (p) => p.activated && dayjs().isBefore(dayjs.unix(p.expiryDate))
         )
         .map(async (poap) => {
-          console.log(1);
           try {
             const response = await axios.post(
               `${config.backendUrl}/assets/poap/claim`,
@@ -365,9 +364,7 @@ const manageMigratedActions = async (
   await Promise.all(
     upgradeableUserIds.map(async (id) => {
       const member = await guild.members.fetch(id);
-      await manageRoleLimiter.schedule({ priority: 9 }, async () =>
-        member.roles.add(roleId)
-      );
+      await member.roles.add(roleId);
       await notifyAccessedChannels(member, roleId, message, role.name);
     })
   );
@@ -381,9 +378,7 @@ const manageMigratedActions = async (
   await Promise.all(
     membersToTakeRoleFrom.map(async (m) => {
       if (!upgradeableUserIds.includes(m.id)) {
-        await manageRoleLimiter.schedule({ priority: 9 }, async () =>
-          m.roles.remove(roleId)
-        );
+        await m.roles.remove(roleId);
         const embed = new EmbedBuilder()
           .setTitle(
             `You no longer have access to the \`${message}\` role in \`${guild.name}\`, because you have not fulfilled the requirements, disconnected your Discord account or just left it.`
