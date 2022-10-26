@@ -21,7 +21,8 @@ abstract class Buttons {
     );
     try {
       await interaction.reply({
-        content: "I'll update your accesses as soon as possible.",
+        content:
+          "I'll update your accesses as soon as possible. Currently we have latency issues, it might take up several hours to get your role.",
         ephemeral: true,
       });
     } catch (error) {
