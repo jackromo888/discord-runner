@@ -657,13 +657,7 @@ const notifyAccessedChannels = async (
     });
   });
 
-  try {
-    await member.send({ embeds: [embed] });
-  } catch (error) {
-    logger.error(
-      `notifyAccessedChannels error sending message - ${error.message}`
-    );
-  }
+  await member.send({ embeds: [embed] });
 };
 
 const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
