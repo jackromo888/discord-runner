@@ -14,9 +14,8 @@ import logger from "../utils/logger";
 import { createInteractionPayload } from "../utils/utils";
 import config from "../config";
 import Main from "../Main";
-import { sendMessageLimiter } from "../utils/limiters";
-import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 import OnlyGuild from "../guards/OnlyGuild";
+import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 
 @Discord()
 abstract class Slashes {
@@ -44,21 +43,17 @@ abstract class Slashes {
     );
 
     try {
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
-          ephemeral: true,
-        })
-      );
+      await interaction.reply({
+        content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
+        ephemeral: true,
+      });
 
       const editOptions = await status(interaction.guild.id, interaction.user);
 
-      await sendMessageLimiter.schedule(() =>
-        interaction.editReply({
-          content: null,
-          ...editOptions,
-        })
-      );
+      await interaction.editReply({
+        content: null,
+        ...editOptions,
+      });
     } catch (error) {
       logger.verbose(
         `status command failed ${interaction.user.id} ${
@@ -168,12 +163,10 @@ abstract class Slashes {
           PermissionsBitField.Flags.Administrator
         )
       ) {
-        await sendMessageLimiter.schedule(() =>
-          interaction.reply({
-            content: "❌ Only server admins can use this command.",
-            ephemeral: true,
-          })
-        );
+        await interaction.reply({
+          content: "❌ Only server admins can use this command.",
+          ephemeral: true,
+        });
         return;
       }
 
@@ -184,12 +177,10 @@ abstract class Slashes {
         // ignored
       }
       if (!guild) {
-        await sendMessageLimiter.schedule(() =>
-          interaction.reply({
-            content: "❌ There are no guilds in this server.",
-            ephemeral: true,
-          })
-        );
+        await interaction.reply({
+          content: "❌ There are no guilds in this server.",
+          ephemeral: true,
+        });
         return;
       }
 
@@ -200,19 +191,15 @@ abstract class Slashes {
         buttonText
       );
 
-      const message = await sendMessageLimiter.schedule(() =>
-        interaction.channel.send(payload)
-      );
+      const message = await interaction.channel.send(payload);
 
       await message.react(config.joinButtonEmojis.emoji1);
       await message.react(config.joinButtonEmojis.emoji2);
 
-      await sendMessageLimiter.schedule(() =>
-        interaction.reply({
-          content: "✅ Join button created successfully.",
-          ephemeral: true,
-        })
-      );
+      await interaction.reply({
+        content: "✅ Join button created successfully.",
+        ephemeral: true,
+      });
     } catch (err: any) {
       logger.error(`join-button error -  ${err.message}`);
     }

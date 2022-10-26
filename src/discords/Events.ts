@@ -29,7 +29,6 @@ import { Vote } from "../api/types";
 import NotDM from "../guards/NotDM";
 import { createPollText } from "../api/polls";
 import api from "../api/api";
-import { sendMessageLimiter } from "../utils/limiters";
 import { redisClient } from "../database";
 import { handleUserStateDuringVoiceEvent } from "../utils/voiceUtils";
 
@@ -186,11 +185,8 @@ abstract class Events {
           pollStorage.savePollQuestion(userId, msgText);
           pollStorage.setUserStep(userId, 2);
 
-          await sendMessageLimiter.schedule(
-            (): Promise<Message> =>
-              message.channel.send(
-                "Please give me the first option of your poll."
-              )
+          await message.channel.send(
+            "Please give me the first option of your poll."
           );
 
           break;
@@ -291,9 +287,7 @@ abstract class Events {
               .setColor(`#${config.embedColor.default}`)
               .setDescription(await createPollText(poll));
 
-            const msg = await sendMessageLimiter.schedule(
-              (): Promise<Message> => message.channel.send({ embeds: [embed] })
-            );
+            const msg = await message.channel.send({ embeds: [embed] });
 
             reactions.map(async (emoji) => await msg.react(emoji));
 
@@ -320,11 +314,7 @@ abstract class Events {
         .setDescription(
           "You can find more information on [docs.guild.xyz](https://docs.guild.xyz/)."
         );
-
-      sendMessageLimiter.schedule(
-        (): Promise<Message | any> =>
-          message.channel.send({ embeds: [embed] }).catch(logger.error)
-      );
+      message.channel.send({ embeds: [embed] }).catch(logger.error);
 
       logger.verbose(
         `unkown request: ${message.author.username}#${message.author.discriminator}: ${message.content}`

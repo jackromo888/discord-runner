@@ -4,7 +4,6 @@ import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
-import { sendMessageLimiter } from "../utils/limiters";
 import logger from "../utils/logger";
 import {
   checkInviteChannel,
@@ -27,8 +26,7 @@ import {
 } from "./types";
 
 const handleAccessEvent = async (
-  params: AccessEventParams,
-  highPrio: boolean
+  params: AccessEventParams
 ): Promise<UserResult> => {
   logger.verbose(`manageRoles params: ${JSON.stringify(params)}`);
   const { platformGuildId, platformUserId, guildName, action, roles } = params;
@@ -107,9 +105,7 @@ const handleAccessEvent = async (
         )
         .setColor(`#${config.embedColor.default}`);
       try {
-        await sendMessageLimiter.schedule({ priority: highPrio ? 5 : 6 }, () =>
-          updatedMember.send({ embeds: [embed] })
-        );
+        await updatedMember.send({ embeds: [embed] });
       } catch (error) {
         if (error?.code === 50007) {
           logger.verbose(

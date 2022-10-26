@@ -57,7 +57,7 @@ const controller = {
       const results = await Promise.all(
         params.map(async (aep) => {
           try {
-            await handleAccessEvent(aep, params.length <= 2);
+            await handleAccessEvent(aep);
             return { success: true };
           } catch (error) {
             logger.error(
