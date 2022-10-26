@@ -58,7 +58,7 @@ const controller = {
         params.map(async (aep) => {
           try {
             const highPrio = params.length <= 2;
-            if (highPrio) {
+            if (!highPrio) {
               logger.verbose(
                 `status update detected, first param: ${JSON.stringify(
                   params[0]
