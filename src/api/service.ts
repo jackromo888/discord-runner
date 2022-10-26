@@ -42,7 +42,7 @@ const handleAccessEvent = async (
 
   // update join interaction reply if exists
   const redisKey = `joining:${member.guild.id}:${member.id}`;
-  const redisValue: string = await redisClient.getAsync(redisKey);
+  const redisValue: string = await redisClient.get(redisKey);
   if (redisValue) {
     const messageText = await getJoinReplyMessage(
       roleIds,
@@ -57,7 +57,7 @@ const handleAccessEvent = async (
         { content: messageText.content },
         { headers: { "Content-Type": "application/json" } }
       );
-      redisClient.client.del(redisKey);
+      await redisClient.del(redisKey);
     } catch (err) {
       logger.verbose(`Update join interaction reply error: ${err.message}`);
     }
@@ -431,7 +431,7 @@ const getInfo = async (
   serverId: string
 ): Promise<{ name: string; inviteCode: string }> => {
   logger.verbose(`getInfo param: ${serverId}`);
-  const redisValue: string = await redisClient.getAsync(`info:${serverId}`);
+  const redisValue: string = await redisClient.get(`info:${serverId}`);
   if (redisValue) {
     logger.verbose(`getInfo returning cached: ${redisValue}`);
     const [cachedName, cachedInviteCode] = redisValue.split(":");
@@ -444,12 +444,9 @@ const getInfo = async (
   const name = await getServerName(serverId);
   const inviteCode = await getInviteCode(serverId);
 
-  redisClient.client.set(
-    `info:${serverId}`,
-    `${name}:${inviteCode}`,
-    "EX",
-    20 * 60
-  );
+  await redisClient.set(`info:${serverId}`, `${name}:${inviteCode}`, {
+    EX: 20 * 60,
+  });
 
   logger.verbose(`getInfo result: ${name} ${inviteCode}`);
   return { name, inviteCode };

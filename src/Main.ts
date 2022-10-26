@@ -10,6 +10,7 @@ import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
 import config from "./config";
 import logger from "./utils/logger";
 import { logAxiosResponse } from "./utils/utils";
+import { redisClient } from "./database";
 
 class Main {
   public static client: Client;
@@ -80,6 +81,7 @@ class Main {
 
     await importx(`${__dirname}/discords/*.{ts,js}`);
 
+    await redisClient.connect();
     await this.client.login(config.discordToken);
   }
 }
