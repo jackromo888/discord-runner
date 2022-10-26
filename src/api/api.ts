@@ -1,7 +1,12 @@
 import express from "express";
+import tracer from "dd-trace";
 import config from "../config";
 import logger from "../utils/logger";
 import router from "./router";
+
+if (config.nodeEnv === "production") {
+  tracer.init({ profiling: true });
+}
 
 const createApi = () => {
   const api = express();

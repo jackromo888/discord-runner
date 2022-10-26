@@ -16,22 +16,9 @@ abstract class Buttons {
     id: "join-button",
   })
   async joinButton(interaction: ButtonInteraction) {
-    logger.debug(
-      `join-trace ${interaction.user?.id} ${interaction.guildId} button pressed`
-    );
-    try {
-      await interaction.reply({
-        content:
-          "I'll update your accesses as soon as possible. Currently we have latency issues, it might take up several hours to get your role.",
-        ephemeral: true,
-      });
-    } catch (error) {
-      logger.verbose(`join-button interaction reply ${error.message}`);
-      return;
-    }
-    logger.debug(
-      `join-trace ${interaction.user?.id} ${interaction.guildId} reply sent`
-    );
+    await interaction.deferReply({
+      ephemeral: true,
+    });
 
     let messagePayload: BaseMessageOptions;
     try {
@@ -42,22 +29,27 @@ abstract class Buttons {
       );
     } catch (error) {
       if (error.message?.startsWith("Cannot find guild")) {
-        logger.debug(
-          `join-trace ${interaction.user?.id} ${interaction.guildId} cannot find guild`
-        );
-        await interaction.editReply({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle("Error")
-              .setDescription("There is no guild associated with this server.")
-              .setColor(`#${config.embedColor.error}`),
-          ],
-        });
-        return;
+        try {
+          await interaction.followUp({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle("Error")
+                .setDescription(
+                  "There is no guild associated with this server."
+                )
+                .setColor(`#${config.embedColor.error}`),
+            ],
+          });
+          return;
+        } catch (noGuildError) {
+          logger.error(
+            `There is no guild associated with this server.=${interaction.guildId} serverName=${interaction.guild?.name} channelId=${interaction.channelId} channelName=${interaction.channel?.name} error=${noGuildError.message}`
+          );
+          return;
+        }
       }
-      logger.error(`join-button - ${error}`);
       try {
-        await interaction.editReply({
+        await interaction.followUp({
           embeds: [
             new EmbedBuilder()
               .setTitle("Error")
@@ -78,20 +70,17 @@ abstract class Buttons {
       }
       return;
     }
-    logger.debug(
-      `join-trace ${interaction.user?.id} ${interaction.guildId} join util successful`
-    );
 
     try {
-      await interaction.editReply(messagePayload);
-      logger.debug(
-        `join-trace ${interaction.user?.id} ${interaction.guildId} edited reply`
-      );
+      await interaction.followUp(messagePayload);
     } catch (error) {
-      logger.verbose(
-        `join-button interaction EDITREPLY ${JSON.stringify(error)}`
+      logger.warn(
+        ` ${interaction.user?.id} ${interaction.guildId} join-button interaction EDITREPLY ${error.message}`
       );
-      logger.verbose(`join-button interaction EDITREPLY ${error.message}`);
+      await interaction.followUp({
+        content:
+          "Joining this guild currently is not possible. Please, try it again later!",
+      });
     }
   }
 
@@ -99,26 +88,21 @@ abstract class Buttons {
     id: "poap-claim-button",
   })
   async claimButton(interaction: ButtonInteraction) {
-    try {
-      await interaction.reply({
-        content: "I'll send the link for your POAP right now.",
-        ephemeral: true,
-      });
-    } catch (error) {
-      logger.verbose(`poap-claim-button interaction reply ${error.message}`);
-    }
-
+    await interaction.deferReply({
+      ephemeral: true,
+    });
     const message = await getUserPoap(
       interaction?.user?.id,
       interaction?.guild?.id
     );
 
     try {
-      await interaction.editReply(message);
+      await interaction.followUp(message);
     } catch (error) {
-      logger.verbose(
-        `poap-claim-button interaction EDITREPLY ${error.message}`
-      );
+      logger.warn(`poap-claim-button interaction EDITREPLY ${error.message}`);
+      await interaction.followUp({
+        content: "Poap claiming unsuccessful. Please, try it again later!",
+      });
     }
   }
 }

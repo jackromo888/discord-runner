@@ -37,7 +37,6 @@ import {
 } from "../utils/utils";
 import config from "../config";
 import { createPollText } from "./polls";
-import { sendMessageLimiter } from "../utils/limiters";
 
 const isMember = async (
   guildId: string,
@@ -341,9 +340,7 @@ const sendDiscordButton = async (
     meta?.isJoinButton
   );
 
-  const message = await sendMessageLimiter.schedule({ priority: 3 }, () =>
-    modifiableChannel.send(payload)
-  );
+  const message = await modifiableChannel.send(payload);
   await message.react(config.joinButtonEmojis.emoji1);
   await message.react(config.joinButtonEmojis.emoji2);
 
@@ -385,9 +382,7 @@ const manageMigratedActions = async (
           )
           .setColor(`#${config.embedColor.default}`);
         try {
-          await sendMessageLimiter.schedule({ priority: 9 }, () =>
-            m.send({ embeds: [embed] })
-          );
+          await m.send({ embeds: [embed] });
         } catch (error) {
           if (error?.code === 50007) {
             logger.verbose(
@@ -463,9 +458,7 @@ const sendPollMessage = async (
     .setColor(`#${config.embedColor.default}`)
     .setDescription(await createPollText(poll));
 
-  const msg = await sendMessageLimiter.schedule(() =>
-    channel.send({ embeds: [embed] })
-  );
+  const msg = await channel.send({ embeds: [embed] });
 
   poll.reactions.map(async (emoji) => await (msg as Message).react(emoji));
 

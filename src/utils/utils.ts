@@ -22,7 +22,6 @@ import nacl from "tweetnacl";
 import { ActionError, ErrorResult, UserResult } from "../api/types";
 import config from "../config";
 import Main from "../Main";
-import { sendMessageLimiter } from "./limiters";
 import logger from "./logger";
 
 const getUserResult = (member: GuildMember): UserResult => ({
@@ -658,9 +657,7 @@ const notifyAccessedChannels = async (
     });
   });
 
-  await sendMessageLimiter.schedule(() =>
-    member.send({ embeds: [embed] }).catch()
-  );
+  await member.send({ embeds: [embed] });
 };
 
 const checkInviteChannel = async (server: Guild, inviteChannelId: string) => {
