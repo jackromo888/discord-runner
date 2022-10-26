@@ -724,6 +724,11 @@ const readNacl = (signedBase64Token: string) => {
   return token;
 };
 
+const delay = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 export {
   getUserResult,
   getErrorResult,
@@ -750,4 +755,5 @@ export {
   signNacl,
   readNacl,
   hasNecessaryPermissions,
+  delay,
 };

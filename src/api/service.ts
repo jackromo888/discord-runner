@@ -8,6 +8,7 @@ import { limiters } from "../utils/limiters";
 import logger from "../utils/logger";
 import {
   checkInviteChannel,
+  delay,
   getJoinReplyMessage,
   getUserResult,
   notifyAccessedChannels,
@@ -427,13 +428,21 @@ const getServerName = async (guildId: string) => {
   return guild.name;
 };
 
+const getInfoLock = new Set<string>();
+
 const getInfo = async (
   serverId: string
 ): Promise<{ name: string; inviteCode: string }> => {
   logger.verbose(`getInfo param: ${serverId}`);
+  if (getInfoLock.has(serverId)) {
+    await delay(2000);
+    getInfoLock.delete(serverId);
+  }
+  getInfoLock.add(serverId);
   const redisValue: string = await redisClient.get(`info:${serverId}`);
   if (redisValue) {
     logger.verbose(`getInfo returning cached: ${redisValue}`);
+    getInfoLock.delete(serverId);
     const [cachedName, cachedInviteCode] = redisValue.split(":");
     return {
       name: cachedName,
@@ -447,6 +456,7 @@ const getInfo = async (
   await redisClient.set(`info:${serverId}`, `${name}:${inviteCode}`, {
     EX: 20 * 60,
   });
+  getInfoLock.delete(serverId);
 
   logger.verbose(`getInfo result: ${name} ${inviteCode}`);
   return { name, inviteCode };
