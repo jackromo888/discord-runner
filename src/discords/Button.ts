@@ -16,9 +16,13 @@ abstract class Buttons {
     id: "join-button",
   })
   async joinButton(interaction: ButtonInteraction) {
-    await interaction.deferReply({
-      ephemeral: true,
-    });
+    try {
+      await interaction.deferReply({
+        ephemeral: true,
+      });
+    } catch (error) {
+      return;
+    }
 
     let messagePayload: BaseMessageOptions;
     try {
@@ -77,10 +81,12 @@ abstract class Buttons {
       logger.warn(
         ` ${interaction.user?.id} ${interaction.guildId} join-button interaction EDITREPLY ${error.message}`
       );
-      await interaction.followUp({
-        content:
-          "Joining this guild currently is not possible. Please, try it again later!",
-      });
+      interaction
+        .followUp({
+          content:
+            "Joining this guild currently is not possible. Please, try it again later!",
+        })
+        .catch();
     }
   }
 
@@ -88,9 +94,13 @@ abstract class Buttons {
     id: "poap-claim-button",
   })
   async claimButton(interaction: ButtonInteraction) {
-    await interaction.deferReply({
-      ephemeral: true,
-    });
+    try {
+      await interaction.deferReply({
+        ephemeral: true,
+      });
+    } catch (error) {
+      return;
+    }
     const message = await getUserPoap(
       interaction?.user?.id,
       interaction?.guild?.id
@@ -100,9 +110,11 @@ abstract class Buttons {
       await interaction.followUp(message);
     } catch (error) {
       logger.warn(`poap-claim-button interaction EDITREPLY ${error.message}`);
-      await interaction.followUp({
-        content: "Poap claiming unsuccessful. Please, try it again later!",
-      });
+      interaction
+        .followUp({
+          content: "Poap claiming unsuccessful. Please, try it again later!",
+        })
+        .catch();
     }
   }
 }

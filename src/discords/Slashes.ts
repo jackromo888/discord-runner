@@ -121,9 +121,11 @@ abstract class Slashes {
           interaction.user.id
         } error: ${error.message} ${JSON.stringify(error)}`
       );
-      await interaction.followUp({
-        content: `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${interaction.user.id} error: ${error.message}. Please open a ticket with this message for further investigation.`,
-      });
+      interaction
+        .followUp({
+          content: `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${interaction.user.id} error: ${error.message}. Please open a ticket with this message for further investigation.`,
+        })
+        .catch();
     }
   }
 
@@ -240,10 +242,12 @@ abstract class Slashes {
           error.message
         } ${JSON.stringify(error)}`
       );
-      await interaction.followUp({
-        content: `The Voice Event cannot be started for POAP ${poapId}.`,
-        ephemeral: true,
-      });
+      interaction
+        .followUp({
+          content: `The Voice Event cannot be started for POAP ${poapId}.`,
+          ephemeral: true,
+        })
+        .catch();
     }
   }
 
@@ -283,10 +287,12 @@ abstract class Slashes {
           error.message
         } ${JSON.stringify(error)}`
       );
-      await interaction.followUp({
-        content: `The Voice Event cannot be stopped for POAP ${poapId}.`,
-        ephemeral: true,
-      });
+      interaction
+        .followUp({
+          content: `The Voice Event cannot be stopped for POAP ${poapId}.`,
+          ephemeral: true,
+        })
+        .catch();
     }
   }
 }
