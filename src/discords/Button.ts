@@ -81,12 +81,12 @@ abstract class Buttons {
       logger.warn(
         ` ${interaction.user?.id} ${interaction.guildId} join-button interaction EDITREPLY ${error.message}`
       );
-      interaction
-        .followUp({
-          content:
-            "Joining this guild currently is not possible. Please, try it again later!",
-        })
-        .catch();
+      // interaction
+      //   .followUp({
+      //     content:
+      //       "Joining this guild currently is not possible. Please, try it again later!",
+      //   })
+      //   .catch();
     }
   }
 
@@ -110,11 +110,11 @@ abstract class Buttons {
       await interaction.followUp(message);
     } catch (error) {
       logger.warn(`poap-claim-button interaction EDITREPLY ${error.message}`);
-      interaction
-        .followUp({
-          content: "Poap claiming unsuccessful. Please, try it again later!",
-        })
-        .catch();
+      // interaction
+      //   .followUp({
+      //     content: "Poap claiming unsuccessful. Please, try it again later!",
+      //   })
+      //   .catch();
     }
   }
 }
