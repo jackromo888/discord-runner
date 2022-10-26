@@ -43,14 +43,10 @@ abstract class Slashes {
     );
 
     try {
-      await interaction.reply({
-        content: `I'll update your Guild accesses as soon as possible. (It could take up to 2 minutes.)`,
-        ephemeral: true,
-      });
-
+      await interaction.deferReply({ ephemeral: true });
       const editOptions = await status(interaction.guild.id, interaction.user);
 
-      await interaction.editReply({
+      await interaction.followUp({
         content: null,
         ...editOptions,
       });
@@ -82,7 +78,7 @@ abstract class Slashes {
         );
       } catch (error) {
         if (error.message?.startsWith("Cannot find guild")) {
-          await interaction.editReply({
+          await interaction.followUp({
             embeds: [
               new EmbedBuilder()
                 .setTitle("Error")
@@ -96,7 +92,7 @@ abstract class Slashes {
         }
         logger.error(error);
         try {
-          await interaction.editReply({
+          await interaction.followUp({
             embeds: [
               new EmbedBuilder()
                 .setTitle("Error")
@@ -118,13 +114,16 @@ abstract class Slashes {
         return;
       }
 
-      await interaction.editReply(messagePayload);
+      await interaction.followUp(messagePayload);
     } catch (error) {
       logger.error(
         `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${
           interaction.user.id
         } error: ${error.message} ${JSON.stringify(error)}`
       );
+      await interaction.followUp({
+        content: `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${interaction.user.id} error: ${error.message}. Please open a ticket with this message for further investigation.`,
+      });
     }
   }
 
@@ -158,12 +157,13 @@ abstract class Slashes {
     interaction: CommandInteraction
   ) {
     try {
+      await interaction.deferReply({ ephemeral: true });
       if (
         !(interaction.member as GuildMember).permissions.has(
           PermissionsBitField.Flags.Administrator
         )
       ) {
-        await interaction.reply({
+        await interaction.followUp({
           content: "❌ Only server admins can use this command.",
           ephemeral: true,
         });
@@ -177,7 +177,7 @@ abstract class Slashes {
         // ignored
       }
       if (!guild) {
-        await interaction.reply({
+        await interaction.followUp({
           content: "❌ There are no guilds in this server.",
           ephemeral: true,
         });
@@ -196,7 +196,7 @@ abstract class Slashes {
       await message.react(config.joinButtonEmojis.emoji1);
       await message.react(config.joinButtonEmojis.emoji2);
 
-      await interaction.reply({
+      await interaction.followUp({
         content: "✅ Join button created successfully.",
         ephemeral: true,
       });
@@ -231,8 +231,7 @@ abstract class Slashes {
 
       const guild = await Main.platform.guild.get(interaction.guildId);
       await startVoiceEvent(guild.id, poapId);
-
-      await interaction.editReply({
+      await interaction.followUp({
         content: `The Voice Event has successfully started for POAP ${poapId}.`,
       });
     } catch (error) {
@@ -241,6 +240,10 @@ abstract class Slashes {
           error.message
         } ${JSON.stringify(error)}`
       );
+      await interaction.followUp({
+        content: `The Voice Event cannot be started for POAP ${poapId}.`,
+        ephemeral: true,
+      });
     }
   }
 
@@ -271,7 +274,7 @@ abstract class Slashes {
       const guild = await Main.platform.guild.get(interaction.guildId);
       await stopVoiceEvent(guild.id, poapId);
 
-      await interaction.editReply({
+      await interaction.followUp({
         content: `The Voice Event has successfully stopped for POAP ${poapId}.`,
       });
     } catch (error) {
@@ -280,6 +283,10 @@ abstract class Slashes {
           error.message
         } ${JSON.stringify(error)}`
       );
+      await interaction.followUp({
+        content: `The Voice Event cannot be stopped for POAP ${poapId}.`,
+        ephemeral: true,
+      });
     }
   }
 }

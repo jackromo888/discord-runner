@@ -123,7 +123,6 @@ const join = async (
     userId,
     joinResult.inviteLink
   );
-  logger.debug(`join-trace ${userId} ${server} get reply message`);
 
   if (!roleIds) {
     redisClient.client.set(
@@ -133,8 +132,6 @@ const join = async (
       15 * 60
     );
   }
-  logger.debug(`join-trace ${userId} ${server} set redis token`);
-
   return message;
 };
 
