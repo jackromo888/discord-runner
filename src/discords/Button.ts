@@ -29,15 +29,24 @@ abstract class Buttons {
       );
     } catch (error) {
       if (error.message?.startsWith("Cannot find guild")) {
-        await interaction.followUp({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle("Error")
-              .setDescription("There is no guild associated with this server.")
-              .setColor(`#${config.embedColor.error}`),
-          ],
-        });
-        return;
+        try {
+          await interaction.followUp({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle("Error")
+                .setDescription(
+                  "There is no guild associated with this server."
+                )
+                .setColor(`#${config.embedColor.error}`),
+            ],
+          });
+          return;
+        } catch (noGuildError) {
+          logger.error(
+            `There is no guild associated with this server.=${interaction.guildId} serverName=${interaction.guild?.name} channelId=${interaction.channelId} channelName=${interaction.channel?.name} error=${noGuildError.message}`
+          );
+          return;
+        }
       }
       try {
         await interaction.followUp({
