@@ -125,12 +125,9 @@ const join = async (
   );
 
   if (!roleIds) {
-    redisClient.client.set(
-      `joining:${server.id}:${userId}`,
-      interactionToken,
-      "EX",
-      15 * 60
-    );
+    await redisClient.set(`joining:${server.id}:${userId}`, interactionToken, {
+      EX: 15 * 60,
+    });
   }
   return message;
 };

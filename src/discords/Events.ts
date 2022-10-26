@@ -332,11 +332,11 @@ abstract class Events {
   @On({
     event: "inviteDelete",
   })
-  onInviteDelete([invite]: [Invite]): void {
-    Main.client.guilds.fetch(invite.guild.id).then((guild) => {
+  async onInviteDelete([invite]: [Invite]): Promise<void> {
+    Main.client.guilds.fetch(invite.guild.id).then(async (guild) => {
       logger.verbose(`onInviteDelete guild: ${guild.name}`);
 
-      redisClient.client.del(`info:${guild.id}`);
+      await redisClient.del(`info:${guild.id}`);
     });
   }
 
