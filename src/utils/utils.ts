@@ -114,10 +114,10 @@ const getMissingPermissions = (bot: GuildMember) => [
     name: "MANAGE_ROLES",
     value: bot.permissions.has("ManageRoles"),
   },
-  {
-    name: "CREATE_INSTANT_INVITE",
-    value: bot.permissions.has("CreateInstantInvite"),
-  },
+  // {
+  //   name: "CREATE_INSTANT_INVITE",
+  //   value: bot.permissions.has("CreateInstantInvite"),
+  // },
   {
     name: "SEND_MESSAGES",
     value: bot.permissions.has("SendMessages"),
