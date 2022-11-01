@@ -76,7 +76,7 @@ abstract class Buttons {
     }
 
     try {
-      await interaction.followUp(messagePayload);
+      await interaction.followUp({ ...messagePayload, ephemeral: true });
     } catch (error) {
       logger.warn(
         ` ${interaction.user?.id} ${interaction.guildId} join-button interaction EDITREPLY ${error.message}`
@@ -107,7 +107,7 @@ abstract class Buttons {
     );
 
     try {
-      await interaction.followUp(message);
+      await interaction.followUp({ ...message, ephemeral: true });
     } catch (error) {
       logger.warn(`poap-claim-button interaction EDITREPLY ${error.message}`);
       // interaction

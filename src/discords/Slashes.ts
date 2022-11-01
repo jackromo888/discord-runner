@@ -114,7 +114,7 @@ abstract class Slashes {
         return;
       }
 
-      await interaction.followUp(messagePayload);
+      await interaction.followUp({ ...messagePayload, ephemeral: true });
     } catch (error) {
       logger.error(
         `Slashes.join failed serverId: ${interaction.guild.id} dc userId: ${
