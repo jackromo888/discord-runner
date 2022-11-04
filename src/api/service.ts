@@ -563,7 +563,7 @@ const fetchUserByCode = async (
     /* eslint-enable camelcase */
   } catch (error) {
     throw Error(
-      `reolveUser: cannot fetch user from access_token. ${JSON.stringify(
+      `reolveUser: cannot fetch user from oauth code. ${JSON.stringify(
         JSON.stringify(error.response.data)
       )}`
     );

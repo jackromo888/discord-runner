@@ -21,6 +21,8 @@ abstract class Buttons {
         ephemeral: true,
       });
     } catch (error) {
+      logger.error(`join-button interaction deferReply error ${error.message}`);
+
       return;
     }
 
@@ -53,6 +55,9 @@ abstract class Buttons {
         }
       }
       try {
+        logger.error(
+          `join-button interaction error messagePayload ${error.message}`
+        );
         await interaction.followUp({
           embeds: [
             new EmbedBuilder()
