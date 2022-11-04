@@ -1,6 +1,7 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import axios from "axios";
 import { GuildMember, EmbedBuilder, Role, TextChannel } from "discord.js";
+import url from "url";
 import config from "../config";
 import { redisClient } from "../database";
 import Main from "../Main";
@@ -486,14 +487,15 @@ const refreshAccessToken = async (
   refreshToken: string
 ): Promise<ResolveUserResopnse["platformUserData"]> => {
   try {
+    const params = new url.URLSearchParams({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: readNacl(refreshToken),
+    });
     const apiResponse = await axios.post<TokenExchangeResponse>(
       `https://discord.com/api/v10/oauth2/token`,
-      {
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        grant_type: "refresh_token",
-        refresh_token: readNacl(refreshToken),
-      },
+      params.toString(),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
