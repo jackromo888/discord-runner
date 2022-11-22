@@ -516,6 +516,9 @@ const refreshAccessToken = async (
     };
     /* eslint-enable camelcase */
   } catch (error) {
+    if (error.response?.data?.error === "invalid_grant") {
+      return { invalidToken: true };
+    }
     throw Error(
       `refreshAccessToken: cannot refresh token. ${JSON.stringify(
         JSON.stringify(error.response.data)

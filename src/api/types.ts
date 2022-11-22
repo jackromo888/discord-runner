@@ -191,12 +191,16 @@ type ResolveUserParams =
 
 type ResolveUserResopnse = {
   platformUserId: string;
-  platformUserData: {
-    accessToken: string;
-    expiresIn?: number;
-    refreshToken?: string;
-    scope?: string;
-  };
+  platformUserData:
+    | {
+        accessToken: string;
+        expiresIn?: number;
+        refreshToken?: string;
+        scope?: string;
+      }
+    | {
+        invalidToken: true;
+      };
 };
 
 type DiscordServerData = {
