@@ -23,6 +23,7 @@ import {
   sendPollMessage,
   sendDiscordButton,
   getVoiceChannelList,
+  migrateUsers,
 } from "./actions";
 import {
   fetchUserByAccessToken,
@@ -577,6 +578,24 @@ const controller = {
     try {
       const guildId = req?.params?.guildId;
       const result = await getVoiceChannelList(guildId);
+
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(400).json(getErrorResult(err));
+    }
+  },
+
+  migrateUsers: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    try {
+      const { guildId } = req.params;
+      const result = await migrateUsers(guildId);
 
       res.status(200).json(result);
     } catch (err) {

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint no-return-await: "off" */
 
 import {
@@ -32,6 +33,7 @@ import {
   denyViewEntryChannelForRole,
   getBackendErrorMessage,
   getChannelsByCategoryWithRoles,
+  getDiscordRoleIds,
   getUserResult,
   notifyAccessedChannels,
 } from "../utils/utils";
@@ -513,6 +515,25 @@ const getVoiceChannelList = async (guildId: string): Promise<ChannelObj[]> => {
     }));
 };
 
+const migrateUsers = async (guildId: string): Promise<any> => {
+  logger.verbose(`migrateUsers ${guildId}`);
+
+  const guild = await Main.client.guilds.fetch(guildId);
+
+  const members = await guild.members.fetch();
+  const filteredMembersByRoles = [...members].map(
+    ([platformUserId, userDetails]) => ({
+      platformUserId,
+      discordRoles: [...userDetails.roles.cache].map(([r]) => r),
+    })
+  );
+  await axios.post(`${config.backendUrl}/discord/migrateGuildUsers`, {
+    platformGuildId: guildId,
+    members: filteredMembersByRoles,
+  });
+  return true;
+};
+
 export {
   getMembersByRoleId,
   manageMigratedActions,
@@ -531,4 +552,5 @@ export {
   getVoiceChannelList,
   resetGuildGuard,
   getUserPoap,
+  migrateUsers,
 };
