@@ -525,9 +525,9 @@ const migrateUsers = async (
 
   const members = await guild.members.fetch();
   const filteredMembersByRoles = [...members].map(
-    ([userPlatformId, userDetails]) => ({
-      userPlatformId,
-      userDiscordRoles: [...userDetails.roles.cache].map(([r]) => r),
+    ([platformUserId, userDetails]) => ({
+      platformUserId,
+      discordRoles: [...userDetails.roles.cache].map(([r]) => r),
     })
   );
   await axios.post(`${config.backendUrl}/discord/migrateGuildUsers`, {
