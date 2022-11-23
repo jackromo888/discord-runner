@@ -161,6 +161,13 @@ const createRouter = () => {
     controller.resetVoiceEvent
   );
 
+  router.get(
+    "/migrateUsers/:platformGuildId/:guildId",
+    validators.paramDiscordId("platformGuildId"),
+    validators.paramIdValidator("guildId"),
+    controller.migrateUsers
+  );
+
   return router;
 };
 
