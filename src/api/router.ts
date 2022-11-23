@@ -162,9 +162,8 @@ const createRouter = () => {
   );
 
   router.get(
-    "/migrateUsers/:platformGuildId/:guildId",
-    validators.paramDiscordId("platformGuildId"),
-    validators.paramIdValidator("guildId"),
+    "/migrateUsers/:guildId",
+    validators.paramDiscordId("guildId"),
     controller.migrateUsers
   );
 

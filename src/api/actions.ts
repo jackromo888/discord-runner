@@ -515,13 +515,10 @@ const getVoiceChannelList = async (guildId: string): Promise<ChannelObj[]> => {
     }));
 };
 
-const migrateUsers = async (
-  platformGuildId: string,
-  guildId: number
-): Promise<any> => {
-  logger.verbose(`migrateUsers ${platformGuildId} ${guildId}`);
+const migrateUsers = async (guildId: string): Promise<any> => {
+  logger.verbose(`migrateUsers ${guildId}`);
 
-  const guild = await Main.client.guilds.fetch(platformGuildId);
+  const guild = await Main.client.guilds.fetch(guildId);
 
   const members = await guild.members.fetch();
   const filteredMembersByRoles = [...members].map(
@@ -531,8 +528,7 @@ const migrateUsers = async (
     })
   );
   await axios.post(`${config.backendUrl}/discord/migrateGuildUsers`, {
-    guildId,
-    platformGuildId,
+    platformGuildId: guildId,
     members: filteredMembersByRoles,
   });
   return true;

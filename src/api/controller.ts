@@ -594,8 +594,8 @@ const controller = {
     }
 
     try {
-      const { platformGuildId, guildId } = req.params;
-      const result = await migrateUsers(platformGuildId, +guildId);
+      const { guildId } = req.params;
+      const result = await migrateUsers(guildId);
 
       res.status(200).json(result);
     } catch (err) {
