@@ -1,12 +1,12 @@
 import { PlatformStatusResponse } from "@guildxyz/sdk";
 import {
-  Guild,
+  ActionRowBuilder,
+  BaseMessageOptions,
   EmbedBuilder,
+  Guild,
+  MessageActionRowComponentBuilder,
   User,
   WebhookEditMessageOptions,
-  ActionRowBuilder,
-  MessageActionRowComponentBuilder,
-  BaseMessageOptions,
 } from "discord.js";
 import config from "./config";
 import { redisClient } from "./database";

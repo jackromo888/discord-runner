@@ -1,12 +1,14 @@
 /* eslint-disable class-methods-use-this */
 /* eslint no-return-await: "off" */
 
+import axios from "axios";
+import dayjs from "dayjs";
 import {
   Collection,
+  EmbedBuilder,
   GuildMember,
   Invite,
   Message,
-  EmbedBuilder,
   MessageReaction,
   PartialGuildMember,
   PartialMessageReaction,
@@ -17,19 +19,16 @@ import {
   VoiceState,
 } from "discord.js";
 import { Discord, Guard, On } from "discordx";
-import dayjs from "dayjs";
-import axios from "axios";
+import { createPollText } from "../api/polls";
+import pollStorage from "../api/pollStorage";
+import { Vote } from "../api/types";
+import config from "../config";
+import { redisClient } from "../database";
 import IsDM from "../guards/IsDM";
 import NotABot from "../guards/NotABot";
+import NotDM from "../guards/NotDM";
 import Main from "../Main";
 import logger from "../utils/logger";
-import pollStorage from "../api/pollStorage";
-import config from "../config";
-import { Vote } from "../api/types";
-import NotDM from "../guards/NotDM";
-import { createPollText } from "../api/polls";
-import api from "../api/api";
-import { redisClient } from "../database";
 import { handleUserStateDuringVoiceEvent } from "../utils/voiceUtils";
 
 const messageReactionCommon = async (
@@ -138,14 +137,6 @@ const messageReactionCommon = async (
 
 @Discord()
 abstract class Events {
-  @On({
-    event: "ready",
-  })
-  onReady(): void {
-    api();
-    logger.info("Bot logged in.");
-  }
-
   @On.rest({
     event: "rateLimited",
   })

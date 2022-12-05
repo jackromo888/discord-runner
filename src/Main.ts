@@ -1,21 +1,27 @@
-import axios from "axios";
 import { importx } from "@discordx/importer";
+import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
+import axios from "axios";
 import {
   IntentsBitField,
   MessageComponentInteraction,
   Partials,
 } from "discord.js";
 import { Client } from "discordx";
-import { Platform, setApiBaseUrl, setProjectName } from "@guildxyz/sdk";
+import API from "./api/api";
 import config from "./config";
+import { redisClient } from "./database";
+import Health from "./services/healthService";
 import logger from "./utils/logger";
 import { logAxiosResponse } from "./utils/utils";
-import { redisClient } from "./database";
 
-class Main {
+export default class Main {
+  public static API: API;
+
   public static client: Client;
 
   public static platform: Platform;
+
+  public static ready: Boolean = false;
 
   public static async start(): Promise<void> {
     // log all axios responses
@@ -25,8 +31,9 @@ class Main {
     setApiBaseUrl(config.backendUrl);
     setProjectName("DISCORD connector");
     logger.info(`Backend url set to ${config.backendUrl}`);
-    this.platform = new Platform("DISCORD");
 
+    this.API = new API();
+    this.platform = new Platform("DISCORD");
     this.client = new Client({
       shardCount: 4,
       intents: [
@@ -51,6 +58,9 @@ class Main {
     this.client.on("ready", async () => {
       logger.info(">> Bot started");
 
+      this.ready = true;
+      Health.status.runnerReady = true;
+
       await this.client.initApplicationCommands();
       await this.client.initGlobalApplicationCommands();
     });
@@ -74,8 +84,11 @@ class Main {
       }
       try {
         this.client.executeInteraction(interaction);
+        Health.status.interactionFail = false;
       } catch (error) {
         logger.error(error);
+        Health.status.interactionFail = true;
+        Health.sendNotification();
       }
     });
 
@@ -86,6 +99,20 @@ class Main {
   }
 }
 
-Main.start();
+// Polyfill for BigInt serialization
+(BigInt.prototype as any).toJSON = function fn(): string {
+  return this.toString();
+};
 
-export default Main;
+// Healthcheck related
+process.once("SIGTERM", () => {
+  logger.info("SIGTERM received, exiting...");
+
+  Health.status.runnerReady = false;
+  Health.status.noSigterm = false;
+
+  Main.client.destroy();
+  process.exit(1);
+});
+
+Main.start();

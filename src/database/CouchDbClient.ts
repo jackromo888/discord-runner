@@ -1,15 +1,19 @@
 import Nano from "nano";
 import { VoiceEvents, VoiceParticipation } from "../api/types";
 import config from "../config";
+import Health from "../services/healthService";
 import logger from "../utils/logger";
 
 const dbNames = {
+  healthCheck: "health-check",
   voiceParticipation: "voice-participation",
   voiceEvents: "voice-events",
 };
 
-class CouchDbClient {
+export default class CouchDbClient {
   nano: Nano.ServerScope;
+
+  healthCheckDb: Nano.DocumentScope<{ value: string }>;
 
   voiceParticipation: Nano.DocumentScope<VoiceParticipation>;
 
@@ -27,11 +31,12 @@ class CouchDbClient {
           }
         })
       ).then(() => {
+        this.healthCheckDb = this.nano.db.use(dbNames.healthCheck);
         this.voiceParticipation = this.nano.db.use(dbNames.voiceParticipation);
         this.voiceEvents = this.nano.db.use(dbNames.voiceEvents);
+
+        Health.status.couchDbReady = true;
       });
     });
   }
 }
-
-export default CouchDbClient;

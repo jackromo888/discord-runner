@@ -1,4 +1,5 @@
 /* eslint-disable class-methods-use-this */
+import { GetGuildResponse } from "@guildxyz/sdk";
 import {
   ApplicationCommandOptionType,
   BaseMessageOptions,
@@ -8,13 +9,12 @@ import {
   PermissionsBitField,
 } from "discord.js";
 import { Discord, Guard, Slash, SlashOption } from "discordx";
-import { GetGuildResponse } from "@guildxyz/sdk";
 import { join, ping, status } from "../commands";
+import config from "../config";
+import OnlyGuild from "../guards/OnlyGuild";
+import Main from "../Main";
 import logger from "../utils/logger";
 import { createInteractionPayload } from "../utils/utils";
-import config from "../config";
-import Main from "../Main";
-import OnlyGuild from "../guards/OnlyGuild";
 import { startVoiceEvent, stopVoiceEvent } from "../utils/voiceUtils";
 
 @Discord()

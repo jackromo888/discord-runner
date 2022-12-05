@@ -1,8 +1,8 @@
 /* eslint-disable class-methods-use-this */
 import {
+  BaseMessageOptions,
   ButtonInteraction,
   EmbedBuilder,
-  BaseMessageOptions,
 } from "discord.js";
 import { ButtonComponent, Discord } from "discordx";
 import { getUserPoap } from "../api/actions";

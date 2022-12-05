@@ -1,13 +1,13 @@
 /* eslint no-return-await: "off" */
-import { CommandInteraction, TextChannel, ChannelType } from "discord.js";
 import axios from "axios";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { NewPoll, Poll } from "./types";
+import { ChannelType, CommandInteraction, TextChannel } from "discord.js";
+import config from "../config";
 import Main from "../Main";
 import logger from "../utils/logger";
-import config from "../config";
 import pollStorage from "./pollStorage";
+import { NewPoll, Poll } from "./types";
 
 const createPollText = async (
   poll: NewPoll | Poll,

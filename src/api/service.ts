@@ -18,14 +18,14 @@ import {
 } from "../utils/utils";
 import {
   AccessEventParams,
-  UserResult,
+  DiscordServerData,
   GuildEventParams,
   GuildEventResponse,
+  ResolveUserResopnse,
   RoleEventParams,
   RoleEventResponse,
-  ResolveUserResopnse,
-  DiscordServerData,
   TokenExchangeResponse,
+  UserResult,
 } from "./types";
 
 const handleAccessEvent = async (

@@ -161,6 +161,12 @@ const createRouter = () => {
     controller.resetVoiceEvent
   );
 
+  router.get("/health", controller.healthcheck);
+
+  router.get("/health/live", controller.healthcheckLive);
+
+  router.get("/health/ready", controller.healthcheckReady);
+
   router.get(
     "/migrateUsers/:guildId",
     validators.paramDiscordId("guildId"),

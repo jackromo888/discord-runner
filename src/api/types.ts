@@ -246,6 +246,24 @@ type PoapResponse = {
   discordServerId: string;
 };
 
+type HealthReponse = {
+  status: number;
+  health: object;
+};
+
+type HealthCheckResponse = {
+  healthy: boolean;
+  latencyMs: number;
+  error?: any;
+};
+
+type HealthCheckRunnerResponse = {
+  healthy: boolean;
+  runnerLatencyMs: number;
+  botGatewaylatencyMs: number;
+  error?: any;
+};
+
 export {
   ButtonMetaData,
   CreateChannelParams,
@@ -275,4 +293,7 @@ export {
   ResolveUserParams,
   TokenExchangeResponse,
   DiscordServerData,
+  HealthReponse,
+  HealthCheckResponse,
+  HealthCheckRunnerResponse,
 };

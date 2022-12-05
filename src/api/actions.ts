@@ -1,33 +1,26 @@
 /* eslint-disable no-unused-vars */
 /* eslint no-return-await: "off" */
 
-import {
-  Role,
-  ThreadChannel,
-  Collection,
-  TextChannel,
-  Message,
-  ChannelType,
-  OverwriteType,
-  BaseMessageOptions,
-  ButtonBuilder,
-  EmbedBuilder,
-  ActionRowBuilder,
-  MessageActionRowComponentBuilder,
-  ButtonStyle,
-} from "discord.js";
 import axios from "axios";
 import dayjs from "dayjs";
+import {
+  ActionRowBuilder,
+  BaseMessageOptions,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  Collection,
+  EmbedBuilder,
+  Message,
+  MessageActionRowComponentBuilder,
+  OverwriteType,
+  Role,
+  TextChannel,
+  ThreadChannel,
+} from "discord.js";
+import config from "../config";
 import Main from "../Main";
 import logger from "../utils/logger";
-import {
-  ChannelObj,
-  CreateChannelParams,
-  Emote,
-  Poll,
-  ButtonMetaData,
-  UserResult,
-} from "./types";
 import {
   createInteractionPayload,
   denyViewEntryChannelForRole,
@@ -37,8 +30,15 @@ import {
   getUserResult,
   notifyAccessedChannels,
 } from "../utils/utils";
-import config from "../config";
 import { createPollText } from "./polls";
+import {
+  ButtonMetaData,
+  ChannelObj,
+  CreateChannelParams,
+  Emote,
+  Poll,
+  UserResult,
+} from "./types";
 
 const isMember = async (
   guildId: string,

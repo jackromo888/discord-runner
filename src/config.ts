@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import * as dotenv from "dotenv";
+import { hostname } from "os";
 
 const envFound = dotenv.config();
 /* if (envFound.error) {
@@ -7,7 +8,11 @@ const envFound = dotenv.config();
 } */
 
 const nodeEnv = process.env.NODE_ENV || "development";
-
+const instanceInfo = {
+  version: process.env.COMMIT_SHA || "local",
+  hostname: hostname(),
+};
+const notificationWebhook = process.env.NOTIFICATION_WEBHOOK || "";
 const redisHost = process.env.REDIS_HOST;
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -72,4 +77,6 @@ export default {
   clientSecret,
   naclSecret,
   naclPublic,
+  instanceInfo,
+  notificationWebhook,
 };

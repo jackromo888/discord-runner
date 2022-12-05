@@ -1,5 +1,5 @@
-import express from "express";
 import tracer from "dd-trace";
+import express, { Application } from "express";
 import config from "../config";
 import logger from "../utils/logger";
 import router from "./router";
@@ -8,18 +8,31 @@ if (config.nodeEnv === "production") {
   tracer.init({ profiling: true });
 }
 
-const createApi = () => {
-  const api = express();
-  api.disable("x-powered-by");
+export default class API {
+  private api: Application;
 
-  api.use(express.json({ limit: "6mb" }));
-  api.use(config.api.prefix, router());
+  private portNumber: string | number;
 
-  api.listen(config.api.port, () =>
-    logger.info(`API listening on ${config.api.port}`)
-  );
+  constructor() {
+    this.api = express();
+    this.portNumber = config.api.port;
 
-  return api;
-};
+    this.setup();
+  }
 
-export default createApi;
+  private setup(): void {
+    this.api.disable("x-powered-by");
+    this.api.set("json spaces", 2);
+
+    this.api.use(express.json({ limit: "6mb" }));
+    this.api.use(config.api.prefix, router());
+
+    this.start();
+  }
+
+  private start(): void {
+    this.api.listen(this.portNumber, () =>
+      logger.info(`API listening on ${config.api.port}`)
+    );
+  }
+}

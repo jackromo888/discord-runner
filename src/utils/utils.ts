@@ -2,21 +2,21 @@
 import { GetGuildResponse } from "@guildxyz/sdk";
 import { AxiosResponse } from "axios";
 import {
-  GuildMember,
-  DiscordAPIError,
-  Guild,
+  ActionRowBuilder,
+  BaseMessageOptions,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
   Collection,
+  DiscordAPIError,
+  EmbedBuilder,
+  Guild,
   GuildChannel,
-  Role,
+  GuildMember,
+  MessageActionRowComponentBuilder,
   PartialGuildMember,
   PermissionOverwrites,
-  ActionRowBuilder,
-  MessageActionRowComponentBuilder,
-  ButtonStyle,
-  ButtonBuilder,
-  ChannelType,
-  EmbedBuilder,
-  BaseMessageOptions,
+  Role,
 } from "discord.js";
 import nacl from "tweetnacl";
 import { ActionError, ErrorResult, UserResult } from "../api/types";

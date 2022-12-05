@@ -1,4 +1,4 @@
-import { GuardFunction, ArgsOf, SimpleCommandMessage } from "discordx";
+import { ArgsOf, GuardFunction, SimpleCommandMessage } from "discordx";
 
 const NotABot: GuardFunction<
   ArgsOf<"messageCreate"> | SimpleCommandMessage

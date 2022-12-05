@@ -1,28 +1,29 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import Health from "../services/healthService";
 import logger from "../utils/logger";
 import { getErrorResult, hasNecessaryPermissions } from "../utils/utils";
 import {
+  resetVoiceEvent,
   startVoiceEvent,
   stopVoiceEvent,
-  resetVoiceEvent,
 } from "../utils/voiceUtils";
 import {
   createChannel,
   createRole,
+  getChannelList,
+  getEmoteList,
+  getMembersByRoleId,
   getRole,
+  getServerInfo,
+  getUser,
+  getVoiceChannelList,
   isMember,
   listAdministeredServers,
-  getServerInfo,
-  updateRoleName,
-  getUser,
   manageMigratedActions,
-  getEmoteList,
-  getChannelList,
-  getMembersByRoleId,
-  sendPollMessage,
   sendDiscordButton,
-  getVoiceChannelList,
+  sendPollMessage,
+  updateRoleName,
   migrateUsers,
 } from "./actions";
 import {
@@ -147,6 +148,48 @@ const controller = {
     }
   },
 
+  healthcheck: async (_: Request, res: Response): Promise<void> => {
+    try {
+      const { status, health } = await Health.getHealth();
+
+      res.status(status).json(health);
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  healthcheckLive: async (_: Request, res: Response): Promise<void> => {
+    try {
+      const live = Health.isLive();
+
+      if (live) {
+        res.status(200).send({});
+        return;
+      }
+
+      res.status(503).json({ message: "NOT_LIVE" });
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
+  healthcheckReady: async (_: Request, res: Response): Promise<void> => {
+    try {
+      const ready = Health.isReady();
+
+      if (ready) {
+        res.status(200).send({});
+      } else {
+        res.status(503).json({ message: "NOT_READY" });
+      }
+    } catch (error) {
+      const errorMsg = getErrorResult(error);
+      res.status(400).json(errorMsg);
+    }
+  },
+
   handleVoiceEvent: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
@@ -202,6 +245,7 @@ const controller = {
       res.status(400).json(errorMsg);
     }
   },
+
   resolveUser: async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
 
