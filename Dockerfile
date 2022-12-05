@@ -86,4 +86,4 @@ COPY --from=builder --chown=${USER}:${USER} /app/build ./build
 
 EXPOSE ${PORT}
 
-CMD ["node", "build/Main.js"]
+CMD ["node", "--heapsnapshot-signal=SIGUSR2", "build/Main.js"]
