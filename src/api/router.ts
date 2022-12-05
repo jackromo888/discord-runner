@@ -173,6 +173,8 @@ const createRouter = () => {
     controller.migrateUsers
   );
 
+  router.get("/heapSnapshot", controller.heapSnapshot);
+
   return router;
 };
 

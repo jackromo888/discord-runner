@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
+import { writeHeapSnapshot } from "v8";
 import Health from "../services/healthService";
 import logger from "../utils/logger";
 import { getErrorResult, hasNecessaryPermissions } from "../utils/utils";
@@ -641,6 +642,22 @@ const controller = {
       const { guildId } = req.params;
       const result = await migrateUsers(guildId);
 
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(400).json(getErrorResult(err));
+    }
+  },
+
+  heapSnapshot: async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    try {
+      const result = writeHeapSnapshot();
       res.status(200).json(result);
     } catch (err) {
       res.status(400).json(getErrorResult(err));
