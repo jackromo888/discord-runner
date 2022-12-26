@@ -24,7 +24,7 @@
     "@guildxyz/sdk": "github:agoraxyz/guild-sdk#next",
     "axios": "^0.26.1",
     "bottleneck": "^2.19.5",
-    "dayjs": "^1.11.5",
+    "dayjs": "^1.11.6",
     "dd-trace": "^2.9.1",
     "discord.js": "^14.5.0",
     "discordx": "^11.4.0",
