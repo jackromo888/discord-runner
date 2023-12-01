@@ -19,13 +19,13 @@
     "type-check": "tsc --pretty --noEmit --incremental false"
   },
   "dependencies": {
-    "@discordx/importer": "^1.1.10",
+    "@discordx/importer": "^1.2.0",
     "@discordx/utilities": "^5.1.0",
     "@guildxyz/sdk": "github:agoraxyz/guild-sdk#next",
     "axios": "^0.26.1",
     "bottleneck": "^2.19.5",
     "dayjs": "^1.11.5",
-    "dd-trace": "^2.9.1",
+    "dd-trace": "^2.12.0",
     "discord.js": "^14.5.0",
     "discordx": "^11.4.0",
     "dotenv": "^16.0.3",
