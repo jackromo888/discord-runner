@@ -21,7 +21,7 @@
   "dependencies": {
     "@discordx/importer": "^1.1.10",
     "@discordx/utilities": "^5.1.0",
-    "@guildxyz/sdk": "github:agoraxyz/guild-sdk#next",
+    "@guildxyz/sdk": "2.0.0",
     "axios": "^0.26.1",
     "bottleneck": "^2.19.5",
     "dayjs": "^1.11.5",
